@@ -1,0 +1,9 @@
+{
+  "wallet_host": "localhost",
+  "wallet_port": 45000,
+  "wallet_username": "username",
+  "wallet_password": "password",
+  "sdp_servers": [
+    "example.com:8080"
+  ]
+}

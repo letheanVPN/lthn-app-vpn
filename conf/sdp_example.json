@@ -1,0 +1,81 @@
+{
+  "protocolVersion": 1,
+  "nodeType": "commercial",
+  "provider": {
+    "id": "publicKey",
+    "name": "16 Characters max"
+  },
+  "certificates": [
+    "certificate content 1",
+    "certificate content 2"
+  ],
+  "wallet": "Public Wallet Address",
+  "terms": "Terms of the Provider as a whole",
+  "services": [
+    {
+      "id": "1A",
+      "name": "My Budget Proxy",
+      "type": "proxy",
+      "cost": 0.12345678,
+      "firstPrePaidMinutes": 2,
+      "firstVerificationsNeeded": 1,
+      "subsequentPrePaidMinutes": 2,
+      "subsequentVerificationsNeeded": 1,
+      "allowRefunds": true,
+      "downloadSpeed": 1000000,
+      "uploadSpeed": 1000000,
+      "proxy": {
+        "endpoints": [
+          "1.1.1.1",
+          "2.2.2.2"
+        ],
+        "certificates": [
+          "FirstCertificate",
+          "Second Certificate"
+        ],
+        "terms": "these are the service terms",
+        "policy": {
+          "default": "allow",
+          "addresses": {
+            "blocked": [
+              "BlockedDomain.com",
+              "SecondBlockedDomain.com"
+            ]
+          }
+        }
+      },
+      "vpn": null
+    },
+    {
+      "id": "2B",
+      "name": "My Super VPN",
+      "type": "vpn",
+      "cost": 0.12345678,
+      "firstPrePaidMinutes": 2,
+      "firstVerificationsNeeded": 1,
+      "subsequentPrePaidMinutes": 2,
+      "subsequentVerificationsNeeded": 1,
+      "allowRefunds": true,
+      "downloadSpeed": 1000000,
+      "uploadSpeed": 1000000,
+      "proxy": null,
+      "vpn": {
+        "endpoints": [
+          "3.3.3.3",
+          "4.4.4.4"
+        ],
+        "certificates": [
+          "first vpn certificate",
+          "second vpn certificate"
+        ],
+        "parameters": {
+          "mtuSize": "1",
+          "cyphers": [
+            "DESX-CBC",
+            "AES-256-CBC"
+          ]
+        }
+      }
+    }
+  ]
+}

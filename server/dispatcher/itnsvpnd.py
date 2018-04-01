@@ -2,140 +2,82 @@
 
 import ed25519
 import getopt
-import json
+import logging
 import os
-import pickle
-from pprint import pprint
+import pprint
 import sys
+import time
+import pickle
+import binascii
+from util import *
+from sdp import *
+from services import *
+from authids import *
+from sessions import *
+from config import *
 
-class Session(object):
-    """
-    Single paymentid session class.
-    All payments for given paymentid are in one session.
-    """
-    
-    def __init__(self, authid, price, balance):
-        self.id = authid
-        self.balance = balance
-        self.price = price
-        self.created = time()
-        
-    def getId(self):
-        return(self.id)
-
-    def show(self):
-        print("PaymentId %s created at %s with balance %f and price %f per minute (%f minutes left).\n" % {self.id, self.created, self.balance, self.price, self.balance/self.price})
-        
-    def charge(self, balance):
-        self.balance += balance
-        self.lastModify = time()
-        self.lastCharge = time()
-    
-    def disCharge(self, minutes):
-        self.balance -= (self.price * minutes)
-        self.lastModify = time()
-        self.lastDisCharge = time()
-        
-    def checkAlive(self):
-        return(self.balance > 0)
-
-class Sessions(object):
-    """Active sessions container"""
-    
-    def __init__(self):
-        payments = {}
-        
-    def add(self, paymentid):
-        self.payments[paymentid.getId()] = paymentid
-        
-    def charge(self, paymentid, balance):
-        self.payments[paymentid].charge(balance)
-
-    def disCharge(self, paymentid, balance):
-        self.payments[paymentid].disCharge(balance)
-        
-    def exists(self,paymentid):
-        return(paymentid in self.payments)
-
-    def remove(self, paymentid):
-        self.payments.pop(paymentid.getId())
-        
-    def show(self):
-        print(self.payments.keys())
-        
-    def cleanup(self):
-        for id, paymentid in self.payments.items():
-            if paymentid.checkAlive():
-                self.payments.pop(id)
-                
-    def save(self, filename):
-        with open(filename, 'wb') as output:
-            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
-            
-class Config(object):
-    """Configuration container"""
-    
-    def load(self, filename):
-        self.data = json.load(open(filename))
-        
-    def get(self, key):
-        idx=""
-        for k in key.split("."):
-            idx+="['"+k+"']"
-        try: 
-            exec("ret=self.data%s" % (idx))
-        except KeyError:
-            return(None)
-        else:
-            return(ret)
-
-class SDP(object):
-    """SDP functions"""
-    
-    def load(self, filename):
-        self.data = json.load(open(filename))
-        
-def get_payments(height):
-    """Connect to wallet and ask for all payments from last height"""
-    
-    payments={"id1": {"amount":"10"}}
-    for key,value in payments:
-        if sessions.exists(key):
-            sessions.charge(key,value["amount"])
-        else:
-            sessions.add(key,value["amount"])
-    
 def main(argv):
-    if (os.getenv('ITNSVPN_SYSCONFDIR')):
-        configfile = os.getenv('ITNSVPN_SYSCONFDIR') + "/dispatcher.json"
-        sdpfile = os.getenv('ITNSVPN_SYSCONFDIR') + "/sdp.json"
-    else:
-        configfile = '/opt/itns/etc/dispatcher.json'
-        sdpfile = '/opt/itns/etc/sdp.json'
+    loglevel = logging.WARNING
+    configfile = Config.PREFIX + "/etc/dispatcher.json"
+    sdpfile = Config.PREFIX + "/etc/sdp.json"
+    authidsfile = Config.PREFIX + '/var/authids.db'
+ 
     try:
-        opts, args = getopt.getopt(argv, "hf:s:", ["help", "config=", "sdp="])
+        opts, args = getopt.getopt(argv, "hf:s:d:G:", ["help", "config=", "sdp=","gen-ed25519="])
     except getopt.GetoptError:
-        print 'itnsvpnd.py -h'
+        print('itnsvpnd.py -h')
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print 'itnsvpnd.py [-h] [-f dispatcher.json] [-s sdp.json]'
+            print('itnsvpnd.py [-l DEBUG|INFO|WARNING|ERROR] [-h] [-f dispatcher.json] [-s sdp.json] [--generate-providerid file]')
             sys.exit()
         elif opt in ("-f", "--config"):
             configfile = arg
         elif opt in ("-s", "--sdp"):
             sdpfile = arg
-          
+        elif opt in ("-d", "--debug"):
+            loglevel = arg
+        elif opt in ("-G", "gen-ed25519"):
+            privatef = arg
+            try:
+                signing_key, verifying_key = ed25519.create_keypair()
+                open(privatef + ".private", "wb").write(signing_key.to_ascii(encoding="hex"))
+                open(privatef + ".public", "wb").write(verifying_key.to_ascii(encoding="hex"))
+                open(privatef + ".seed", "wb").write(binascii.hexlify(signing_key.to_seed()))
+            except (IOError, OSError):
+                logging.error("Cannot open/write %s" % (privatef))
+            sys.exit()
+    
+    logging.basicConfig(level=loglevel)
     config = Config()
     config.load(configfile)
     
-    sdp = SDP()
-    sdp.load(sdpfile)
+    services = Services(sdpfile)
+    try:
+        logging.warning("Reading authids db from %s" % (authidsfile))
+        authids=pickle.load( open( authidsfile, "rb" ) )
+    except (OSError, IOError) as e:
+        logging.warning("Creating empty authids db %s" % (authidsfile))
+        authids = AuthIds()
+        authids.save(authidsfile)
+    else:
+        authids = AuthIds()
+
+    services.show()
+    services.runAll()
+    sessions = Sessions(authids)
     
-    sessions = Sessions()
-    
-    while ():
+    while (1):
+        start = time.time()
+        services.checkAll()
+        authids.getFromWallet(services)
+        #authids.show()
+        time.sleep(10)
+        authids.show()
+        authids.save(authidsfile)
+        authids.show()
+        services.checkAll()
+        end = time.time()
         
-    
 if __name__ == "__main__":
     main(sys.argv[1:])

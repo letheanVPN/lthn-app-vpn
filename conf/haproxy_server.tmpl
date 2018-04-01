@@ -1,0 +1,84 @@
+global
+        maxconn         {maxconn}
+        daemon
+        log {f_logfile}
+        stats socket {f_sock} mode 600 level admin
+        stats timeout 1m
+
+        # SSL options
+        ca-base {cabase}
+        crt-base {crtbase}
+        ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
+        ssl-default-bind-options no-sslv3
+
+frontend icproxy
+        bind            :8080 ssl crt {f_site_pem}
+        mode            http
+        log             global
+        option          httplog
+        option          dontlognull
+        option          nolinger
+        option          http_proxy
+        option          contstats
+        maxconn         {maxconn}
+        timeout client  1m
+
+        stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
+        acl allowed_src_ips src -u 10 -f {f_allow_src_ips}
+        http-request deny if !allowed_src_ips
+        acl deny_src_ips src -u 11 -f {f_deny_src_ips}
+        http-request deny if deny_src_ips
+        acl deny_dst_ips url_ip -u 12 -f {f_deny_dst_ips}
+        http-request deny if deny_dst_ips
+        acl deny_dst_doms url_dom -u 14 -f {f_deny_dst_doms}
+        http-request deny if deny_dst_doms
+        
+        acl server-domain url_dom {ctrldomain}
+        http-request allow if server-domain
+        use_backend server if server-domain
+
+        # Default is to proxy connection
+        default_backend http-proxy
+
+backend http-proxy
+        mode            http
+        timeout connect 5s
+        timeout server  5s
+        retries         2
+        option          nolinger
+        option          httplog
+
+        stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
+        stick on hdr({header}) table http-proxy
+
+        tcp-request content track-sc2 hdr({header})
+        acl allowed_payments    hdr({header}) -u 20 -M
+        acl valid_method        method  GET POST OPTIONS PUT CONNECT
+
+        http-request deny if !allowed_payments
+        http-request deny if !valid_method
+
+        server server1 127.0.0.1:8888
+
+listen server-status
+        bind 127.0.0.1:8081
+        mode http
+        errorfile 503 {f_status}
+
+listen server-credit
+        bind 127.0.0.1:8082
+        mode http
+        errorfile 503 {f_credit}.hdr({header})
+
+backend  server
+        mode            http
+
+        acl p_status path_beg /status
+        acl p_credit path_beg /credit
+
+        http-request deny if !p_status !p_credit
+
+        server status 127.0.0.1:8081
+        server credit 127.0.0.1:8082
+        use-server status if p_status
+        use-server credit if p_credit

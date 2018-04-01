@@ -1,0 +1,27 @@
+port {port}
+proto {proto}
+dev tun
+persist-tun
+persist-key
+ca {f_ca}
+cert {f_crt}
+key {f_key}
+cd {workdir}
+script-security 3
+dh {f_dh}
+topology subnet
+server {iprange} {ipmask}
+keepalive 30 120
+reneg-sec {reneg}
+tls-auth {f_ta} 0
+verify-client-cert none
+auth SHA256
+auth-user-pass-verify ./auth.sh via-env
+cipher AES-256-CBC
+user {user}
+group {group}
+status {f_status}
+verb 3
+float
+tun-mtu {mtu}
+mssfix {mssfix}

@@ -2,13 +2,14 @@
 
 # set PATH to find all binaries
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+export TOPDIR=$(realpath $(dirname $0))
 
 # Static defaults
-prefix=/opt/itns/
+ITNS_PREFIX=/opt/itns/
 
 # General usage help
 usage() {
-   echo $0 [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--generate-ca]
+   echo $0 [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh]
    echo
    exit
 }
@@ -34,60 +35,91 @@ findcmd() {
 }
 
 defaults() {
-    findcmd openvpn openvpn_bin
-    findcmd openssl openssl_bin
-    findcmd haproxy haproxy_bin
-    findcmd python python_bin
+    findcmd openvpn OPENVPN_BIN
+    findcmd openssl OPENSSL_BIN
+    findcmd haproxy HAPROXY_BIN
+    findcmd python PYTHON_BIN
 
-    bin_dir=${prefix}/bin/
-    sysconf_dir=${prefix}/etc/
-    ca_dir=${prefix}/etc/ca/
-    data_dir=${prefix}/var/
-    tmp_dir=${prefix}/tmp/
-
-    [ -z "$runas_user" ] && runas_user=root
-    [ -z "$runas_group" ] && runas_group=root
+    [ -z "$ITNS_USER" ] && ITNS_USER=root
+    [ -z "$ITNS_GROUP" ] && ITNS_GROUP=root
 }
 
 summary() {
     echo
-    if [ -z "$python_bin" ] || [ -z "$haproxy_bin" ] || [ -z "$openvpn_bin" ] || [ -z "$openssl_bin" ]; then
-        echo "Missing some dependencies to run HA. Look above. Exiting."
+    if [ -z "$PYTHON_BIN" ] || [ -z "$HAPROXY_BIN" ] || [ -z "$OPENVPN_BIN" ] || [ -z "$OPENSSL_BIN" ]; then
+        echo "Missing some dependencies to run intense-vpn. Look above. Exiting."
         usage
         exit 1
     fi
-    if ! [ -f $ca_dir/index.txt ]; then
-        echo "CA directory $ca_dir not prepared! You should generate by configure or use your own CA!"
-        exit 3
-    fi
 
     echo "Intense-vpn configured."
-    echo "Python bin:   $python_bin"
-    echo "Openssl bin:  $openssl_bin"
-    echo "Openvpn bin:  $openvpn_bin"
-    echo "HAproxy bin:  $haproxy_bin"
-    echo "Prefix:       $prefix"
+    echo "Python bin:   $PYTHON_BIN"
+    echo "Openssl bin:  $OPENSSL_BIN"
+    echo "Openvpn bin:  $OPENVPN_BIN"
+    echo "HAproxy bin:  $HAPROXY_BIN"
+    echo "Prefix:       $ITNS_PREFIX"
     echo "Bin dir:      $bin_dir"
     echo "Conf dir:     $sysconf_dir"
     echo "CA dir:       $ca_dir"
     echo "Data dir:     $data_dir"
     echo "Temp dir:     $tmp_dir"
-    echo "Run as user:  $runas_user"
-    echo "Run as group:  $runas_group"
+    echo "Run as user:  $ITNS_USER"
+    echo "Run as group:  $ITNS_GROUP"
     echo
 }
 
-generate_env() {
-    cat >env.sh <<EOF
-ITNS_PREFIX=$prefix
-OPENVPN_BIN=$openvpn_bin
-HAPROXY_BIN=$haproxy_bin
-OPENSSL_BIN=$openssl_bin
-ITNS_USER=$runas_user
-ITNS_GROUP=$runas_group
-GENERATE_CA=$generate_ca
 
-export ITNS_PREFIX OPENVPN_BIN HAPROXY_BIN OPENSSL_BIN ITNS_USER ITNS_GROUP GENERATE_CA
+# Generate root CA and keys
+generate_ca() {
+    local prefix="$1"
+
+    cd $prefix || exit 2
+    mkdir -p private certs csr newcerts || exit 2
+    touch index.txt
+    echo -n 00 >serial
+    ${OPENSSL_BIN} genrsa -aes256 -out private/ca.key.pem -passout pass:$cert_pass 4096
+    chmod 400 private/ca.key.pem
+    ${OPENSSL_BIN} req -config $TOPDIR/conf/ca.cfg -passin pass:$cert_pass \
+      -key private/ca.key.pem \
+      -new -x509 -days 7300 -sha256 -extensions v3_ca \
+      -out certs/ca.cert.pem
+    if ! [ -f certs/ca.cert.pem ]; then
+        echo "Error generating CA! See messages above."
+        exit 2
+    fi
+}
+
+generate_crt() {
+    local name="$1"
+    ${OPENSSL_BIN} genrsa -aes256 \
+      -out private/$name.key.pem -passout pass:$cert_pass 4096
+    chmod 400 private/$name.key.pem
+    ${OPENSSL_BIN} req -config $TOPDIR/conf/ca.cfg -subj "/CN=$name" -passin "pass:$cert_pass" \
+      -key private/$name.key.pem \
+      -new -sha256 -out csr/$name.csr.pem
+    ${OPENSSL_BIN} ca -batch -config $TOPDIR/conf/ca.cfg -passin "pass:$cert_pass" \
+      -extensions server_cert -days 375 -notext -md sha256 \
+      -in csr/$name.csr.pem \
+      -out certs/$name.cert.pem
+    (cat certs/ca.cert.pem certs/$name.cert.pem; openssl rsa -passin "pass:$cert_pass" -text <private/$name.key.pem) >certs/$name.all.pem
+    (cat certs/$name.cert.pem; openssl rsa -passin "pass:$cert_pass" -text <private/$name.key.pem) >certs/$name.both.pem
+    if ! [ -f certs/$name.cert.pem ]; then
+        echo "Error generating cert $name! See messages above."
+        exit 2
+    fi
+}
+
+generate_env() {
+    cat <<EOF
+ITNS_PREFIX=$ITNS_PREFIX
+OPENVPN_BIN=$OPENVPN_BIN
+PYTHON_BIN=$PYTHON_BIN
+HAPROXY_BIN=$HAPROXY_BIN
+OPENSSL_BIN=$OPENSSL_BIN
+ITNS_USER=$ITNS_USER
+ITNS_GROUP=$ITNS_GROUP
+
+export ITNS_PREFIX OPENVPN_BIN HAPROXY_BIN OPENSSL_BIN ITNS_USER ITNS_GROUP
 EOF
 }
 
@@ -103,12 +135,12 @@ while [[ $# -gt 0 ]]; do
         shift
     ;;
     --openvpn-bin)
-        openvpn_bin="$2"
+        OPENVPN_BIN="$2"
         shift
         shift
     ;;
     --haproxy-bin)
-        haproxy_bin="$2"
+        HAPROXY_BIN="$2"
         shift
         shift
     ;;
@@ -118,17 +150,26 @@ while [[ $# -gt 0 ]]; do
         shift
     ;;
     --runas-user)
-        runas_user="$2"
+        ITNS_USER="$2"
         shift
         shift
     ;;
     --runas-group)
-        runas_group="$2"
+        ITNS_GROUP="$2"
+        shift
+        shift
+    ;;
+    --with-capass)
+        cert_pass="$2"
         shift
         shift
     ;;
     --generate-ca)
         generate_ca=1
+        shift
+    ;;
+    --generate-dh)
+        generate_dh=1
         shift
     ;;
     *)
@@ -139,21 +180,42 @@ while [[ $# -gt 0 ]]; do
 esac
 done
 
-defaults
-if [ -n "$generate_ca" ]; then
-    mkdir ca
-    if [ -f $ca_dir/index.txt ]; then
-        echo "Will not generate new CA over existing! Backup and remove $ca_dir and rerun!"
+if [ -f build/env.sh ]; then
+    echo "Using build/env.sh as defaults! Remove that file for clean config."
+    . build/env.sh
+else
+    defaults
+fi
+bin_dir=${ITNS_PREFIX}/bin/
+sysconf_dir=${ITNS_PREFIX}/etc/
+ca_dir=${ITNS_PREFIX}/etc/ca/
+data_dir=${ITNS_PREFIX}/var/
+tmp_dir=${ITNS_PREFIX}/tmp/
+
+mkdir -p build
+if [ -n "$generate_ca" ] && ! [ -f build/ca/index.txt ]; then
+    export cert_pass
+    if [ -z "$cert_pass" ]; then
+        echo "You must specify ca-password on cmdline!"
         exit 2
     fi
-    if ! [ -d $ca_dir ]; then
-        mkdir -p $ca_dir || exit
-    fi
-    generate_ca $ca_dir
+    (
+    rm -rf build/ca
+    mkdir -p build/ca
+    generate_ca build/ca/
     generate_crt openvpn
     generate_crt ha
+    )
 fi
+
+if [ -n "$generate_dh" ]; then
+    $OPENSSL_BIN dhparam -out build/dhparam.pem 2048
+else
+    cp etc/dhparam.pem build/
+fi
+
 summary
-generate_env
+generate_env >build/env.sh
 
 echo "You can contunue by ./install.sh"
+echo

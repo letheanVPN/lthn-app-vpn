@@ -62,6 +62,7 @@ class AuthIds(object):
     
     def __init__(self):
         self.payments = {}
+        self.lastmodify = time.time()
         
     def update(self, paymentid):
         if paymentid.getId() in self.payments.keys():
@@ -85,6 +86,7 @@ class AuthIds(object):
         self.payments.pop(paymentid.getId())
         
     def show(self):
+        logging.warning("Authids: %d ids, last updated %s" %(len(self.payments),timefmt(self.lastmodify)))
         for id, paymentid in self.payments.items():
             paymentid.show()
         
@@ -113,6 +115,7 @@ class AuthIds(object):
 
     def save(self, filename):
         self.cleanup()
+        self.lastmodify=time.time()
         logging.info("Saving authids db into %s" % (filename))
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)

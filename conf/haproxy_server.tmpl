@@ -1,11 +1,12 @@
 global
         maxconn         {maxconn}
         daemon
-        log {f_logfile}
+        log {f_logsocket}
         stats socket {f_sock} mode 600 level admin
-        stats timeout 1m
+        stats timeout {timeout}
 
         # SSL options
+        ssl-dh-param-file {f_dh}
         ca-base {cabase}
         crt-base {crtbase}
         ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
@@ -21,7 +22,7 @@ frontend icproxy
         option          http_proxy
         option          contstats
         maxconn         {maxconn}
-        timeout client  1m
+        timeout client  {timeout}
 
         stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
         acl allowed_src_ips src -u 10 -f {f_allow_src_ips}
@@ -62,16 +63,20 @@ backend http-proxy
 
 listen server-status
         bind 127.0.0.1:8081
+        timeout client  {timeout}
         mode http
         errorfile 503 {f_status}
 
 listen server-credit
         bind 127.0.0.1:8082
+        timeout client  {timeout}
         mode http
-        errorfile 503 {f_credit}.hdr({header})
+        #errorfile 503 {f_credit}.hdr({header})
 
 backend  server
         mode            http
+        timeout server {timeout}
+        timeout connect {ctimeout}
 
         acl p_status path_beg /status
         acl p_credit path_beg /credit

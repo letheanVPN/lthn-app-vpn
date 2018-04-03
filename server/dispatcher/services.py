@@ -4,6 +4,9 @@ import sys
 from subprocess import PIPE, Popen
 from threading  import Thread
 import pprint
+import socket
+import time
+import syslogmp
 from sdp import *
 from config import *
 
@@ -66,7 +69,7 @@ class ServiceHa(Service):
     
     def run(self):
         self.createConfig()
-        cmd=[Config.HAPROXY_BIN,"-f", self.cfile]
+        cmd=[Config.HAPROXY_BIN,"-Ds","-f", self.cfile]
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         logging.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.process.pid))
         self.queue = Queue()
@@ -74,11 +77,16 @@ class ServiceHa(Service):
         #self.thread.daemon = True
         self.thread.start()
         
-    def check(self):
+    def orchestrate(self):
         l=self.getLine()
         while (l<>None):
             logging.info("haproxy: %s" %(l))
             l=self.getLine()
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(Config.PREFIX+'/var/haproxy.sock')
+        sock.settimeout(0.1)
+        sock.send("show info\n")
+        #logging.warning(sock.recv(1024))
         return(self.isAlive())
         
     def createConfig(self):
@@ -92,20 +100,23 @@ class ServiceHa(Service):
             
         out=tmpl.format(
             maxconn=2000,
-            f_logfile='ha.log local0',
-            f_sock='haproxy.sock',
+            timeout="1m",
+            ctimeout="15s",
+            f_logsocket=Config.PREFIX+'/var/log local0',
+            f_sock=Config.PREFIX+'/var/haproxy.sock',
             header='X-ITNS-PaymentID',
             ctrluri='http://_ITNSVPN_',
-            cabase='ca',
-            crtbase='crt',
-            ctrldomain='_ITNSVPN',
-            f_site_pem='site.pem',
-            f_credit='credit-',
-            f_status='info.txt',
-            f_allow_src_ips='allow.ips',
-            f_deny_src_ips='deny.ips',
-            f_deny_dst_ips='deny.ips',
-            f_deny_dst_doms='deny.doms'
+            f_dh=Config.PREFIX+'/etc/dhparam.pem',
+            cabase=Config.PREFIX+'/etc/ca/certs',
+            crtbase=Config.PREFIX+'/etc/ca/certs',
+            ctrldomain='_ITNSVPN_',
+            f_site_pem=Config.PREFIX+'/etc/ca/certs/ha.both.pem',
+            f_credit=Config.PREFIX+'/var/hasrv/credit-',
+            f_status=Config.PREFIX+'/etc/ha_info.http',
+            f_allow_src_ips=Config.PREFIX+'/etc/src_allow.ips',
+            f_deny_src_ips=Config.PREFIX+'/etc/src_deny.ips',
+            f_deny_dst_ips=Config.PREFIX+'/etc/dst_deny.ips',
+            f_deny_dst_doms=Config.PREFIX+'/etc/dst_deny.doms'
             )
         try:
             cf=open(self.cfile, "wb")
@@ -125,18 +136,33 @@ class ServiceOvpn(Service):
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         logging.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.process.pid))
         self.queue = Queue()
+        i=0
+        self.mgmt=socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        while (i<100):
+            try:
+                self.mgmt.connect(Config.PREFIX+'/var/ovpn.mgmt')
+            except socket.error:
+                time.sleep(0.1)
+                i+=1
+            else:
+                break
+        
+        self.mgmt.settimeout(0.1)
         self.thread = Thread(target=enqueue_output, args=(self.process.stdout, self.process.stderr, self.queue))
-        #self.thread.daemon = True
         self.thread.start()
         
-    def check(self):
+    def orchestrate(self):
         l=self.getLine()
         while (l<>None):
             logging.info("openvpn: %s" %(l))
             l=self.getLine()
-        #if not self.process.poll():
-        #    logging.error("Openvpn died! Exiting.")
-        #    sys.exit(self.process.returncode)
+        try:
+            self.mgmt.send("hold release\n")
+            print(self.mgmt.recv(4096))
+        except socket.timeout:
+            pass
+        else:
+            return(None)
         return(self.isAlive())
     
     def createConfig(self):
@@ -150,17 +176,18 @@ class ServiceOvpn(Service):
         out=tmpl.format(
             port=1194,
             proto="udp",
-            f_dh="dh4096",
-            f_ca="ca.crt",
-            f_crt="a.crt",
-            f_key="a.pem",
-            f_ta="tls.pem",
+            f_dh=Config.PREFIX+'/etc/dhparam.pem',
+            f_ca=Config.PREFIX+'/etc/ca/certs/ca.cert.pem',
+            f_crt=Config.PREFIX+'/etc/ca/certs/openvpn.cert.pem',
+            f_key=Config.PREFIX+'/etc/ca/certs/openvpn.both.pem',
+            f_ta=Config.PREFIX+'/etc/openvpn.tlsauth',
             workdir="/tmp",
             user="nobody",
             group="nogroup",
             f_status="status",
             iprange="10.10.10.0",
             ipmask="255.255.255.0",
+            mgmt_sock=Config.PREFIX+'/var/ovpn.mgmt unix',
             reneg=60,
             mtu=1400,
             mssfix=1300
@@ -171,6 +198,25 @@ class ServiceOvpn(Service):
         except (IOError,OSError):
             logging.error("Cannot write openvpn config file %s" % (self.cfile))
         logging.info("Created openvpn config file %s" %(self.cfile))
+
+class ServiceSyslog(Service):
+    
+    def __init__(self,s):
+        self.flog=s
+        if (os.path.exists(s)):
+            os.remove(s)
+        self.sock=socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.sock.bind(s)
+        self.sock.settimeout(0.1)
+        
+    def getLine(self):
+        try:
+            return(self.sock.recv(2048))
+        except socket.timeout:
+            return(None)
+        
+    def stop(self):
+        os.remove(self.flog)
 
 class Services(object):
     
@@ -189,23 +235,37 @@ class Services(object):
                     logging.error("Unknown service type %s in SDP!" % (s["type"]))
                     sys.exit(1)
             self.data[id.upper()] = so
+        self.syslog=ServiceSyslog(Config.PREFIX + "/var/log")
             
-    def runAll(self):
+    def run(self):
         for id in self.data:
             s = self.data[id]
             s.run()
+    
+    def createConfigs(self):
+        for id in self.data:
+            s = self.data[id]
+            s.createConfig()
             
-    def checkAll(self):
+    def orchestrate(self):
+        s=self.syslog.getLine()
+        if (s!=None):
+            message = syslogmp.parse(s)
+            print(message.message)
+        
         for id in self.data:
             s = self.data[id]
-            if (not s.check()):
+            if (not s.orchestrate()):
                 logging.error("Service %s died! Exiting!" % (s.id))
+                self.stop()
                 sys.exit(3)
-                
-    def stopAll(self):
+
+    def stop(self):
         for id in self.data:
             s = self.data[id]
-            s.stop()
+            if (s.isAlive()):
+                s.stop()
+        self.syslog.stop()
             
     def show(self):
         for id in self.data:

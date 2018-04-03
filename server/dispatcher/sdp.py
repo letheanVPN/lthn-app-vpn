@@ -1,5 +1,7 @@
 
 import json
+import logging
+import sys
 
 class SDP(object):
     """SDP functions"""
@@ -10,7 +12,11 @@ class SDP(object):
         except IOError:
             logging.error("Cannot read %s" % (filename))
             sys.exit(1)
-        
+    def upload(self):
+        """
+        Upload to SDP server..
+        """
+    
     def listServices(self):
         ret = dict()
         for service in self.data["services"]:

@@ -11,6 +11,10 @@ install_dir() {
     install $2 $3 $4 $5 $6 -o "$ITNS_USER" -g "$ITNS_GROUP" -d "$INSTALL_PREFIX/$ITNS_PREFIX/$1"
 }
 
+nopip() {
+    echo 'You have to manually install python packages '$*
+}
+
 # Create directories
 install_dir 
 install_dir bin
@@ -19,18 +23,19 @@ install_dir var -m 770
 install_dir var/ha -m 770
 install_dir var/ovpn -m 770
 install_dir lib
-install_dir dev/net
-
-# Install tun device
-"$OPENVPN_BIN" --mktun --dev $ITNS_PREFIX/dev/tun0 --dev-type tun --user $ITNS_USER --group $ITNS_GROUP
+install_dir dev
 
 # Copy bin files
 install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/dispatcher/itnsdispatcher.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
+sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
 
 # Copy lib files
 for f in authids.py  config.py sdp.py  services.py  sessions.py  util.py; do
     install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./server/dispatcher/$f $INSTALL_PREFIX/$ITNS_PREFIX/lib/
 done
+sed -i 's^/opt/itns^'"$ITNS_PREFIX"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
+sed -i 's^/usr/sbin/openvpn^'"$OPENVPN_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
+sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
 
 # Copy configs
 (cd conf; for f in *tmpl *cfg *ips *doms *http; do
@@ -63,6 +68,15 @@ fi
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth ]; then
     "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth
 fi
+
+for p in syslogmp ed25519 logging pprint; do
+    echo "Checking for python package $p..."
+    if [ "$PIP_BIN" = "nopip" ]; then
+        $PIP_BIN $p
+    else
+        "$PIP_BIN" -q show $p || "$PIP_BIN" install $p
+    fi
+done
 
 chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 chmod -R 700 $INSTALL_PREFIX/$ITNS_PREFIX/etc/

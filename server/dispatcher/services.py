@@ -1,6 +1,8 @@
 
 import logging
 import sys
+import signal
+import atexit
 from subprocess import PIPE, Popen
 from threading  import Thread
 import pprint
@@ -69,13 +71,21 @@ class ServiceHa(Service):
     
     def run(self):
         self.createConfig()
-        cmd=[Config.HAPROXY_BIN,"-Ds","-f", self.cfile]
+        pidfile=Config.PREFIX + "/var/ha_%s.pid" % (self.id)
+        cmd = [Config.HAPROXY_BIN, "-Ds", "-p", pidfile , "-f", self.cfile]
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
-        logging.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.process.pid))
+        time.sleep(0.3)
+        if (os.path.exists(pidfile)):
+            with open (pidfile, "r") as p:
+                self.pid=int(p.readline().strip())
+        logging.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
         self.queue = Queue()
         self.thread = Thread(target=enqueue_output, args=(self.process.stdout, self.process.stderr, self.queue))
         #self.thread.daemon = True
         self.thread.start()
+        
+    def stop(self):
+        os.kill(self.pid,signal.SIGTERM)
         
     def orchestrate(self):
         l=self.getLine()
@@ -132,8 +142,13 @@ class ServiceOvpn(Service):
     
     def run(self):
         self.createConfig()
-        cmd=[Config.OPENVPN_BIN,"--config", self.cfile]
+        pidfile=Config.PREFIX + "/var/ovpn_%s.pid" % (self.id)
+        cmd=[Config.OPENVPN_BIN,"--config", self.cfile, "--writepid", pidfile]
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
+        time.sleep(0.3)
+        if (os.path.exists(pidfile)):
+            with open (pidfile, "r") as p:
+                self.pid=int(p.readline().strip())
         logging.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.process.pid))
         self.queue = Queue()
         i=0
@@ -216,7 +231,8 @@ class ServiceSyslog(Service):
             return(None)
         
     def stop(self):
-        os.remove(self.flog)
+        if (os.path.exists(self.flog)):
+            os.remove(self.flog)
 
 class Services(object):
     
@@ -236,6 +252,7 @@ class Services(object):
                     sys.exit(1)
             self.data[id.upper()] = so
         self.syslog=ServiceSyslog(Config.PREFIX + "/var/log")
+        atexit.register(self.stop)
             
     def run(self):
         for id in self.data:

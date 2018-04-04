@@ -12,8 +12,8 @@ class Config(object):
     HAPROXY_BIN="/usr/sbin/haproxy"
     
     def __init__(self):
-        if (os.getenv('ITNSVPN_PREFIX')):
-            self.PREFIX=os.getenv('ITNSVPN_PREFIX')
+        if (os.getenv('ITNS_PREFIX')):
+            self.PREFIX=os.getenv('ITNS_PREFIX')
     
     def load(self, filename):
         try:

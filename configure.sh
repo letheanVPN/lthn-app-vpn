@@ -3,13 +3,14 @@
 # set PATH to find all binaries
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 export TOPDIR=$(realpath $(dirname $0))
+export PARMS="$@"
 
 # Static defaults
 ITNS_PREFIX=/opt/itns/
 
 # General usage help
 usage() {
-   echo $0 [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh]
+   echo $0 [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh]
    echo
    exit
 }
@@ -39,6 +40,15 @@ defaults() {
     findcmd openssl OPENSSL_BIN
     findcmd haproxy HAPROXY_BIN
     findcmd python PYTHON_BIN
+    if "$PYTHON_BIN" --version | grep -q " 3"; then
+        cmd=pip3
+    else
+        cmd=pip
+    fi
+    findcmd $cmd PIP_BIN
+    if [ -z "$PIP_BIN" ]; then
+        PIP_BIN="nopip"
+    fi
 
     [ -z "$ITNS_USER" ] && ITNS_USER=root
     [ -z "$ITNS_GROUP" ] && ITNS_GROUP=root
@@ -54,6 +64,7 @@ summary() {
 
     echo "Intense-vpn configured."
     echo "Python bin:   $PYTHON_BIN"
+    echo "pip bin:      $PIP_BIN"
     echo "Openssl bin:  $OPENSSL_BIN"
     echo "Openvpn bin:  $OPENVPN_BIN"
     echo "HAproxy bin:  $HAPROXY_BIN"
@@ -114,6 +125,7 @@ generate_env() {
 ITNS_PREFIX="$ITNS_PREFIX"
 OPENVPN_BIN="$OPENVPN_BIN"
 PYTHON_BIN="$PYTHON_BIN"
+PIP_BIN="$PIP_BIN"
 HAPROXY_BIN="$HAPROXY_BIN"
 OPENSSL_BIN="$OPENSSL_BIN"
 ITNS_USER="$ITNS_USER"
@@ -145,7 +157,17 @@ while [[ $# -gt 0 ]]; do
         shift
     ;;
     --openssl-bin)
-        openssl_bin="$2"
+        OPENSSL_BIN="$2"
+        shift
+        shift
+    ;;
+    --python-bin)
+        PYTHON_BIN="$2"
+        shift
+        shift
+    ;;
+    --pip-bin)
+        PIP_BIN="$2"
         shift
         shift
     ;;
@@ -181,7 +203,7 @@ esac
 done
 
 if [ -f build/env.sh ]; then
-    echo "Using build/env.sh as defaults! Remove that file for clean config."
+    defaults=1
     . build/env.sh
 else
     defaults
@@ -211,11 +233,18 @@ fi
 if [ -n "$generate_dh" ]; then
     "$OPENSSL_BIN" dhparam -out build/dhparam.pem 2048
 else
-    cp etc/dhparam.pem build/
+    if [ -f etc/dhparam.pem ]; then
+        cp etc/dhparam.pem build/
+    fi
 fi
 
 summary
 generate_env >build/env.sh
 
+if [ -n "$PARMS" ]; then
+    echo "$PARMS" >configure.log
+fi
+
+echo "Used build/env.sh as env. Remove that file for reconfigure."
 echo "You can contunue by ./install.sh"
 echo

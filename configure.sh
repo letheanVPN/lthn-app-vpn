@@ -77,9 +77,9 @@ generate_ca() {
     mkdir -p private certs csr newcerts || exit 2
     touch index.txt
     echo -n 00 >serial
-    ${OPENSSL_BIN} genrsa -aes256 -out private/ca.key.pem -passout pass:$cert_pass 4096
+    "${OPENSSL_BIN}" genrsa -aes256 -out private/ca.key.pem -passout pass:$cert_pass 4096
     chmod 400 private/ca.key.pem
-    ${OPENSSL_BIN} req -config $TOPDIR/conf/ca.cfg -passin pass:$cert_pass \
+    "${OPENSSL_BIN}" req -config $TOPDIR/conf/ca.cfg -passin pass:$cert_pass \
       -key private/ca.key.pem \
       -new -x509 -days 7300 -sha256 -extensions v3_ca \
       -out certs/ca.cert.pem
@@ -91,13 +91,13 @@ generate_ca() {
 
 generate_crt() {
     local name="$1"
-    ${OPENSSL_BIN} genrsa -aes256 \
+    "${OPENSSL_BIN}" genrsa -aes256 \
       -out private/$name.key.pem -passout pass:$cert_pass 4096
     chmod 400 private/$name.key.pem
-    ${OPENSSL_BIN} req -config $TOPDIR/conf/ca.cfg -subj "/CN=$name" -passin "pass:$cert_pass" \
+    "${OPENSSL_BIN}" req -config $TOPDIR/conf/ca.cfg -subj "/CN=$name" -passin "pass:$cert_pass" \
       -key private/$name.key.pem \
       -new -sha256 -out csr/$name.csr.pem
-    ${OPENSSL_BIN} ca -batch -config $TOPDIR/conf/ca.cfg -passin "pass:$cert_pass" \
+    "${OPENSSL_BIN}" ca -batch -config $TOPDIR/conf/ca.cfg -passin "pass:$cert_pass" \
       -extensions server_cert -days 375 -notext -md sha256 \
       -in csr/$name.csr.pem \
       -out certs/$name.cert.pem
@@ -111,13 +111,13 @@ generate_crt() {
 
 generate_env() {
     cat <<EOF
-ITNS_PREFIX=$ITNS_PREFIX
-OPENVPN_BIN=$OPENVPN_BIN
-PYTHON_BIN=$PYTHON_BIN
-HAPROXY_BIN=$HAPROXY_BIN
-OPENSSL_BIN=$OPENSSL_BIN
-ITNS_USER=$ITNS_USER
-ITNS_GROUP=$ITNS_GROUP
+ITNS_PREFIX="$ITNS_PREFIX"
+OPENVPN_BIN="$OPENVPN_BIN"
+PYTHON_BIN="$PYTHON_BIN"
+HAPROXY_BIN="$HAPROXY_BIN"
+OPENSSL_BIN="$OPENSSL_BIN"
+ITNS_USER="$ITNS_USER"
+ITNS_GROUP="$ITNS_GROUP"
 
 export ITNS_PREFIX OPENVPN_BIN HAPROXY_BIN OPENSSL_BIN ITNS_USER ITNS_GROUP
 EOF
@@ -209,7 +209,7 @@ if [ -n "$generate_ca" ] && ! [ -f build/ca/index.txt ]; then
 fi
 
 if [ -n "$generate_dh" ]; then
-    $OPENSSL_BIN dhparam -out build/dhparam.pem 2048
+    "$OPENSSL_BIN" dhparam -out build/dhparam.pem 2048
 else
     cp etc/dhparam.pem build/
 fi

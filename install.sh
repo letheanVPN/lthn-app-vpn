@@ -19,6 +19,10 @@ install_dir var -m 770
 install_dir var/ha -m 770
 install_dir var/ovpn -m 770
 install_dir lib
+install_dir dev/net
+
+# Install tun device
+"$OPENVPN_BIN" --mktun --dev $ITNS_PREFIX/dev/tun0 --dev-type tun --user $ITNS_USER --group $ITNS_GROUP
 
 # Copy bin files
 install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/dispatcher/itnsdispatcher.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
@@ -52,12 +56,12 @@ if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ca/index.txt ]; then
         fi
 fi
 
-if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dhparam.pem ]; then
+if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dhparam.pem ] && [ -f build/dhparam.pem ]; then
     install build/dhparam.pem $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 fi
 
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth ]; then
-    openvpn --genkey --secret $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth
+    "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth
 fi
 
 chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/

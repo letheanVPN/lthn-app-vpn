@@ -1,0 +1,30 @@
+port {port}
+proto {proto}
+dev tun
+persist-tun
+persist-key
+auth SHA256
+client
+remote {ip} {port} {proto}
+verify-x509-name "openvpn" name
+auth-user-pass
+remote-cert-tls server
+cipher AES-256-CBC
+tun-mtu {mtu}
+mssfix {mssfix}
+float
+
+<ca>
+{f_ca}
+</ca>
+<cert>
+{f_crt}
+</cert>
+topology subnet
+keepalive 30 120
+reneg-sec {reneg}
+<tls-auth>
+{f_ta}
+</tls-auth>
+key-direction 1
+

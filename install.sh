@@ -69,7 +69,7 @@ if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth ]; then
     "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth
 fi
 
-for p in syslogmp ed25519 logging pprint; do
+for p in syslogmp ed25519 logging pprint psutil; do
     echo "Checking for python package $p..."
     if [ "$PIP_BIN" = "nopip" ]; then
         $PIP_BIN $p

@@ -2,15 +2,16 @@
 import json
 import logging
 import sys
+from config import *
 
 class SDP(object):
     """SDP functions"""
     
-    def load(self, filename):
+    def load(self):
         try:
-            self.data = json.load(open(filename))
+            self.data = json.load(open(Config.SDPFILE))
         except IOError:
-            logging.error("Cannot read %s" % (filename))
+            logging.error("Cannot read %s" % (Config.SDPFILE))
             sys.exit(1)
     def upload(self):
         """

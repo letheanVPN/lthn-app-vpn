@@ -65,6 +65,7 @@ summary() {
     echo "Intense-vpn configured."
     echo "Python bin:   $PYTHON_BIN"
     echo "pip bin:      $PIP_BIN"
+    echo "sudo bin:     $SUDO_BIN"
     echo "Openssl bin:  $OPENSSL_BIN"
     echo "Openvpn bin:  $OPENVPN_BIN"
     echo "HAproxy bin:  $HAPROXY_BIN"
@@ -126,6 +127,7 @@ ITNS_PREFIX="$ITNS_PREFIX"
 OPENVPN_BIN="$OPENVPN_BIN"
 PYTHON_BIN="$PYTHON_BIN"
 PIP_BIN="$PIP_BIN"
+SUDO_BIN="$SUDO_BIN"
 HAPROXY_BIN="$HAPROXY_BIN"
 OPENSSL_BIN="$OPENSSL_BIN"
 ITNS_USER="$ITNS_USER"
@@ -168,6 +170,11 @@ while [[ $# -gt 0 ]]; do
     ;;
     --pip-bin)
         PIP_BIN="$2"
+        shift
+        shift
+    ;;
+    --sudo-bin)
+        SUDO_BIN="$2"
         shift
         shift
     ;;

@@ -3,9 +3,17 @@ proto {proto}
 dev tun
 persist-tun
 persist-key
-ca {f_ca}
-cert {f_crt}
-key {f_key}
+verify-client-cert none
+management-client-auth
+<ca>
+{f_ca}
+</ca>
+<cert>
+{f_crt}
+</cert>
+<key>
+{f_key}
+</key>
 cd {workdir}
 script-security 3
 dh {f_dh}
@@ -13,7 +21,10 @@ topology subnet
 server {iprange} {ipmask}
 keepalive 30 120
 reneg-sec {reneg}
-tls-auth {f_ta} 0
+<tls-auth>
+{f_ta}
+</tls-auth>
+key-direction 0
 auth SHA256
 management {mgmt_sock}
 management-hold
@@ -23,7 +34,6 @@ cipher AES-256-CBC
 #user {user}
 #group {group}
 status {f_status}
-verb 3
 float
 tun-mtu {mtu}
 mssfix {mssfix}

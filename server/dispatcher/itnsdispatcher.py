@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import sys
 import os
+import sys
 # Add lib directory to search path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib')))
 
@@ -9,59 +9,35 @@ import ed25519
 import getopt
 import logging
 import atexit
-import pprint
+from pprint import pprint
 import time
 import pickle
 import binascii
 from util import *
 from sdp import *
-from services import *
-from authids import *
+from services import Services, Service, SERVICES
+from authids import AuthIds, AuthId, AUTHIDS
 from sessions import *
-from config import *
-
-def initConf(configfile):
-    config = Config()
-    config.load(configfile)
-    return(config)
-
-def initAuthids(authidsfile):
-    if (os.path.isfile(authidsfile)):
-        try:
-            logging.info("Trying to load authids db from %s" % (authidsfile))
-            authids=pickle.load( open( authidsfile, "rb" ) )
-        except (OSError, IOError) as e:
-            logging.warning("Error reading or creating authids db %s" % (authidsfile))
-            sys.exit(2)
-    else:
-        authids = AuthIds()
-        authids.save(authidsfile)
-        sys.exit(1)
-    return(authids)
+from config import Config
 
 def main(argv):
-    loglevel = logging.WARNING
-    configfile = Config.PREFIX + "/etc/dispatcher.json"
-    sdpfile = Config.PREFIX + "/etc/sdp.json"
-    authidsfile = Config.PREFIX + '/var/authids.db'
- 
     try:
-        opts, args = getopt.getopt(argv, "hf:s:d:G:", ["help", "config=", "sdp=","gen-ed25519=", "generate-configs"])
+        opts, args = getopt.getopt(argv, "hf:s:d:G:", ["help", "config=", "sdp=", "gen-ed25519=", "generate-configs", "generate-client-config="])
     except getopt.GetoptError:
         print('itnsvpnd.py -h')
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print('itnsvpnd.py [-l DEBUG|INFO|WARNING|ERROR] [-h] [-f dispatcher.json] [-s sdp.json] [--generate-providerid file] [--generate-configs]')
+            print('itnsvpnd.py [-l DEBUG|INFO|WARNING|ERROR] [-h] [-f dispatcher.json] [-s sdp.json] [--generate-providerid file] [--generate-configs] [--generate-client-config id]')
             sys.exit()
         elif opt in ("-f", "--config"):
-            configfile = arg
+            Config.CONFIGFILE = arg
         elif opt in ("-s", "--sdp"):
-            sdpfile = arg
+            Config.SDPFILE = arg
         elif opt in ("-d", "--debug"):
-            loglevel = arg
+            Config.LOGLEVEL = arg
         elif opt in ("-G", "gen-ed25519"):
-            logging.basicConfig(level=loglevel)
+            logging.basicConfig(level=Config.LOGLEVEL)
             privatef = arg
             try:
                 signing_key, verifying_key = ed25519.create_keypair()
@@ -72,30 +48,38 @@ def main(argv):
                 logging.error("Cannot open/write %s" % (privatef))
             sys.exit()
         elif opt in ("--generate-configs"):
-            initConf(configfile)
-            config=logging.basicConfig(level=loglevel)
-            services = Services(sdpfile)
-            authids=initAuthids(authidsfile)
+            initConf()
+            l = logging.basicConfig(level=Config.LOGLEVEL)
+            authids.load(authidsfile)
             services.createConfigs()
             sys.exit()
+        elif opt in ("--generate-client-config"):
+            id = arg
+            initConf(configfile)
+            l = logging.basicConfig(level=loglevel)
+            SERVICES.get(id).createClientConfig()
+            sys.exit()
 
-    logging.basicConfig(level=loglevel)
-    config=logging.basicConfig(level=loglevel)
-    services = Services(sdpfile)
-    authids=initAuthids(authidsfile)
-    services.show()
-    services.run()
+    logging.basicConfig(level=Config.LOGLEVEL)
+    CONFIG=Config()
+    SERVICES=Services()
+    AUTHIDS=AuthIds()
+    pprint(AUTHIDS)
+    sys.exit()
+    SERVICES.show()
+    SERVICES.run()
     
     while (1):
         start = time.time()
-        services.orchestrate()
-        authids.getFromWallet(services)
+        #services.orchestrate()
+        #authids.getFromWallet(services)
         #authids.show()
-        time.sleep(1)
+        time.sleep(0.1)
+        #print(".")
         #authids.show()
-        authids.save(authidsfile)
+        #authids.save(authidsfile)
         #authids.show()
-        services.orchestrate()
+        SERVICES.orchestrate()
         end = time.time()
         
 if __name__ == "__main__":

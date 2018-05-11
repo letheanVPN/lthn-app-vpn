@@ -22,13 +22,13 @@ from config import Config
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hf:s:d:G:", ["help", "config=", "sdp=", "gen-ed25519=", "generate-configs", "generate-client-config="])
+        opts, args = getopt.getopt(argv, "hf:s:d:G:", ["help", "config=", "sdp=", "generate-providerid=", "generate-configs", "generate-client-config="])
     except getopt.GetoptError:
         print('itnsvpnd.py -h')
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print('itnsvpnd.py [-l DEBUG|INFO|WARNING|ERROR] [-h] [-f dispatcher.json] [-s sdp.json] [--generate-providerid file] [--generate-configs] [--generate-client-config id]')
+            print('itnsvpnd.py [-d DEBUG|INFO|WARNING|ERROR] [-h] [-f dispatcher.json] [-s sdp.json] [--generate-providerid file] [--generate-configs] [--generate-client-config id]')
             sys.exit()
         elif opt in ("-f", "--config"):
             Config.CONFIGFILE = arg
@@ -36,7 +36,7 @@ def main(argv):
             Config.SDPFILE = arg
         elif opt in ("-d", "--debug"):
             Config.LOGLEVEL = arg
-        elif opt in ("-G", "gen-ed25519"):
+        elif opt in ("-G", "--generate-providerid"):
             logging.basicConfig(level=Config.LOGLEVEL)
             privatef = arg
             try:
@@ -64,8 +64,6 @@ def main(argv):
     CONFIG=Config()
     SERVICES=Services()
     AUTHIDS=AuthIds()
-    pprint(AUTHIDS)
-    sys.exit()
     SERVICES.show()
     SERVICES.run()
     

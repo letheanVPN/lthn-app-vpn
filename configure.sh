@@ -144,7 +144,7 @@ while [[ $# -gt 0 ]]; do
         usage
     ;;
     --prefix)
-        prefix="$2"
+        ITNS_PREFIX="$2"
         shift
         shift
     ;;

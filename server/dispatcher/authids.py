@@ -2,7 +2,9 @@
 import time
 import logging
 import pickle
+import os
 from util import *
+from config import Config
 
 AUTHIDS=None
 
@@ -105,6 +107,7 @@ class AuthIds(object):
                 
     def getFromWallet(self,services):
         """Connect to wallet and ask for all self.authids from last height"""
+		
         # Hardcoded payment
         s1 = AuthId("authid1", "1A", services.get("1A").getCost(), 1)
         s2 = AuthId("authid2", "2B", services.get("2B").getCost(), 10)
@@ -119,12 +122,12 @@ class AuthIds(object):
         if (os.path.isfile(Config.AUTHIDSFILE)):
             try:
                 logging.info("Trying to load authids db from %s" % (Config.AUTHIDSFILE))
-                authids=pickle.load( open( Config.AUTHIDSFILE, "rb" ) )
+                return(pickle.load( open( Config.AUTHIDSFILE, "rb" ) ))
             except (OSError, IOError) as e:
                 logging.warning("Error reading or creating authids db %s" % (Config.AUTHIDSFILE))
                 sys.exit(2)
         else:
-            self.save(Config.AUTHIDSFILE)
+            self.save()
 
     def save(self):
         self.cleanup()

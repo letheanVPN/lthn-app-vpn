@@ -18,6 +18,7 @@ usage() {
 # Find command or report error. If env is already set, only test availability
 # $1 - cmd
 # $2 - env to get/set
+# $3 - optional
 findcmd() {
     local cmd="$1"
     local env="$2"
@@ -27,28 +28,29 @@ findcmd() {
         bin=$(which $cmd)
     fi
 
-    if [ -z "$bin" ]; then
+    if [ -z "$3" ]; then
+      if [ -z "$bin" ]; then
         echo "Missing $cmd!"
-    else
+      else
         echo "Found $env at $bin"
+      fi
+    else
+      if [ -n "$bin" ]; then
+        echo "Found $env at $bin"
+      else
+        echo "Not found $cmd"
+      fi
     fi
     eval "$env=$bin"
 }
 
 defaults() {
-    findcmd openvpn OPENVPN_BIN
+    findcmd openvpn OPENVPN_BIN optional
     findcmd openssl OPENSSL_BIN
     findcmd haproxy HAPROXY_BIN
-    findcmd python PYTHON_BIN
-    if "$PYTHON_BIN" --version | grep -q " 3"; then
-        cmd=pip3
-    else
-        cmd=pip
-    fi
-    findcmd $cmd PIP_BIN
-    if [ -z "$PIP_BIN" ]; then
-        PIP_BIN="nopip"
-    fi
+    findcmd python3 PYTHON_BIN
+    findcmd pip3 PIP_BIN optional
+    findcmd sudo SUDO_BIN optional
 
     [ -z "$ITNS_USER" ] && ITNS_USER=root
     [ -z "$ITNS_GROUP" ] && ITNS_GROUP=root
@@ -56,7 +58,7 @@ defaults() {
 
 summary() {
     echo
-    if [ -z "$PYTHON_BIN" ] || [ -z "$HAPROXY_BIN" ] || [ -z "$OPENVPN_BIN" ] || [ -z "$OPENSSL_BIN" ]; then
+    if [ -z "$PYTHON_BIN" ] || [ -z "$HAPROXY_BIN" ] || [ -z "$OPENSSL_BIN" ]; then
         echo "Missing some dependencies to run intense-vpn. Look above. Exiting."
         usage
         exit 1
@@ -253,5 +255,5 @@ if [ -n "$PARMS" ]; then
 fi
 
 echo "Used build/env.sh as env. Remove that file for reconfigure."
-echo "You can contunue by ./install.sh"
+echo "You can contunue by sudo ./install.sh"
 echo

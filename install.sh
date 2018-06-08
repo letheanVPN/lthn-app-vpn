@@ -65,18 +65,9 @@ if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dhparam.pem ] && [ -f build/dhparam.p
     install build/dhparam.pem $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 fi
 
-if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth ]; then
+if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth ] && [ -n "$OPENVPN_BIN" ] ; then
     "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth
 fi
-
-for p in syslogmp ed25519 logging pprint psutil; do
-    echo "Checking for python package $p..."
-    if [ "$PIP_BIN" = "nopip" ]; then
-        $PIP_BIN $p
-    else
-        "$PIP_BIN" -q show $p || "$PIP_BIN" install $p
-    fi
-done
 
 chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 chmod -R 700 $INSTALL_PREFIX/$ITNS_PREFIX/etc/

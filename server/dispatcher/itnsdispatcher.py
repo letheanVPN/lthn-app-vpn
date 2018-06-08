@@ -17,9 +17,10 @@ from util import *
 from sdp import *
 from services import Services, Service, SERVICES
 from authids import AuthIds, AuthId, AUTHIDS
-from sessions import *
+from sessions import Sessions, SESSIONS
 from config import Config
 
+# Starting here
 def main(argv):
     try:
         opts, args = getopt.getopt(argv, "hf:s:d:G:", ["help", "config=", "sdp=", "generate-providerid=", "generate-configs", "generate-client-config="])
@@ -37,6 +38,7 @@ def main(argv):
         elif opt in ("-d", "--debug"):
             Config.LOGLEVEL = arg
         elif opt in ("-G", "--generate-providerid"):
+            # Generate providerid to file.private, file.public, file.seed
             logging.basicConfig(level=Config.LOGLEVEL)
             privatef = arg
             try:
@@ -48,30 +50,49 @@ def main(argv):
                 logging.error("Cannot open/write %s" % (privatef))
             sys.exit()
         elif opt in ("--generate-configs"):
-            initConf()
-            l = logging.basicConfig(level=Config.LOGLEVEL)
-            authids.load(authidsfile)
-            services.createConfigs()
+            # Generate config files for Openvpn and Haproxy only and exit
+            logging.basicConfig(level=Config.LOGLEVEL)
+            CONFIG = Config()
+            AUTHIDS = AuthIds()
+            tmpauthids=AUTHIDS.load()
+            if (tmpauthids):
+                AUTHIDS=tmpauthids
+            SERVICES = Services()
+            SERVICES.createConfigs()
             sys.exit()
         elif opt in ("--generate-client-config"):
+            # Generate client config for service id and put to stdout
             id = arg
-            initConf(configfile)
-            l = logging.basicConfig(level=loglevel)
+            logging.basicConfig(level=loglevel)
+            CONFIG = Config()
+            SERVICES = Services()
             SERVICES.get(id).createClientConfig()
             sys.exit()
 
     logging.basicConfig(level=Config.LOGLEVEL)
-    CONFIG=Config()
-    SERVICES=Services()
-    AUTHIDS=AuthIds()
+    # Initialise config and globals 
+    CONFIG = Config()
+    # Initialise services
+    SERVICES = Services()
+    # Create empty authids
+    AUTHIDS = AuthIds()
+    # Try to load authids or leave empty
+    tmpauthids=AUTHIDS.load()
+    if (tmpauthids):
+        AUTHIDS=tmpauthids
+    AUTHIDS.getFromWallet(SERVICES)
+    # Create empty sessions
+    SESSIONS = Sessions()
+    # Show services from SDP
     SERVICES.show()
+    # Run all services
     SERVICES.run()
     
     while (1):
         start = time.time()
-        #services.orchestrate()
-        #authids.getFromWallet(services)
-        #authids.show()
+        SERVICES.orchestrate()
+        #AUTHIDS.getFromWallet(SERVICES)
+        AUTHIDS.show()
         time.sleep(0.1)
         #print(".")
         #authids.show()
@@ -79,6 +100,7 @@ def main(argv):
         #authids.show()
         SERVICES.orchestrate()
         end = time.time()
+        AUTHIDS.save()
         
 if __name__ == "__main__":
     main(sys.argv[1:])

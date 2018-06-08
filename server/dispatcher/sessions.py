@@ -1,30 +1,22 @@
 
 import time
 
+SESSIONS = None
+
 class Sessions(object):
     """
     Active sessions class. Session means connected client
     """
     
-    def __init__(self, authids):
-        self.authids = authids
-        self.data = {}
+    def __init__(self):
+        self.ha={}
+        self.ovpn={}
         
     def startedHa(self, authid, conninfo):
-        paymentid = self.authids.get(authid)
-        if not paymentid:
-            logging.error("AuthId %s not in database!" % (authid))
-            return(None)
-        if not (authid in self.data):
-            self.data[authid] = {"type": "haproxy", "started": time.time(), "conninfo": conninfo}
+        self.ha[authid]=1
         
     def startedOvpn(self, authid, conninfo):
-        paymentid = self.authids.get(authid)
-        if not paymentid:
-            logging.error("AuthId %s not in database!" % (authid))
-            return(None)
-        if not (authid in self.data):
-            self.data[authid] = {"type": "vpn", "started": time.time(), "conninfo": conninfo}
+        self.ovpn[authid]=1
         
     def stoppedHa(self, authid):
         paymentid = self.authids.get(authid)

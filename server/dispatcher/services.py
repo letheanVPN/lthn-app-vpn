@@ -48,14 +48,14 @@ class Service(object):
     def getLine(self):
         if (self.stderr.poll(0.05)):
             s = self.process.stderr.readline().strip()
-            if (s != ""):
+            if (s != b""):
                 return(s)
             else:
                 return(None)
         else:
             if (self.stdout.poll(0.05)):
                 s = self.process.stdout.readline().strip()
-                if (s != ""):
+                if (s != b""):
                     return(s)
                 else:
                     return(None)
@@ -86,7 +86,7 @@ class Service(object):
         try:
             while True:
                 self.mgmt.settimeout(0.1)
-                c = self.mgmt.recv(1)
+                c = self.mgmt.recv(1).decode("utf-8")
                 if c != "\n" and c != "":
                     line += c
                 else:
@@ -105,7 +105,7 @@ class Service(object):
     def mgmtWrite(self, msg):
         try:
             logging.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, msg))
-            self.mgmt.send(msg + "\n")
+            self.mgmt.send((msg + "\n").encode())
         except socket.timeout:
             pass
         else:
@@ -168,7 +168,7 @@ class ServiceHa(Service):
         
     def orchestrate(self):
         l = self.getLine()
-        while (l <> None):
+        while (l is not None):
             logging.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
             l = self.getLine()
         
@@ -189,7 +189,7 @@ class ServiceHa(Service):
         except (IOError, OSError):
             logging.error("Cannot open haproxy template file %s" % (tfile))
             
-        out = tmpl.format(
+        out = tmpl.decode("utf-8").format(
                           maxconn=2000,
                           timeout="1m",
                           ctimeout="15s",
@@ -211,7 +211,7 @@ class ServiceHa(Service):
                           )
         try:
             cf = open(self.cfgfile, "wb")
-            cf.write(out)
+            cf.write(out.encode())
         except (IOError, OSError):
             logging.error("Cannot write haproxy config file %s" % (self.cfgfile))
         logging.info("Created haproxy config file %s" % (self.cfgfile))
@@ -288,7 +288,7 @@ class ServiceOvpn(Service):
     def unHold(self):
         self.mgmtWrite("hold release")
         l = self.mgmtRead()
-        while (l <> None):
+        while (l is not None):
             l = self.mgmtRead()
             
     def stop(self):
@@ -296,13 +296,13 @@ class ServiceOvpn(Service):
     
     def orchestrate(self):
         l = self.mgmtRead()
-        while (l <> None):
+        while (l is not None):
             l = self.mgmtRead()
         if (self.initphase):
             self.unHold()
             self.initphase = None
         l = self.getLine()
-        while (l <> None):
+        while (l is not None):
             logging.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
             l = self.getLine()
         
@@ -330,7 +330,7 @@ class ServiceOvpn(Service):
             f_key = "".join(f.readlines())        
         with open (Config.PREFIX + '/etc/openvpn.tlsauth', "r") as f:
             f_ta = "".join(f.readlines())
-        out = tmpl.format(
+        out = tmpl.decode("utf-8").format(
                           port=11194,
                           proto="udp",
                           f_dh=Config.PREFIX + '/etc/dhparam.pem',
@@ -351,7 +351,7 @@ class ServiceOvpn(Service):
                           )
         try:
             cf = open(self.cfgfile, "wb")
-            cf.write(out)
+            cf.write(out.encode())
         except (IOError, OSError):
             logging.error("Cannot write openvpn config file %s" % (self.cfgfile))
         logging.info("Created openvpn config file %s" % (self.cfgfile))
@@ -404,7 +404,7 @@ class ServiceSyslog(Service):
         while (s != None):
             message = syslogmp.parse(s)
             if (message):
-                logging.debug("syslog: " + message.message)
+                logging.debug("syslog: " + message.message.decode("utf-8"))
             s = self.getLine()
         
     def getLine(self):

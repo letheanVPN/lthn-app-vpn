@@ -17,12 +17,13 @@ frontend icproxy
         mode            http
         log             global
         option          httplog
-        option          dontlognull
-        option          nolinger
         option          http_proxy
+	option          logasap
         option          contstats
+	option		http-keep-alive
         maxconn         {maxconn}
         timeout client  {timeout}
+	capture request header {header} len 64
 
         stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
         acl allowed_src_ips src -u 10 -f {f_allow_src_ips}
@@ -46,7 +47,6 @@ backend http-proxy
         timeout connect 5s
         timeout server  5s
         retries         2
-        option          nolinger
         option          httplog
 
         stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
@@ -59,7 +59,7 @@ backend http-proxy
         http-request deny if !allowed_payments
         http-request deny if !valid_method
 
-        server server1 127.0.0.1:8888
+        server server1 {forward_proxy}
 
 listen server-status
         bind 127.0.0.1:8081

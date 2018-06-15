@@ -195,6 +195,7 @@ class ServiceHa(Service):
                           ctimeout="15s",
                           f_logsocket=Config.PREFIX + '/var/log local0',
                           f_sock=self.mgmtfile,
+                          forward_proxy='127.0.0.1:3128',
                           header='X-ITNS-PaymentID',
                           ctrluri='http://_ITNSVPN_',
                           f_dh=Config.PREFIX + '/etc/dhparam.pem',

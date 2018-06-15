@@ -215,7 +215,31 @@ class ServiceHa(Service):
         except (IOError, OSError):
             logging.error("Cannot write haproxy config file %s" % (self.cfgfile))
         logging.info("Created haproxy config file %s" % (self.cfgfile))
-    
+
+    def createClientConfig(self):
+        tfile = Config.PREFIX + "/etc/haproxy_client.tmpl"
+        try:
+            tf = open(tfile, "rb")
+            tmpl = tf.read()
+        except (IOError, OSError):
+            logging.error("Cannot open openvpn template file %s" % (tfile))
+            sys.exit(1)
+        with open (Config.PREFIX + '/etc/ca/certs/ca.cert.pem', "r") as f_ca:
+            f_ca = "".join(f_ca.readlines())
+        out = tmpl.decode("utf-8").format(
+                          server='1.2.3.4',
+                          port=11195,
+                          f_ca=f_ca,
+                          ca=Config.PREFIX + '/etc/ca/certs/ca.cert.pem',
+                          header='X-ITNS-PaymentID',
+                          proxyport='3128',
+                          paymentid='PaymentID')
+        try:
+            print(out)
+            sys.exit()
+        except (IOError, OSError):
+            logging.error("Cannot write haproxy config file")
+
 class ServiceOvpn(Service):
     """
     Openvpn service class
@@ -372,7 +396,7 @@ class ServiceOvpn(Service):
             f_ta = "".join(f.readlines())
         with open (Config.PREFIX + '/etc/dhparam.pem', "r") as f:
             f_dh = "".join(f.readlines())
-        out = tmpl.format(
+        out = tmpl.decode("utf-8").format(
                           port=11194,
                           proto="udp",
                           ip="172.17.4.14",
@@ -387,7 +411,7 @@ class ServiceOvpn(Service):
             print(out)
             sys.exit()
         except (IOError, OSError):
-            logging.error("Cannot create openvpn config file")
+            logging.error("Cannot write openvpn config file")
 
 class ServiceSyslog(Service):
     

@@ -63,7 +63,7 @@ def main(argv):
         elif opt in ("--generate-client-config"):
             # Generate client config for service id and put to stdout
             id = arg
-            logging.basicConfig(level=loglevel)
+            logging.basicConfig(level=Config.LOGLEVEL)
             CONFIG = Config()
             SERVICES = Services()
             SERVICES.get(id).createClientConfig()

@@ -8,7 +8,8 @@ build/env.sh:
 	./configure.sh
 
 install: build/env.sh
-	INSTALL_PREFIX=$(INSTALL_PREFIX) ./install.sh
+	INSTALL_PREFIX=$(INSTALL_PREFIX) 
+	./install.sh
 
 clean:
 	rm -rf build

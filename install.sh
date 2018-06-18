@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . build/env.sh
+ERRORS=false
 
 if [ -z "$ITNS_PREFIX" ]; then
     echo "You must configure intense-vpn!"
@@ -42,13 +43,15 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/
     install -C -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./$f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ 
 done)
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.json ]; then
-    echo "You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.json"
-    echo "You can use conf/dispatcher_example.json as source"
+    echo "ERROR: No dispatcher config file found. You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.json"
+    echo "Use conf/dispatcher_example.json as example"
+    ERRORS=true
 fi
 
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/sdp.json ]; then
-    echo "You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/sdp.json"
-    echo "Look into conf/sdp_example.json and create your own config" 
+    echo "ERROR: No SDP config file found. You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/sdp.json"
+    echo "Use conf/sdp_example.json as example and create your own config"
+    ERRORS=true 
 fi
 
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ca/index.txt ]; then
@@ -71,3 +74,9 @@ fi
 
 chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 chmod -R 700 $INSTALL_PREFIX/$ITNS_PREFIX/etc/
+
+if [ "$ERRORS" = true ]; then
+    echo "Finished installing but with errors. See above."
+else
+    echo "Finished installing successfully!"
+fi

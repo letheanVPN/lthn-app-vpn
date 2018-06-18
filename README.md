@@ -20,10 +20,10 @@ Project is configured by standard configure script. You can change basic paramet
 ```bash
 pip3 install -r requirements.txt
 ./configure.sh [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh]
-make ca PASSWORD="<yourprivatepassword>"
-sudo make install
+make ca PASS="<yourprivatepassword>"
 cp conf/dispatcher_example.json /opt/itns/etc/dispatcher.json
 cp conf/sdp_example.json /opt/itns/etc/sdp.json
+sudo make install
 ``` 
 
 Please edit configs because examples will not work for you. You have to

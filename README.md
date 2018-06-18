@@ -29,6 +29,9 @@ sudo make install
 Please edit configs because examples will not work for you. You have to
 prepare at least SDP with your own services!
 
+## WARNING: Runs as root
+By default, the script uses `root` as the run as group/user. This is a large security risk and should never be used in production!
+
 ## Usage 
 
 ## Directories

@@ -26,6 +26,8 @@ cp conf/sdp_example.json /opt/itns/etc/sdp.json
 sudo make install
 ``` 
 
+When generating certificates with `make ca`, it is mandatory to specify at least an 'Organization Name' in the certificate prompts; otherwise certificate generation will fail.
+
 Please edit configs because examples will not work for you. You have to
 prepare at least SDP with your own services!
 

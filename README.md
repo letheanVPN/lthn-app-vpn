@@ -20,14 +20,19 @@ Project is configured by standard configure script. You can change basic paramet
 ```bash
 pip3 install -r requirements.txt
 ./configure.sh [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh]
-make ca PASSWORD="<yourprivatepassword>"
-sudo make install
+make ca PASS="<yourprivatepassword>"
 cp conf/dispatcher_example.json /opt/itns/etc/dispatcher.json
 cp conf/sdp_example.json /opt/itns/etc/sdp.json
+sudo make install
 ``` 
+
+When generating certificates with `make ca`, it is mandatory to specify at least an 'Organization Name' in the certificate prompts; otherwise certificate generation will fail.
 
 Please edit configs because examples will not work for you. You have to
 prepare at least SDP with your own services!
+
+## WARNING: Runs as root
+By default, the script uses `root` as the run as group/user. This is a large security risk and should never be used in production!
 
 ## Usage 
 

@@ -139,6 +139,13 @@ export ITNS_PREFIX OPENVPN_BIN HAPROXY_BIN OPENSSL_BIN ITNS_USER ITNS_GROUP
 EOF
 }
 
+if [ -f build/env.sh ]; then
+    defaults=1
+    . build/env.sh
+else
+    defaults
+fi
+
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
@@ -211,12 +218,6 @@ while [[ $# -gt 0 ]]; do
 esac
 done
 
-if [ -f build/env.sh ]; then
-    defaults=1
-    . build/env.sh
-else
-    defaults
-fi
 bin_dir=${ITNS_PREFIX}/bin/
 sysconf_dir=${ITNS_PREFIX}/etc/
 ca_dir=${ITNS_PREFIX}/etc/ca/
@@ -248,12 +249,12 @@ else
 fi
 
 summary
-generate_env >build/env.sh
+generate_env >| build/env.sh
 
 if [ -n "$PARMS" ]; then
     echo "$PARMS" >configure.log
 fi
 
 echo "Used build/env.sh as env. Remove that file for reconfigure."
-echo "You can contunue by sudo ./install.sh"
+echo "You can continue by sudo ./install.sh"
 echo

@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+from sdp import SDP
 
 class Config(object):
     """Configuration container"""
@@ -17,7 +18,8 @@ class Config(object):
     SDPFILE = None
     AUTHIDSFILE = None
     
-    def __init__(self):
+    def __init__(self):      
+        print('initializing')
         if (os.getenv('ITNS_PREFIX')):
             type(self).PREFIX = os.getenv('ITNS_PREFIX')
         
@@ -29,7 +31,22 @@ class Config(object):
         type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.json"
         type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
         type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
-            
+        
+        if (sys.argv[1] and sys.argv[1] == 'sdp'):
+            # generate SDP configuration file based on user input
+            print('Using SDP configuration file %s' % self.SDPFILE)
+
+            s = SDP()
+            s.load(self.CONFIGFILE)
+
+            choice = input('Would you like to [g]enerate a new service or [e]dit an existing one? ').strip().lower()[:1]
+
+            if (choice == 'g'):
+                s.addService()
+            elif (choice == 'e'):
+                s.editService()
+            else:
+                print('Unknown response.')
     
     def load(self, filename):
         try:

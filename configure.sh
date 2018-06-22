@@ -10,7 +10,7 @@ ITNS_PREFIX=/opt/itns/
 
 # General usage help
 usage() {
-   echo $0 [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh]
+   echo $0 [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh] [--generate-sdp] [--generate-dispatcher]
    echo
    exit
 }
@@ -210,6 +210,10 @@ while [[ $# -gt 0 ]]; do
         generate_dh=1
         shift
     ;;
+    --generate-sdp)
+        generate_sdp=1
+        shift
+    ;;
     *)
     echo "Unknown option $1"
     usage
@@ -246,6 +250,10 @@ else
     if [ -f etc/dhparam.pem ]; then
         cp etc/dhparam.pem build/
     fi
+fi
+
+if [ -n "$generate_sdp" ]; then
+    "$PYTHON_BIN" server/dispatcher/config.py sdp
 fi
 
 summary

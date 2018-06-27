@@ -18,8 +18,7 @@ class Config(object):
     SDPFILE = None
     AUTHIDSFILE = None
     
-    def __init__(self):      
-        print('initializing')
+    def __init__(self):
         if (os.getenv('ITNS_PREFIX')):
             type(self).PREFIX = os.getenv('ITNS_PREFIX')
         
@@ -37,8 +36,7 @@ class Config(object):
             print('Using SDP configuration file %s' % self.SDPFILE)
 
             s = SDP()
-            s.load(self.CONFIGFILE)
-
+            s.load(self.SDPFILE)
             choice = input('Would you like to [g]enerate a new service or [e]dit an existing one? ').strip().lower()[:1]
 
             if (choice == 'g'):
@@ -47,6 +45,11 @@ class Config(object):
                 s.editService()
             else:
                 print('Unknown response.')
+
+            print('YOUR CHANGES TO THE SDP CONFIG file ARE UNSAVED!')
+            choice = input('Save the file? This will overwrite your existing config file! [Y/n] ').strip().lower()[:1]
+            if (choice == 'y'):
+                s.save()
     
     def load(self, filename):
         try:

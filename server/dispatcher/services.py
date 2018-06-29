@@ -106,7 +106,7 @@ class Service(object):
         try:
             logging.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, msg))
             self.mgmt.send((msg + "\n").encode())
-        except socket.timeout:
+        except socket.error:
             pass
         else:
             pass
@@ -138,7 +138,7 @@ class ServiceHa(Service):
     HAproxy service class
     """
     
-    def run(self):
+    def run(self,authids):
         self.createConfig()
         cmd = [Config.HAPROXY_BIN, "-Ds", "-p", self.pidfile, "-f", self.cfgfile]
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
@@ -154,6 +154,9 @@ class ServiceHa(Service):
         self.stdout.register(self.process.stdout, select.POLLIN)
         self.stderr.register(self.process.stderr, select.POLLIN)
         self.mgmtConnect("socket", self.mgmtfile)
+        for payment in authids.list():
+          self.mgmtWrite("add acl #20 %s" % (payment))
+          self.orchestrate()
         
     def stop(self):
         os.kill(self.pid, signal.SIGTERM)
@@ -170,6 +173,10 @@ class ServiceHa(Service):
         l = self.getLine()
         while (l is not None):
             logging.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
+            l = self.getLine()
+        l = self.mgmtRead()
+        while (l is not None):
+            logging.debug("%s[%s]-mgmt: %s" % (self.type, self.id, l))
             l = self.getLine()
         
         return(self.isAlive())
@@ -246,7 +253,7 @@ class ServiceOvpn(Service):
     Openvpn service class
     """ 
     
-    def run(self):
+    def run(self,authids):
         self.createConfig()
         verb = "3"
         if (Config.OPENVPN_SUDO):
@@ -462,10 +469,10 @@ class Services(object):
             self.services[id.upper()] = so
         self.syslog = ServiceSyslog(Config.PREFIX + "/var/log")
             
-    def run(self):
+    def run(self,authids):
         for id in self.services:
             s = self.services[id]
-            s.run()
+            s.run(authids)
         atexit.register(self.stop)
     
     def createConfigs(self):

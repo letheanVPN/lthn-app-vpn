@@ -86,7 +86,7 @@ def main(argv):
     # Show services from SDP
     SERVICES.show()
     # Run all services
-    SERVICES.run()
+    SERVICES.run(AUTHIDS)
     
     while (1):
         start = time.time()

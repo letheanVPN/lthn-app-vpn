@@ -93,6 +93,9 @@ class AuthIds(object):
         logging.warning("Authids: %d ids, last updated %s" %(len(self.authids),timefmt(self.lastmodify)))
         for id, paymentid in self.authids.items():
             paymentid.show()
+            
+    def list(self):
+        return(self.authids)
         
     def cleanup(self):
         fresh = 0

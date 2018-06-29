@@ -19,11 +19,10 @@ sudo apt-get install python3 python3-pip haproxy
 Project is configured by standard configure script. You can change basic parameters of service via this script.
 ```bash
 pip3 install -r requirements.txt
-./configure.sh [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh]
-make ca PASS="<yourprivatepassword>"
+./configure.sh --with-capass 'SomePass' --with-cn 'someCommonName' --generate-ca --generate-dh --runas-user "$USER"
+sudo make install
 cp conf/dispatcher_example.json /opt/itns/etc/dispatcher.json
 cp conf/sdp_example.json /opt/itns/etc/sdp.json
-sudo make install
 ``` 
 
 When generating certificates with `make ca`, it is mandatory to specify at least an 'Organization Name' in the certificate prompts; otherwise certificate generation will fail.

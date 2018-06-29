@@ -10,7 +10,7 @@ ITNS_PREFIX=/opt/itns/
 
 # General usage help
 usage() {
-   echo $0 [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh] [--generate-sdp] [--generate-dispatcher]
+   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh] [--generate-sdp]"
    echo
    exit
 }
@@ -86,14 +86,16 @@ summary() {
 # Generate root CA and keys
 generate_ca() {
     local prefix="$1"
+    local cn="$2"
 
+    echo "Generating CA $cn"
     cd $prefix || exit 2
     mkdir -p private certs csr newcerts || exit 2
     touch index.txt
     echo -n 00 >serial
     "${OPENSSL_BIN}" genrsa -aes256 -out private/ca.key.pem -passout pass:$cert_pass 4096
     chmod 400 private/ca.key.pem
-    "${OPENSSL_BIN}" req -config $TOPDIR/conf/ca.cfg -passin pass:$cert_pass \
+    "${OPENSSL_BIN}" req -config $TOPDIR/conf/ca.cfg -batch -subj "/CN=$cn" -passin pass:$cert_pass \
       -key private/ca.key.pem \
       -new -x509 -days 7300 -sha256 -extensions v3_ca \
       -out certs/ca.cert.pem
@@ -105,13 +107,15 @@ generate_ca() {
 
 generate_crt() {
     local name="$1"
+    local cn="$2"
+    echo "Generating crt (name=$name,cn=$cn)"
     "${OPENSSL_BIN}" genrsa -aes256 \
       -out private/$name.key.pem -passout pass:$cert_pass 4096
     chmod 400 private/$name.key.pem
-    "${OPENSSL_BIN}" req -config $TOPDIR/conf/ca.cfg -subj "/CN=$name" -passin "pass:$cert_pass" \
+    "${OPENSSL_BIN}" req -config $TOPDIR/conf/ca.cfg -batch -subj "/CN=$cn" -passin "pass:$cert_pass" \
       -key private/$name.key.pem \
       -new -sha256 -out csr/$name.csr.pem
-    "${OPENSSL_BIN}" ca -batch -config $TOPDIR/conf/ca.cfg -passin "pass:$cert_pass" \
+    "${OPENSSL_BIN}" ca -batch -config $TOPDIR/conf/ca.cfg -subj "/CN=$cn" -passin "pass:$cert_pass" \
       -extensions server_cert -days 375 -notext -md sha256 \
       -in csr/$name.csr.pem \
       -out certs/$name.cert.pem
@@ -202,6 +206,11 @@ while [[ $# -gt 0 ]]; do
         shift
         shift
     ;;
+    --with-cn)
+        cert_cn="$2"
+        shift
+        shift
+    ;;
     --generate-ca)
         generate_ca=1
         shift
@@ -230,22 +239,27 @@ tmp_dir=${ITNS_PREFIX}/tmp/
 
 mkdir -p build
 if [ -n "$generate_ca" ] && ! [ -f build/ca/index.txt ]; then
-    export cert_pass
-    if [ -z "$cert_pass" ]; then
-        echo "You must specify ca-password on cmdline!"
+    export cert_pass cert_cn
+    if [ -z "$cert_pass" ] || [ -z "$cert_cn" ] ; then
+        echo "You must specify --with-capass yourpassword --with_cn CN!"
         exit 2
+    fi
+    if [ "$cert_pass" = "1234" ]; then
+    	echo "Generating with default password!"
     fi
     (
     rm -rf build/ca
     mkdir -p build/ca
-    generate_ca build/ca/
-    generate_crt openvpn
-    generate_crt ha
+    generate_ca build/ca/ "$cert_cn"
+    generate_crt openvpn "$cert_cn"
+    generate_crt ha "$cert_cn"
     )
 fi
 
 if [ -n "$generate_dh" ]; then
-    "$OPENSSL_BIN" dhparam -out build/dhparam.pem 2048
+    if ! [ -f  build/dhparam.pem ]; then 
+      "$OPENSSL_BIN" dhparam -out build/dhparam.pem 2048
+    fi
 else
     if [ -f etc/dhparam.pem ]; then
         cp etc/dhparam.pem build/

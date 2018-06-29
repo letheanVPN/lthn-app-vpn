@@ -23,9 +23,10 @@ pip3 install -r requirements.txt
 sudo make install
 cp conf/dispatcher_example.json /opt/itns/etc/dispatcher.json
 cp conf/sdp_example.json /opt/itns/etc/sdp.json
+/opt/itns/bin/itnsdispatcher.py --generate-providerid prov
+cat prov.seed
+/opt/itns/bin/itnsdispatcher.py sdp
 ``` 
-
-When generating certificates with `make ca`, it is mandatory to specify at least an 'Organization Name' in the certificate prompts; otherwise certificate generation will fail.
 
 Please edit configs because examples will not work for you. You have to
 prepare at least SDP with your own services!

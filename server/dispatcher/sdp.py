@@ -4,10 +4,12 @@ import logging
 import sys
 import re
 import jsonpickle
+import os
 
 class SDP(object):
     configFile = None
     dataLoaded = False
+    certsDir = None
     # sample SDP dict
     data = dict(
         protocolVersion = 1,
@@ -16,7 +18,7 @@ class SDP(object):
             id = '',
             name = ''
         ),
-        certificates = {},
+        certificates = [],
         wallet = 'publicWalletAddress',
         terms = 'Provider Terms',
         services = {},
@@ -30,14 +32,13 @@ class SDP(object):
         while not ret:
             ret = self.isConfigured()
 
-        s = SDPService(self.getUsedServiceIds())
+        s = SDPService(self.getUsedServiceIds(), None, self.certsDir)
         ret = False
         while not ret:
             ret = s.checkConfig()
 
-        #FIXME cannot append raw JSON - need to append it as a dict
-        #if ret:
-        #    self.data['services'].append(s.getJson())
+        if ret:
+            self.data['services'].append(s.data)
 
     def getUsedServiceIds(self):
         serviceIds = []
@@ -70,15 +71,13 @@ class SDP(object):
                 # Select service and begin editing
                 print('Editing service %s (ID %s)' % (self.data['services'][choice]['name'], self.data['services'][choice]['id']))
                 encoded = jsonpickle.encode(self.data['services'][choice], unpicklable=False)
-                # TODO add edit capabilities
-                s = SDPService(self.getUsedServiceIds(), encoded)
+                s = SDPService(self.getUsedServiceIds(), encoded, self.certsDir)
                 ret = False
                 while not ret:
                     ret = s.checkConfig()
 
-                #FIXME cannot replace with raw JSON - need to replace it as a dict
-                #if ret:
-                #    self.data['services'][choice] = s.getJson()
+                if ret:
+                    self.data['services'][choice] = s.data
             else:
                 logging.error('Invalid selection')
         else:
@@ -99,7 +98,7 @@ class SDP(object):
             if not self.setNodeType():
                 return False
 
-        if (len(self.data['provider']['id']) != 64 or not re.match('[a-zA-Z0-9]', self.data['provider']['id'])):
+        if (len(self.data['provider']['id']) != 64 or not re.match(r'[a-zA-Z0-9]', self.data['provider']['id'])):
             if not self.setProviderId():
                 return False
 
@@ -116,15 +115,55 @@ class SDP(object):
                 return False
 
         if (not self.data['certificates'] or len(self.data['certificates']) < 1):
-            # TODO encode certs
-            print('WARNING: No provider certificates found!')
+            if not self.loadCertificate():
+                # need to use exit() here or the script will loop
+                # above it loops intentionally to get user input but here it's pointless
+                sys.exit(1)
 
         return True
+
+    def loadCertificate(self):
+        if (self.certsDir is None):
+                logging.error('Failed to locate certificates!')
+                return False
+        else:
+            caCert = self.certsDir + '/ca.cert.pem'
+
+            if (not os.path.isfile(caCert)):
+                logging.error('Failed to find CA cert file %s! Did you run `make ca PASS="password"`?' % caCert)
+                return False
+            try:
+                f = open(caCert, 'r')
+                caCertContents = f.read()
+                f.close()
+            except IOError:
+                logging.error("Failed to read %s" % caCert)
+                return False
+
+            certStart = "-----BEGIN CERTIFICATE-----"
+            certEnd = "-----END CERTIFICATE-----"
+            if (caCertContents and certStart in caCertContents and certEnd in caCertContents):
+                caCertContents = re.sub(r'[\n\r]+', '', caCertContents)
+                start = caCertContents.index(certStart)                
+                caCertParsed = caCertContents[start + len(certStart):]
+                end = caCertParsed.index(certEnd)
+                caCertParsed = caCertParsed[:end]
+                print('Found new CA cert %s..%s, adding to config' % (caCertParsed[:8], caCertParsed[len(caCertParsed) - 5:len(caCertParsed)]))
+                if not self.data['certificates']:
+                    self.data['certificates'] = []
+
+                self.data['certificates'].append(caCertParsed)
+                return True
+            else:
+                logging.error('CA certificate file: %s' % caCert)
+                logging.error('The CA certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
+                return False
+        return False
 
     def setProviderId(self):
         print('Enter provider ID. This should come directly from `itnsdispatcher.py --generate-providerid FILE`')
         choice = input('[64 character hexadecimal] ').strip()
-        if (len(choice) == 64 and re.match('^[a-zA-Z0-9]+$', choice)):
+        if (len(choice) == 64 and re.match(r'^[a-zA-Z0-9]+$', choice)):
             self.data['provider']['id'] = choice
             return True
         else:
@@ -153,7 +192,7 @@ class SDP(object):
 
     def setProviderName(self):
         choice = input('Enter provider name. This will be displayed to users. Use up to 16 alphanumeric characters, symbols allowed: ')
-        if (len(choice) <= 16 and re.match('^[a-zA-Z0-9 ,.-_]+$', choice)):
+        if (len(choice) <= 16 and re.match(r'^[a-zA-Z0-9 ,.-_]+$', choice)):
             self.data['provider']['name'] = choice
             return True
         else:
@@ -195,9 +234,16 @@ class SDP(object):
                 logging.error("Cannot write %s" % (self.configFile))
                 sys.exit(1)
 
-    def load(self, config):
+    def load(self, config, prefix = None):
         if self.dataLoaded:
             return
+
+        if prefix != None:
+            self.certsDir = prefix + '/etc/ca/certs'
+            if not os.path.exists(self.certsDir):
+                logging.error('Certs directory does not exist or is unreadable (%s)!' % self.certsDir)
+                logging.error('Make sure you ran `make install` without errors.')
+                self.certsDir = None
 
         if (self.configFile is None):
             self.configFile = config
@@ -230,32 +276,64 @@ class SDP(object):
 class SDPService(object):
     # sample SDPService dict
     data = dict(
-        id = '',
-        name = '',
-        type = 'proxy',
+        id = None,
+        name = None,
+        type = None,
         allowRefunds = False,
         cost = 0.00000001,
-        downloadSpeed = 100000,
-        uploadSpeed = 100000,
+        downloadSpeed = None,
+        uploadSpeed = None,
         firstPrePaidMinutes = 2,
         subsequentPrePaidMinutes = 2,
         firstVerificationsNeeded = 1,
         subsequentVerificationsNeeded = 1,
-        proxy = {},
-        vpn = {},
+        proxy = dict(
+            certificates = [],
+            endpoints = [],
+            port = '',
+            terms = '',
+            policy = dict(
+                addresses = dict(
+                    blocked = []
+                )
+            )
+        ),
+        vpn = dict(
+            certificates = [],
+            endpoints = [],
+            port = '',
+            terms = '',
+            policy = dict(
+                addresses = dict(
+                    blocked = []
+                )
+            ),
+            parameters = dict(
+                cyphers = [
+                    "DESX-CBC",
+                    "AES-256-CBC"
+                ],
+                mtuSize = 1
+            )
+        )
     )
     existingServiceIds = []
+    certsDir = None
 
-    def __init__(self, existingServiceIds_, thisService = None):
+    def __init__(self, existingServiceIds_, thisService = None, certsDir = None):
         self.existingServiceIds = existingServiceIds_
+
+        if (certsDir != None):
+            self.certsDir = certsDir
+            if not os.path.exists(self.certsDir):
+                logging.error('Certs directory does not exist (%s)! Make sure you ran `make install` without errors.' % self.certsDir)
+                self.certsDir = None
+
         if (thisService != None):
             self.data = jsonpickle.decode(thisService)
             print('Loaded existing SDP service %s' % self.data['name'])
         else:
             print('Creating new SDP service...')
-
-    def setup(self):
-        print('You will be prompted to enter a series of information about the service.')
 
     def checkConfig(self):
         self.setId()
@@ -265,6 +343,14 @@ class SDPService(object):
         ret = False
         while not ret:
             ret = self.setType()
+        ret = False
+        while not ret:
+            ret = self.setEndpoints()
+        ret = False
+        while not ret:
+            ret = self.setPort()
+        if not self.loadCertificate():
+            sys.exit(1)
         ret = False
         while not ret:
             ret = self.setCost()
@@ -284,14 +370,174 @@ class SDPService(object):
         while not ret:
             ret = self.setVerificationsNeeded()
 
-        # TODO add support for generating and configuring proxy and VPN dicts
-
         return True
+
+    def setPort(self):
+        nodeType = self.data['type']
+        
+        if nodeType not in self.data:
+            self.data[nodeType] = []
+
+        choice = ''
+        count = 0
+        validPortFound = False
+
+        for i in self.data[nodeType]:
+            validPortFound = False
+            if 'port' not in i:
+                i['port'] = ''
+
+            if (self.isValidPort(i['port'])):
+                validPortFound = True
+                print('Existing proxy/VPN port for endpoint %s: %s' % (i['endpoint'], i['port']))
+                choice = input('Enter new proxy/VPN port [1-65535] [leave blank to keep existing] ')
+                if choice: 
+                    break
+            else:
+                print('Existing proxy/VPN port for endpoint %s (%s) is empty or incorrect and must be resolved' % (i['endpoint'], i['port']))
+                choice = input('Enter proxy/VPN port [1-65535] ') 
+                if choice: break
+
+            count += 1
+
+        if (not choice and count == 0 and not validPortFound):
+            choice = input('Enter proxy/VPN port [1-65535] ')
+
+        if (not validPortFound and self.isValidPort(choice)):
+            if len(self.data[nodeType]) == 0 or 'port' not in self.data[nodeType][count]:
+                self.data[nodeType].append({})
+            # TODO add support to collect UDP or other protocols for the port
+            self.data[nodeType][count]['port'] = choice + '/TCP'
+            return True
+        elif validPortFound:
+            return True
+        else:
+            logging.error('The port you entered is not a valid number from 1 to 65535.')
+
+        return False
+
+
+    def setEndpoints(self):
+        nodeType = self.data['type']
+        
+        if nodeType not in self.data:
+            self.data[nodeType] = []
+
+        choice = ''
+        count = 0
+        validEndpointFound = False
+
+        for i in self.data[nodeType]:
+            validEndpointFound = False
+            if 'endpoint' not in i:
+                i['endpoint'] = ''
+
+            if (self.isValidEndpoint(i['endpoint'])):
+                validEndpointFound = True
+                print('Existing proxy/VPN endpoint (service %d): %s' % (count, i['endpoint']))
+                choice = input('Enter new proxy/VPN endpoint in IP or FQDN format [leave blank to keep existing] ')
+                if choice: 
+                    break
+            else:
+                choice = input('Found new service. Enter proxy/VPN endpoint in IP or FQDN format ') 
+                if choice: break
+
+            count += 1
+
+        if (not choice and count == 0 and not validEndpointFound):
+            choice = input('Enter proxy/VPN endpoint in IP or FQDN format ')
+
+        if (not validEndpointFound and self.isValidEndpoint(choice)):
+            if len(self.data[nodeType]) == 0 or 'endpoint' not in self.data[nodeType][count]:
+                self.data[nodeType].append({})
+
+            self.data[nodeType][count]['endpoint'] = choice
+            return True
+        elif validEndpointFound:
+            choice = input('Finished evaluating endpoints for this service. Would you like to add a new endpoint? [Y/n] ')
+            if (choice.strip().lower() == 'y'):
+                self.data[nodeType].append({})
+                print('You will now be asked to re-evaluate the current endpoints before adding anew...')
+                return False
+            return True
+        else:
+            logging.error('The endpoint you entered is not a valid IP (eg 172.16.1.1) or FQDN (eg my.test.com).')
+
+        return False
+
+    def isValidPort(self, testPort):
+        if '/' in testPort:
+            testPort = testPort[0:testPort.index('/')]
+        if not testPort.isnumeric():
+            return False
+        testPort = int(testPort)
+        if (testPort > 0 and testPort < 65535):
+            return True
+        else:
+            return False
+
+    def isValidEndpoint(self, testEndpoint):
+        return re.match(r'((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)', testEndpoint)
 
     def getJson(self):
         json = jsonpickle.encode(self.data, unpicklable=False)
         logging.info('Encoded SDP Service JSON: %s' % json)
         return json
+
+    def loadCertificate(self):
+        if (self.certsDir is None):
+            logging.error('Failed to locate certificates!')
+            return False
+        if self.data['type'] == 'proxy':
+            cert = self.certsDir + '/ha.cert.pem'
+        elif self.data['type'] == 'vpn':
+            cert = self.certsDir + '/openvpn.cert.pem'
+        else:
+            logging.error('Failed to parse service type. Unable to load certificate.')
+            return False
+
+        if (not os.path.isfile(cert)):
+            logging.error('Failed to find CA cert file %s! Did you run `make ca PASS="password"`?' % cert)
+            return False
+
+        try:
+            f = open(cert, 'r')
+            certContents = f.read()
+            f.close()
+        except IOError:
+            logging.error("Failed to read %s" % cert)
+            return False
+
+        certStart = "-----BEGIN CERTIFICATE-----"
+        certEnd = "-----END CERTIFICATE-----"
+        if (certContents and certStart in certContents and certEnd in certContents):
+            certContents = re.sub(r'[\n\r]+', '', certContents)
+            start = certContents.index(certStart)                
+            certParsed = certContents[start + len(certStart):]
+            end = certParsed.index(certEnd)
+            certParsed = certParsed[:end]            
+
+            nodeType = self.data['type']
+
+            if not self.data[nodeType]:
+                self.data[nodeType] = []
+
+            for i in self.data[nodeType]:
+                if 'certificates' not in i:
+                    i['certificates'] = []                    
+
+                if (certParsed not in i['certificates']):
+                    print('Found new proxy/VPN cert %s..%s, adding to config' % (certParsed[:8], certParsed[len(certParsed) - 5:len(certParsed)]))
+                    i['certificates'].append(certParsed)         
+       
+            return True
+
+        else:
+            logging.error('Certificate file: %s' % cert)
+            logging.error('The certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
+            return False
+
+        return False
 
     def setPrepaidMinutes(self):
         print('How many minutes of access are required to be prepaid for the first payment from a client? Minimum 1, maximum 5 minutes.')
@@ -444,7 +690,7 @@ class SDPService(object):
             choice = input('Enter service name: ').strip()
 
         if (choice):
-            if (len(choice) <= 32 and re.match('^[a-zA-Z0-9 ,.-_]+$', choice)):
+            if (len(choice) <= 32 and re.match(r'^[a-zA-Z0-9 ,.-_]+$', choice)):
                 self.data['name'] = choice
                 return True
             else:
@@ -472,18 +718,23 @@ class SDPService(object):
     def setType(self):
         if self.data['type']:
             print('Existing service type: %s' % self.data['type'])
+            print('Warning! If you switch service types (eg proxy to VPN), the existing proxy/VPN services will be erased!')
             choice = input('Select new service type? Enter [V]PN or [P]roxy, or leave blank to keep existing. ').strip().lower()[:1]
         else:
             choice = input('Which type of service is this? [V]PN or [P]roxy? ').strip().lower()[:1]
 
         if (choice == 'p'):
             self.data['type'] = 'proxy'
+            self.data['proxy'] = []
+            self.data['vpn'] = None
             return True
         elif (choice == 'v'):
             self.data['type'] = 'vpn'
+            self.data['proxy'] = None
+            self.data['vpn'] = []
             return True
         else:
-            if self.data['type']:
+            if self.data['type'] == 'proxy' or self.data['type'] == 'vpn':
                 return True
 
             logging.error('Invalid option selected. Enter P for proxy or V for VPN.')

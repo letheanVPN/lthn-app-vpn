@@ -359,6 +359,7 @@ class ServiceOvpn(Service):
                           port=11194,
                           proto="udp",
                           f_dh=Config.PREFIX + '/etc/dhparam.pem',
+                          tunnode=Config.PREFIX + '/dev/net/tun',
                           f_ca=f_ca,
                           f_crt=f_crt,
                           f_key=f_key,

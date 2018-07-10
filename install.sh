@@ -87,8 +87,8 @@ fi
 
 if [ -f build/itnsdispatcher.service ]; then
     echo "Installing service file /etc/systemd/system/itnsdispatcher.service as user $ITNS_USER"
+    sed -i "s^User=root^User=$ITNS_USER^" build/itnsdispatcher.service
     sudo cp build/itnsdispatcher.service /etc/systemd/system/
-    sed -i "s^User=root^User=$ITNS_USER^" /etc/systemd/system/itnsdispatcher.service
 fi
 
 sudo chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/

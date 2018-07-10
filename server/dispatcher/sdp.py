@@ -25,20 +25,20 @@ class SDP(object):
     )
 
     """SDP functions"""
-    def addService(self):
+    def addService(self,cap):
         # Create new SDP service
         self.load(None)
         ret = False
         while not ret:
-            ret = self.isConfigured()
+            ret = self.isConfigured(cap)
 
         s = SDPService(self.getUsedServiceIds(), None, self.certsDir)
         ret = False
         while not ret:
-            ret = s.checkConfig()
+            ret = s.checkConfig(cap)
 
         if ret:
-            self.data['services'].append(s.data)
+            self.data['services'][s.data['id']]=s.data
 
     def getUsedServiceIds(self):
         serviceIds = []
@@ -46,7 +46,7 @@ class SDP(object):
             serviceIds.append(i['id'])
         return serviceIds
 
-    def editService(self):
+    def editService(self,cap):
         # Revise existing SDP service
         self.load(None)
         ret = False
@@ -74,7 +74,7 @@ class SDP(object):
                 s = SDPService(self.getUsedServiceIds(), encoded, self.certsDir)
                 ret = False
                 while not ret:
-                    ret = s.checkConfig()
+                    ret = s.checkConfig(cap)
 
                 if ret:
                     self.data['services'][choice] = s.data
@@ -83,7 +83,7 @@ class SDP(object):
         else:
             logging.error('Invalid selection')
 
-    def isConfigured(self):
+    def isConfigured(self,cap):
         # Checks validity of data and forces configuration if invalid
         self.load(None)
 
@@ -95,39 +95,42 @@ class SDP(object):
         validNodeTypes = ['residential', 'commercial', 'government']
         if (self.data['nodeType'] not in validNodeTypes):
             logging.error('Invalid node type.')
-            if not self.setNodeType():
+            if not self.setNodeType(cap.nodeType):
                 return False
 
         if (len(self.data['provider']['id']) != 64 or not re.match(r'[a-zA-Z0-9]', self.data['provider']['id'])):
-            if not self.setProviderId():
+            if not self.setProviderId(cap.providerId):
                 return False
 
         if(not self.data['provider']['name'] or len(self.data['provider']['name']) > 16):
-            if not self.setProviderName():
+            if not self.setProviderName(cap.providerName):
                 return False
 
         if (not self.data['wallet'] or len(self.data['wallet']) != 97):
-            if not self.setWalletAddr():
+            if not self.setWalletAddr(cap.walletAddr):
                 return False
 
         if (not self.data['terms'] or len(self.data['terms']) > 50000):
-            if not self.setProviderTerms():
+            if not self.setProviderTerms(cap.providerTerms):
                 return False
 
         if (not self.data['certificates'] or len(self.data['certificates']) < 1):
-            if not self.loadCertificate():
+            if not self.loadCertificate(cap.providerCa):
                 # need to use exit() here or the script will loop
                 # above it loops intentionally to get user input but here it's pointless
                 sys.exit(1)
 
         return True
 
-    def loadCertificate(self):
-        if (self.certsDir is None):
+    def loadCertificate(self,ca=None):
+        if (self.certsDir is None and ca is None):
                 logging.error('Failed to locate certificates!')
                 return False
         else:
-            caCert = self.certsDir + '/ca.cert.pem'
+            if (ca):
+                caCert = ca
+            else:
+                caCert = self.certsDir + '/ca.cert.pem'
 
             if (not os.path.isfile(caCert)):
                 logging.error('Failed to find CA cert file %s! Did you run `make ca PASS="password"`?' % caCert)
@@ -160,59 +163,60 @@ class SDP(object):
                 return False
         return False
 
-    def setProviderId(self):
-        print('Enter provider ID. This should come directly from `itnsdispatcher.py --generate-providerid FILE`')
-        choice = input('[64 character hexadecimal] ').strip()
+    def setProviderId(self, providerid=None):
+        if (providerid==None):
+            print('Enter provider ID. This should come directly from `itnsdispatcher.py --generate-providerid FILE`')
+            choice = input('[64 character hexadecimal] ').strip()
+        else:
+            choice=providerid
         if (len(choice) == 64 and re.match(r'^[a-zA-Z0-9]+$', choice)):
             self.data['provider']['id'] = choice
             return True
         else:
             logging.error('Provider ID format or length bad. The ID must be exactly 64 hexadecimal characters.')
-            return False
+            return self.setProviderId()
 
-    def setProviderTerms(self):
-        choice = input('Enter provider terms. These will be displayed to users. Up to 50000 characters. ').strip()[:50000]
+    def setProviderTerms(self, terms=None):
+        if (terms==None):
+            choice = input('Enter provider terms. These will be displayed to users. Up to 50000 characters. ').strip()[:50000]
+        else:
+            choice = terms
         if not choice:
             choice = 'None'
 
         self.data['terms'] = choice
         return True
 
-    def setWalletAddr(self):
-        choice = input('Enter wallet address. This wallet will receive all payments for services. ').strip()
+    def setWalletAddr(self, addr=None):
+        if (addr==None):
+            choice = input('Enter wallet address. This wallet will receive all payments for services. ').strip()
+        else:
+            choice=addr
         if (len(choice) != 97):
             logging.error('Wallets should be exactly 97 characters. Are you sure you entered a real wallet address?')
-            return False
+            return self.setWalletAddr()
         if (choice[:2] != 'iz'):
             logging.error('Wallet addresses must start with iz. Do not enter an integrated address; one will be automatically generated for every client.')
-            return False
+            return self.setWalletAddr()
 
         self.data['wallet'] = choice
         return True
 
-    def setProviderName(self):
-        choice = input('Enter provider name. This will be displayed to users. Use up to 16 alphanumeric characters, symbols allowed: ')
+    def setProviderName(self, name=None):
+        if (name==None):
+            choice = input('Enter provider name. This will be displayed to users. Use up to 16 alphanumeric characters, symbols allowed: ')
+        else:
+            choice = name
         if (len(choice) <= 16 and re.match(r'^[a-zA-Z0-9 ,.-_]+$', choice)):
             self.data['provider']['name'] = choice
             return True
         else:
             logging.error('Invalid provider name!')
-            return False
+            return self.setProviderName()
 
-    def setNodeType(self):
-        choice = input('Enter provider type. [c]ommercial, [r]esidential, or [g]overnment? ').strip().lower()[:1]
-        if (choice == 'c'):
-            self.data['nodeType'] = 'commercial'
-            return True
-        elif (choice == 'r'):
-            self.data['nodeType'] = 'residential'
-            return True
-        elif (choice == 'g'):
-            self.data['nodeType'] = 'government'
-            return True
-
-        logging.error('Invalid provider type specified.')
-        return False
+    def setNodeType(self, type):
+        self.data['nodeType'] = type
+        return True
     
     def getJson(self):
         self.load(None)
@@ -248,10 +252,11 @@ class SDP(object):
         if (self.configFile is None):
             self.configFile = config
         try:
-            f = open(self.configFile, 'r')
-            jsonStr = f.read()
-            f.close()
-            self.data = jsonpickle.decode(jsonStr)
+            if (self.configFile != None):
+                f = open(self.configFile, 'r')
+                jsonStr = f.read()
+                f.close()
+                self.data = jsonpickle.decode(jsonStr)
             self.dataLoaded = True            
         except IOError:
             logging.error("Cannot read %s" % (self.configFile))
@@ -335,44 +340,44 @@ class SDPService(object):
         else:
             print('Creating new SDP service...')
 
-    def checkConfig(self):
+    def checkConfig(self, cap):
         self.setId()
         ret = False
         while not ret:
-            ret = self.setName()
+            ret = self.setName(cap.serviceName)
         ret = False
         while not ret:
-            ret = self.setType()
+            ret = self.setType(cap.serviceType)
         ret = False
         while not ret:
-            ret = self.setEndpoints()
+            ret = self.setEndpoints(cap.serviceFqdn)
         ret = False
         while not ret:
-            ret = self.setPort()
-        if not self.loadCertificate():
+            ret = self.setPort(cap.servicePort)
+        if not self.loadCertificate(cap.serviceCrt):
             sys.exit(1)
         ret = False
         while not ret:
-            ret = self.setCost()
+            ret = self.setCost(cap.serviceCost)
         ret = False
         while not ret:
-            ret = self.setAllowRefunds()
+            ret = self.setAllowRefunds(cap.serviceAllowRefunds)
         ret = False
         while not ret:
-            ret = self.setDownloadSpeed()
+            ret = self.setDownloadSpeed(cap.serviceDownloadSpeed)
         ret = False
         while not ret:
-            ret = self.setUploadSpeed()
+            ret = self.setUploadSpeed(cap.serviceUploadSpeed)
         ret = False
         while not ret:
-            ret = self.setPrepaidMinutes()
+            ret = self.setPrepaidMinutes(cap.servicePrepaidMinutes)
         ret = False
         while not ret:
-            ret = self.setVerificationsNeeded()
+            ret = self.setVerificationsNeeded(cap.serviceVerificationsNeeded)
 
         return True
 
-    def setPort(self):
+    def setPort(self, port=None):
         nodeType = self.data['type']
         
         if nodeType not in self.data:
@@ -389,19 +394,29 @@ class SDPService(object):
 
             if (self.isValidPort(i['port'])):
                 validPortFound = True
-                print('Existing proxy/VPN port for endpoint %s: %s' % (i['endpoint'], i['port']))
-                choice = input('Enter new proxy/VPN port [1-65535] [leave blank to keep existing] ')
+                if (port):
+                    choice = port
+                else:
+                    print('Existing proxy/VPN port for endpoint %s: %s' % (i['endpoint'], i['port']))
+                    choice = input('Enter new proxy/VPN port [1-65535] [leave blank to keep existing] ')
+                    
                 if choice: 
                     break
             else:
                 print('Existing proxy/VPN port for endpoint %s (%s) is empty or incorrect and must be resolved' % (i['endpoint'], i['port']))
-                choice = input('Enter proxy/VPN port [1-65535] ') 
+                if (port):
+                    choice = port
+                else:
+                    choice = input('Enter proxy/VPN port [1-65535] ') 
                 if choice: break
 
             count += 1
 
         if (not choice and count == 0 and not validPortFound):
-            choice = input('Enter proxy/VPN port [1-65535] ')
+            if (port):
+                choice = port
+            else:
+                choice = input('Enter proxy/VPN port [1-65535] ')
 
         if (not validPortFound and self.isValidPort(choice)):
             if len(self.data[nodeType]) == 0 or 'port' not in self.data[nodeType][count]:
@@ -417,7 +432,7 @@ class SDPService(object):
         return False
 
 
-    def setEndpoints(self):
+    def setEndpoints(self, endpoint):
         nodeType = self.data['type']
         
         if nodeType not in self.data:
@@ -434,18 +449,27 @@ class SDPService(object):
 
             if (self.isValidEndpoint(i['endpoint'])):
                 validEndpointFound = True
-                print('Existing proxy/VPN endpoint (service %d): %s' % (count, i['endpoint']))
-                choice = input('Enter new proxy/VPN endpoint in IP or FQDN format [leave blank to keep existing] ')
+                if (endpoint):
+                    choice = endpoint
+                else:
+                    print('Existing proxy/VPN endpoint (service %d): %s' % (count, i['endpoint']))
+                    choice = input('Enter new proxy/VPN endpoint in IP or FQDN format [leave blank to keep existing] ')
                 if choice: 
                     break
             else:
-                choice = input('Found new service. Enter proxy/VPN endpoint in IP or FQDN format ') 
+                if (endpoint):
+                    choice = endpoint
+                else:
+                    choice = input('Found new service. Enter proxy/VPN endpoint in IP or FQDN format ') 
                 if choice: break
 
             count += 1
 
         if (not choice and count == 0 and not validEndpointFound):
-            choice = input('Enter proxy/VPN endpoint in IP or FQDN format ')
+            if (endpoint):
+                    choice = endpoint
+            else:
+                choice = input('Enter proxy/VPN endpoint in IP or FQDN format ')
 
         if (not validEndpointFound and self.isValidEndpoint(choice)):
             if len(self.data[nodeType]) == 0 or 'endpoint' not in self.data[nodeType][count]:
@@ -484,14 +508,22 @@ class SDPService(object):
         logging.info('Encoded SDP Service JSON: %s' % json)
         return json
 
-    def loadCertificate(self):
+    def loadCertificate(self, crt):
         if (self.certsDir is None):
-            logging.error('Failed to locate certificates!')
-            return False
+            if (crt is None):
+                logging.error('Failed to locate certificates!')
+                return False
+            
         if self.data['type'] == 'proxy':
-            cert = self.certsDir + '/ha.cert.pem'
+            if (crt):
+                cert = crt
+            else:
+                cert = self.certsDir + '/ha.cert.pem'
         elif self.data['type'] == 'vpn':
-            cert = self.certsDir + '/openvpn.cert.pem'
+            if (crt):
+                cert = crt
+            else:
+                cert = self.certsDir + '/openvpn.cert.pem'
         else:
             logging.error('Failed to parse service type. Unable to load certificate.')
             return False
@@ -539,7 +571,11 @@ class SDPService(object):
 
         return False
 
-    def setPrepaidMinutes(self):
+    def setPrepaidMinutes(self, mins=None):
+        if (mins):
+            self.data['firstPrePaidMinutes'] = mins
+            return True
+        
         print('How many minutes of access are required to be prepaid for the first payment from a client? Minimum 1, maximum 5 minutes.')
         if (self.data['firstPrePaidMinutes'] and int(self.data['firstPrePaidMinutes']) > 0 and int(self.data['firstPrePaidMinutes']) <= 5):
             print('Existing value: %d' % self.data['firstPrePaidMinutes'])
@@ -575,7 +611,11 @@ class SDPService(object):
 
         return False
 
-    def setVerificationsNeeded(self):
+    def setVerificationsNeeded(self, verifications=None):
+        if (verifications):
+            self.data['firstVerificationsNeeded'] = verifications
+            return True
+        
         print('How many transaction confirmations are required for the first payment from a client? Minimum 0, maximum 2.')
         if (self.data['firstVerificationsNeeded'] and int(self.data['firstVerificationsNeeded']) >= 0 and int(self.data['firstVerificationsNeeded']) <= 2):
             print('Existing value: %d' % self.data['firstVerificationsNeeded'])
@@ -612,11 +652,15 @@ class SDPService(object):
         return False
 
 
-    def setAllowRefunds(self):
-        self.data['allowRefunds'] = False
+    def setAllowRefunds(self, allow):
+        self.data['allowRefunds'] = allow
         return True
 
-    def setDownloadSpeed(self):
+    def setDownloadSpeed(self, speed=None):
+        if (speed):
+            self.data['downloadSpeed'] = speed
+            return True
+        
         # TODO automate collection of node download/upload speed - consider github.com/sivel/speedtest-cli
         print('When entering download and upload speeds, it is strongly encouraged to be honest!')
         print('If you intentionally mislead users with forged speeds, you will likely receive poor reviews!')
@@ -638,7 +682,11 @@ class SDPService(object):
         
         return False
 
-    def setUploadSpeed(self):
+    def setUploadSpeed(self, speed=None):
+        if (speed):
+            self.data['uploadSpeed'] = speed
+            return True
+        
         # TODO automate collection of node download/upload speed - consider github.com/sivel/speedtest-cli
 
         if (self.data['uploadSpeed'] and int(self.data['uploadSpeed']) > 0):
@@ -659,19 +707,25 @@ class SDPService(object):
         return False
 
 
-    def setCost(self):
+    def setCost(self, cost):
         print('Enter service cost in Intense Coin (ITNS) per minute. You may use up to 8 decimal places. Minimum 0.00000001')
         if (self.data['cost']):
-            print('Existing cost: %.8f' % self.data['cost'])
-            choice = input('Enter new cost? [leave blank to keep existing] ')
+            if (cost):
+                choice = cost
+            else:
+                print('Existing cost: %.8f' % self.data['cost'])
+                choice = input('Enter new cost? [leave blank to keep existing] ')
         else:
-            choice = input('Enter cost: ').strip()
+            if (cost):
+                choice = cost
+            else:
+                choice = input('Enter cost: ').strip()
 
         if (choice):
             choice = float(choice)
             if (choice < 0.00000001):
                 logging.error('Cost must be at least 0.00000001!')
-                return False
+                return self.setCost()
             self.data['cost'] = choice
             return True
         else:
@@ -680,14 +734,22 @@ class SDPService(object):
 
         return False
 
-    def setName(self):
-        print('Specify name of service [32 characters, numbers and spaces allowed] ')
+    def setName(self, name=None):
+        
+        if (name==None):
+            print('Specify name of service [32 characters, numbers and spaces allowed] ')
 
         if self.data['name']:
             print('Existing service name: %s' % self.data['name'])
-            choice = input('New service name? [leave blank to keep existing] ').strip()
+            if (name):
+                choice = name
+            else:
+                choice = input('New service name? [leave blank to keep existing] ').strip()
         else:
-            choice = input('Enter service name: ').strip()
+            if (name):
+                choice = name
+            else:
+                choice = input('Enter service name: ').strip()
 
         if (choice):
             if (len(choice) <= 32 and re.match(r'^[a-zA-Z0-9 ,.-_]+$', choice)):
@@ -701,10 +763,12 @@ class SDPService(object):
 
         return False
 
-    def setId(self):
+    def setId(self, id=None):
         # we use two hex digits to represent the service ID (range = 16 [0x10] to 255 since two digits must be used)
         # auto increment
-        if self.existingServiceIds and len(self.existingServiceIds) > 0:
+        if (id):
+            self.data['id'] = id
+        elif self.existingServiceIds and len(self.existingServiceIds) > 0:
             val = int(self.existingServiceIds[len(self.existingServiceIds) - 1], base=16)
             if (val <= 254):
                 self.data['id'] = format(val + 1, 'X')
@@ -715,20 +779,26 @@ class SDPService(object):
         else:
             self.data['id'] = 10
 
-    def setType(self):
+    def setType(self, type):
         if self.data['type']:
             print('Existing service type: %s' % self.data['type'])
             print('Warning! If you switch service types (eg proxy to VPN), the existing proxy/VPN services will be erased!')
-            choice = input('Select new service type? Enter [V]PN or [P]roxy, or leave blank to keep existing. ').strip().lower()[:1]
+            if (type):
+                choice = type
+            else:
+                choice = input('Select new service type? Enter [V]PN or [P]roxy, or leave blank to keep existing. ').strip().lower()[:1]
         else:
-            choice = input('Which type of service is this? [V]PN or [P]roxy? ').strip().lower()[:1]
+            if (type):
+                choice = type
+            else:
+                choice = input('Which type of service is this? vpn or proxy? ').strip().lower()
 
-        if (choice == 'p'):
+        if (choice == 'proxy'):
             self.data['type'] = 'proxy'
             self.data['proxy'] = []
             self.data['vpn'] = None
             return True
-        elif (choice == 'v'):
+        elif (choice == 'vpn'):
             self.data['type'] = 'vpn'
             self.data['proxy'] = None
             self.data['vpn'] = []
@@ -738,4 +808,4 @@ class SDPService(object):
                 return True
 
             logging.error('Invalid option selected. Enter P for proxy or V for VPN.')
-            return False
+            return self.setType()

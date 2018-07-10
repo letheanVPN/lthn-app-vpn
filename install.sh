@@ -80,6 +80,12 @@ if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth ] && [ -n "$OPENVPN_B
     "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth
 fi
 
+if [ -f build/itnsdispatcher.service ]; then
+    echo "Installing service file /etc/systemd/system/itnsdispatcher.service as user $ITNS_USER"
+    sudo cp build/itnsdispatcher.service /etc/systemd/system/
+    sed -i "s^User=root^User=$ITNS_USER^" /etc/systemd/system/itnsdispatcher.service
+fi
+
 chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 chmod -R 700 $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 

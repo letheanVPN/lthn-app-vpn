@@ -17,8 +17,10 @@ class Config(object):
     CONFIGFILE = None
     SDPFILE = None
     AUTHIDSFILE = None
+    # configargparse results
+    CAP = None
     
-    def __init__(self):
+    def __init__(self,action="read"):
         if (os.getenv('ITNS_PREFIX')):
             type(self).PREFIX = os.getenv('ITNS_PREFIX')
         
@@ -31,25 +33,39 @@ class Config(object):
         type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
         type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
         
-        if (sys.argv[1] and sys.argv[1] == 'sdp'):
+        s = SDP()
+        if (action=="init"):
             # generate SDP configuration file based on user input
-            print('Using SDP configuration file %s' % self.SDPFILE)
-
-            s = SDP()
-            s.load(self.SDPFILE, self.PREFIX)
-            choice = input('Would you like to [g]enerate a new service or [e]dit an existing one? ').strip().lower()[:1]
-
-            if (choice == 'g'):
-                s.addService()
-            elif (choice == 'e'):
-                s.editService()
+            print('Initialising configuration file %s' % self.SDPFILE)
+            s.addService(self.CAP)
+            s.configFile=self.SDPFILE
+            s.save()
+        elif (action=="read"):
+            s.load(self.SDPFILE)
+        elif (action=="dummy"):
+            if (os.path.exists(self.SDPFILE)):
+                s.load(self.SDPFILE)
             else:
-                print('Unknown response.')
-
+                logging.warning("Missing config file" + self.SDPFILE)
+        elif (action=="edit"):
+            # generate SDP configuration file based on user input
+            print('Editing configuration file %s' % self.SDPFILE)
+            s.editService(Config.CAP)
             print('YOUR CHANGES TO THE SDP CONFIG file ARE UNSAVED!')
             choice = input('Save the file? This will overwrite your existing config file! [y/N] ').strip().lower()[:1]
             if (choice == 'y'):
                 s.save()
+        elif (action=="add"):
+            # Add service into SDP file based on user input
+            print('Editing configuration file %s' % self.SDPFILE)
+            s.addService(Config.CAP)
+            print('YOUR CHANGES TO THE SDP CONFIG file ARE UNSAVED!')
+            choice = input('Save the file? This will overwrite your existing config file! [y/N] ').strip().lower()[:1]
+            if (choice == 'y'):
+                s.save()
+        else:
+            logger.error("Bad option to Config!")
+            sys.exit(2)
     
     def load(self, filename):
         try:
@@ -69,4 +85,4 @@ class Config(object):
         else:
             return(ret)
 
-CONFIG = Config()
+CONFIG = Config("dummy")

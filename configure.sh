@@ -10,7 +10,7 @@ ITNS_PREFIX=/opt/itns/
 
 # General usage help
 usage() {
-   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh] [--generate-sdp]"
+   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh] [--generate-sdp] [--install-service]"
    echo
    exit
 }
@@ -223,6 +223,10 @@ while [[ $# -gt 0 ]]; do
         generate_sdp=1
         shift
     ;;
+    --install-service)
+        install_service=1
+        shift
+    ;;
     *)
     echo "Unknown option $1"
     usage
@@ -251,8 +255,8 @@ if [ -n "$generate_ca" ] && ! [ -f build/ca/index.txt ]; then
     rm -rf build/ca
     mkdir -p build/ca
     generate_ca build/ca/ "$cert_cn"
-    generate_crt openvpn "$cert_cn"
-    generate_crt ha "$cert_cn"
+    generate_crt openvpn "$cert_cn.openvpn"
+    generate_crt ha "$cert_cn.ha"
     )
 fi
 
@@ -270,11 +274,15 @@ if [ -n "$generate_sdp" ]; then
     "$PYTHON_BIN" server/dispatcher/config.py sdp
 fi
 
+if [ -n "$install_service" ]; then
+    cp conf/itnsdispatcher.service build/
+fi
+
 summary
 generate_env >| build/env.sh
 
 if [ -n "$PARMS" ]; then
-    echo "$PARMS" >configure.log
+    echo "./configure.sh $PARMS" >configure.log
 fi
 
 echo "Used build/env.sh as env. Remove that file for reconfigure."

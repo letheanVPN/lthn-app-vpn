@@ -1,0 +1,12 @@
+[Unit]
+Description=ITNS dispatcher
+ConditionPathExists=/opt/itns/bin/itnsdispatcher
+
+[Service]
+Type=forking
+ExecStart=/opt/itns/bin/itnsdispatcher
+User=root
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

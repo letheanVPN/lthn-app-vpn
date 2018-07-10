@@ -27,11 +27,12 @@ install_dir lib
 install_dir dev
 install_dir dev/net
 
-if ! [ -r "$INSTALL_PREFIX/dev/net/tun" ]; then
-  mknod "$INSTALL_PREFIX/dev/net/tun" c 10 200
+if ! [ -r "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun" ]; then
+  mkdir -p "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/"
+  mknod "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun" c 10 200
 fi
-chmod 600 "$INSTALL_PREFIX/dev/net/tun"
-chown "$ITNS_USER" "$INSTALL_PREFIX/dev/net/tun"
+chmod 600 "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
+chown "$ITNS_USER" "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
 
 # Copy bin files
 install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/dispatcher/itnsdispatcher.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher

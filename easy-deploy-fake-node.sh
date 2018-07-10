@@ -15,8 +15,8 @@ else
 fi
 git checkout config-sdp
 pip3 install -r requirements.txt
-./configure.sh  --runas-user "$USER" --with-capass 1234  --with-cn 'ITNSFakeNode' --generate-ca --generate-dh
-sudo make install
+./configure.sh  --runas-user "$USER" --with-capass 1234  --with-cn 'ITNSFakeNode' --generate-ca --generate-dh --install-service
+make install
 /opt/itns/bin/itnsdispatcher --generate-providerid /opt/itns/etc/provider
 providerid=$(cat /opt/itns/etc/provider.public)
 /opt/itns/bin/itnsdispatcher --sdp-provider-type residential \
@@ -35,7 +35,6 @@ echo authid1 >/tmp/authids
 echo authid2 >>/tmp/authids
 echo authid3 >>/tmp/authids
 
-sudo cp /tmp/itnsvpn.service /etc/systemd/system/itnsvpn.service
 sudo systemctl daemon-reload
 sudo systemctl enable squid
 if ! sudo grep -q "#https_websocket" /etc/squid/squid.conf; then
@@ -48,6 +47,9 @@ fi
 
 sudo systemctl restart squid
 
+sudo systemctl daemon-reload
 sudo systemctl enable itnsdispatcher
 sudo systemctl restart itnsdispatcher
+
+cat /opt/itns/etc/sdp.json
 

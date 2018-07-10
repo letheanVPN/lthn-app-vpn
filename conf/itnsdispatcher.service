@@ -1,12 +1,15 @@
 [Unit]
 Description=ITNS dispatcher
 ConditionPathExists=/opt/itns/bin/itnsdispatcher
+After=syslog.target
 
 [Service]
-Type=forking
+Type=simple
 ExecStart=/opt/itns/bin/itnsdispatcher
 User=root
 Restart=always
+StandardOutput=syslog
+StandardError=syslog
 
 [Install]
 WantedBy=multi-user.target

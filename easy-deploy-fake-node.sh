@@ -29,12 +29,6 @@ providerid=$(cat /opt/itns/etc/provider.public)
 
 /opt/itns/bin/itnsdispatcher -d DEBUG --generate-server-configs
 
-sed -i 's#hdr(X-ITNS-PaymentID) -u#hdr(X-ITNS-PaymentID) -f /tmp/authids -u#' /opt/itns//var/proxy_1A//cfg
-sed -i 's#/opt/itns//var/log#/dev/log#' /opt/itns//var/proxy_1A//cfg
-echo authid1 >/tmp/authids
-echo authid2 >>/tmp/authids
-echo authid3 >>/tmp/authids
-
 sudo systemctl daemon-reload
 sudo systemctl enable squid
 if ! sudo grep -q "#https_websocket" /etc/squid/squid.conf; then

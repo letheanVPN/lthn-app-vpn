@@ -3,13 +3,18 @@
 . build/env.sh
 ERRORS=false
 
+if [ "$USER" = "root" ]; then
+    echo "Do not run install as root! It will invoke sudo automatically. Exiting!"
+    exit 2
+fi 
+
 if [ -z "$ITNS_PREFIX" ]; then
     echo "You must configure intense-vpn!"
     exit 1
 fi
 
 install_dir() {
-    install $2 $3 $4 $5 $6 -o "$ITNS_USER" -g "$ITNS_GROUP" -d "$INSTALL_PREFIX/$ITNS_PREFIX/$1"
+    sudo install $2 $3 $4 $5 $6 -o "$ITNS_USER" -g "$ITNS_GROUP" -d "$INSTALL_PREFIX/$ITNS_PREFIX/$1"
 }
 
 nopip() {
@@ -17,7 +22,7 @@ nopip() {
 }
 
 # Create directories
-install_dir 
+install_dir /
 install_dir bin
 install_dir etc
 install_dir var -m 770
@@ -28,19 +33,19 @@ install_dir dev
 install_dir dev/net
 
 if ! [ -r "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun" ]; then
-  mkdir -p "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/"
-  mknod "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun" c 10 200
+  install_dir /dev/net/
+  sudo mknod "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun" c 10 200
 fi
-chmod 600 "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
-chown "$ITNS_USER" "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
+sudo chmod 600 "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
+sudo chown "$ITNS_USER" "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
 
 # Copy bin files
-install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/dispatcher/itnsdispatcher.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
+sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/dispatcher/itnsdispatcher.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
 sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
 
 # Copy lib files
 for f in authids.py  config.py sdp.py  services.py  sessions.py  util.py; do
-    install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./server/dispatcher/$f $INSTALL_PREFIX/$ITNS_PREFIX/lib/
+    sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./server/dispatcher/$f $INSTALL_PREFIX/$ITNS_PREFIX/lib/
 done
 sed -i 's^/opt/itns^'"$ITNS_PREFIX"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
 sed -i 's^/usr/sbin/openvpn^'"$OPENVPN_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
@@ -48,7 +53,7 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/
 
 # Copy configs
 (cd conf; for f in *tmpl *cfg *ips *doms *http; do
-    install -C -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./$f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ 
+    sudo install -C -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./$f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ 
 done)
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.json ]; then
     echo "ERROR: No dispatcher config file found. You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.json"
@@ -86,8 +91,8 @@ if [ -f build/itnsdispatcher.service ]; then
     sed -i "s^User=root^User=$ITNS_USER^" /etc/systemd/system/itnsdispatcher.service
 fi
 
-chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/
-chmod -R 700 $INSTALL_PREFIX/$ITNS_PREFIX/etc/
+sudo chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/
+sudo chmod -R 700 $INSTALL_PREFIX/$ITNS_PREFIX/etc/
 
 if [ "$ERRORS" = true ]; then
     echo "Finished installing but with errors. See above."

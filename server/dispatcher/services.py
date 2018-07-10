@@ -449,7 +449,7 @@ class Services(object):
         
         self.services = {}
         sdp = SDP()
-        sdp.load()
+        sdp.load(Config.SDPFILE)
         for id in sdp.listServices():
             s = sdp.getService(id)
             if (s["type"]):

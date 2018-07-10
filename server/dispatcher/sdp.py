@@ -5,6 +5,7 @@ import sys
 import re
 import jsonpickle
 import os
+import pprint
 
 class SDP(object):
     configFile = None
@@ -268,14 +269,12 @@ class SDP(object):
     
     def listServices(self):
         ret = dict()
-        for service in self.data["services"]:
-            ret[service["id"]] = service["id"]
+        for id in self.data["services"].keys():
+            ret[id] = self.data["services"][id]
         return(ret)
     
     def getService(self, id):
-        for value in self.data["services"]:
-            if (value["id"] == id): 
-                return(value)
+        return(self.data["services"][id])
             
 
 class SDPService(object):
@@ -341,7 +340,7 @@ class SDPService(object):
             print('Creating new SDP service...')
 
     def checkConfig(self, cap):
-        self.setId()
+        self.setId(cap.serviceId)
         ret = False
         while not ret:
             ret = self.setName(cap.serviceName)

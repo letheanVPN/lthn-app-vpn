@@ -109,14 +109,8 @@ class AuthIds(object):
         """Connect to wallet and ask for all self.authids from last height"""
 		
         # Hardcoded payment
-        s1 = AuthId("authid1", "1A", services.get("1A").getCost(), 1)
-        s2 = AuthId("authid2", "2B", services.get("2B").getCost(), 10)
-        s3 = AuthId("authid3", "1A", services.get("1A").getCost(), 20)
-        s4 = AuthId("authid1", "1A", services.get("1A").getCost(), 10)
-        self.update(s1)
-        self.update(s2)
-        self.update(s3)
-        self.update(s4)
+        #s1 = AuthId("authid1", "1A", services.get("1A").getCost(), 1)
+        #self.update(s1)
         
     def load(self):
         if (os.path.isfile(Config.AUTHIDSFILE)):

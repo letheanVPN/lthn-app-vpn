@@ -13,6 +13,8 @@ install: build/env.sh
 	INSTALL_PREFIX=$(INSTALL_PREFIX) ./install.sh
 
 clean:
+	@echo Note this cleans only build directory. If you want to uninstall package, do it manually by removing files from install location.
+	@. build/env.sh ; echo Your last install dir is $$ITNS_PREFIX
 	rm -rf build
 
 ca: build/ca/index.txt

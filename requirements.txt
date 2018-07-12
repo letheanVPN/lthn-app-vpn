@@ -4,3 +4,4 @@ pprint
 psutil
 jsonpickle
 configargparse
+ed25519

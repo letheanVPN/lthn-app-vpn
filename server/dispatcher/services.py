@@ -30,12 +30,17 @@ class Service(object):
     Service class
     """
     
+    OPTS = ["a", "b"]
+    
     def __init__(self, id, json):
         self.id = id.upper()
         self.type = json["type"]
         self.name = json["name"]
         self.cost = json["cost"]
         self.dir = Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
+        self.cfg=CONFIG.getService(self.id)
+        for c in self.cfg:
+            logging.debug("Setting service %s parameter %s to %s" % (id,c,self.cfg[c]))
         self.initphase = True
 
     def stop(self):
@@ -188,7 +193,7 @@ class ServiceHa(Service):
             tmpl = tf.read()
         except (IOError, OSError):
             logging.error("Cannot open haproxy template file %s" % (tfile))
-            
+        
         out = tmpl.decode("utf-8").format(
                           maxconn=2000,
                           timeout="1m",

@@ -55,15 +55,14 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/
 (cd conf; for f in *tmpl *cfg *ips *doms *http; do
     sudo install -C -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./$f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ 
 done)
-if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.json ]; then
-    echo "ERROR: No dispatcher config file found. You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.json"
-    echo "Use conf/dispatcher_example.json as example"
+if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.ini ]; then
+    echo "ERROR: No dispatcher config file found. You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.ini"
+    echo "Use conf/dispatcher_example.ini as example"
     ERRORS=true
 fi
 
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/sdp.json ]; then
-    echo "ERROR: No SDP config file found. You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/sdp.json"
-    echo "Use conf/sdp_example.json as example and create your own config"
+    echo "ERROR: No SDP config file found. You can use itnsdispatcher --generate-sdp to create it for you."
     ERRORS=true 
 fi
 

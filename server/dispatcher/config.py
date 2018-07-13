@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from sdp import SDP
+import configparser
 
 class Config(object):
     """Configuration container"""
@@ -14,6 +15,7 @@ class Config(object):
     SUDO_BIN = None
     OPENVPN_SUDO = None
     LOGLEVEL = logging.WARNING
+    VERBOSE = None
     CONFIGFILE = None
     SDPFILE = None
     AUTHIDSFILE = None
@@ -29,27 +31,29 @@ class Config(object):
         type(self).SUDO_BIN = "/usr/bin/sudo"
         type(self).OPENVPN_SUDO = True
         type(self).LOGLEVEL = logging.WARNING
-        type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.json"
+        type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"
         type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
         type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
         
         s = SDP()
+        self.load(self.CONFIGFILE)
         if (action=="init"):
             # generate SDP configuration file based on user input
-            print('Initialising configuration file %s' % self.SDPFILE)
+            print('Initialising SDP file %s' % self.SDPFILE)
             s.addService(self.CAP)
             s.configFile=self.SDPFILE
             s.save()
         elif (action=="read"):
+            self.load(self.CONFIGFILE)
             s.load(self.SDPFILE)
         elif (action=="dummy"):
             if (os.path.exists(self.SDPFILE)):
                 s.load(self.SDPFILE)
             else:
-                logging.warning("Missing config file" + self.SDPFILE)
+                logging.warning("Missing SDP file" + self.SDPFILE)
         elif (action=="edit"):
             # generate SDP configuration file based on user input
-            print('Editing configuration file %s' % self.SDPFILE)
+            print('Editing SDP file %s' % self.SDPFILE)
             s.editService(Config.CAP)
             print('YOUR CHANGES TO THE SDP CONFIG file ARE UNSAVED!')
             choice = input('Save the file? This will overwrite your existing config file! [y/N] ').strip().lower()[:1]
@@ -66,23 +70,21 @@ class Config(object):
         else:
             logger.error("Bad option to Config!")
             sys.exit(2)
-    
+            
     def load(self, filename):
         try:
-            self.data = json.load(open(filename))
+            logging.debug("Reading config file %s" % (filename))
+            cfg =  configparser.ConfigParser()
+            cfg.read(filename)
+            self.cfg = cfg
         except IOError:
             logging.error("Cannot read %s" % (filename))
             sys.exit(1)
             
-    def get(self, key):
-        idx = ""
-        for k in key.split("."):
-            idx += "['" + k + "']"
-        try: 
-            exec("ret=self.data%s" % (idx))
-        except KeyError:
-            return(None)
-        else:
-            return(ret)
-
-CONFIG = Config("dummy")
+    def getService(self, id):
+        section = "service-" + id
+        for s in self.cfg.sections():
+            if s.lower()==section.lower():
+                return(self.cfg[s])
+        return(None)
+             

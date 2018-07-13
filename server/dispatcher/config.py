@@ -67,6 +67,9 @@ class Config(object):
             choice = input('Save the file? This will overwrite your existing config file! [y/N] ').strip().lower()[:1]
             if (choice == 'y'):
                 s.save()
+        elif (action =="upload"):
+            s.load(self.SDPFILE)
+            s.upload()
         else:
             logger.error("Bad option to Config!")
             sys.exit(2)

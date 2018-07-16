@@ -33,7 +33,8 @@ automatically during install.
 
 On debian, use standard packager:
 ```bash
-sudo apt-get install python3 python3-pip haproxy sudo
+apt-get install python3 python3-pip haproxy sudo
+
 ```
 
 ## Configure and install
@@ -48,11 +49,19 @@ Without this flag, all configs and keys are left untouched.
 pip3 install -r requirements.txt
 ./configure.sh --with-capass 'SomePass' --with-cn 'someCommonName' --generate-ca --generate-dh --runas-user "$USER" --generate-sdp --install-service
 make install [FORCE=1]
+
 ``` 
 For fully automated install, please use our easy deploy script. Please note that this script works only if system is clean and sudo is already configured for user which runs this.
-You can use more env variables to tune parameters. See script header for available env variables:
+Never run this on configured system! It will overwrite config files!
+```bash
+wget https://raw.githubusercontent.com/valiant1x/intense-vpn/config-sdp/server/easy-deploy-node.sh
+chmod +x easy-deploy-node.sh
+BRANCH=config-sdp ./easy-deploy-node.sh
 
 ```
+
+You can use more env variables to tune parameters. See script header for available env variables:
+```bash
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$CAPASS" ] && CAPASS=1234
 [ -z "$CACN" ] && CACN=ITNSFakeNode
@@ -61,40 +70,44 @@ You can use more env variables to tune parameters. See script header for availab
 [ -z "$PROVTYPE" ] && PROVTYPE="residental"
 [ -z "$WALLET" ] && WALLET="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 [ -z "$EMAIL" ] && EMAIL=""
-```
 
-Never run this on configured system! It will overwrite config files!
-```
-wget https://raw.githubusercontent.com/valiant1x/intense-vpn/config-sdp/server/easy-deploy-node.sh
-chmod +x easy-deploy-node.sh
-BRANCH=config-sdp ./easy-deploy-node.sh
 ```
 
 ## Usage 
-```
-/opt/itns/bin/itnsdispatcher -h
-usage: itnsdispatcher [-h] [-f CONFIGFILE] [-s SDPFILE] [-d LEVEL] [-G PREFIX]
-                      [-S] [-C SERVICEID] [-D] [--sdp-provider-type TYPE]
-                      [--sdp-provider-id ID] [--sdp-provider-name NAME]
-                      [--sdp-wallet-address ADDR] [--sdp-provider-terms TEXT]
-                      [--sdp-provider-ca FILE] [--sdp-service-crt FILE]
-                      [--sdp-service-type TYPE] [--sdp-service-fqdn FQDN]
-                      [--sdp-service-port NUMBER] [--sdp-service-name NAME]
-                      [--sdp-service-id NUMBER] [--sdp-service-cost ITNS]
-                      [--sdp-service-refunds NUMBER]
+```bash
+ /opt/itns/bin/itnsdispatcher -h
+usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-d LEVEL] [-v]
+                      [-G PREFIX] [-S] [-C SERVICEID] [-D]
+                      [--sdp-service-crt FILE] [--sdp-service-type TYPE]
+                      [--sdp-service-fqdn FQDN] [--sdp-service-port NUMBER]
+                      [--sdp-service-name NAME] [--sdp-service-id NUMBER]
+                      [--sdp-service-cost ITNS] [--sdp-service-refunds NUMBER]
                       [--sdp-service-dlspeed Mbps]
                       [--sdp-service-ulspeed Mbps]
                       [--sdp-service-prepaid-mins TIME]
-                      [--sdp-service-verifications NUMBER]
+                      [--sdp-service-verifications NUMBER] --ca ca.crt
+                      --wallet-address ADDRESS [--wallet-host HOST]
+                      [--wallet-port PORT] [--wallet-username USER]
+                      [--wallet-password PW] [--sdp-server URL [URL ...]]
+                      --provider-id PROVIDERID --provider-key PROVIDERKEY
+                      --provider-name NAME [--provider-type TYPE]
+                      [--provider-terms TEXT]
+
+Args that start with '--' (eg. -h) can also be set in a config file (specified
+via -f). Config file syntax allows: key=value, flag=true, stuff=[a,b,c] (for
+details, see syntax at https://goo.gl/R74nmi). If an arg is specified in more
+than one place, then commandline values override config file values which
+override defaults.
 
 optional arguments:
-  -h, --help            show this help message and exit
   -f CONFIGFILE, --config CONFIGFILE
-                        Config file (default: /opt/itns//etc/dispatcher.json)
+                        Config file (default: /opt/itns//etc/dispatcher.ini)
+  -h, --help            Help (default: None)
   -s SDPFILE, --sdp SDPFILE
                         SDP file (default: /opt/itns//etc/sdp.json)
   -d LEVEL, --debug LEVEL
                         Debug level (default: WARNING)
+  -v, --verbose         Be more verbose on output (default: None)
   -G PREFIX, --generate-providerid PREFIX
                         Generate providerid files (default: None)
   -S, --generate-server-configs
@@ -103,23 +116,6 @@ optional arguments:
                         Generate client config for specified service on stdout
                         and exit (default: None)
   -D, --generate-sdp    Generate SDP by wizzard (default: None)
-  --sdp-provider-type TYPE
-                        Provider type (for SDP edit/creation only) (default:
-                        commercial)
-  --sdp-provider-id ID  Provider ID (for SDP edit/creation only) (default:
-                        None)
-  --sdp-provider-name NAME
-                        Provider Name (for SDP edit/creation only) (default:
-                        None)
-  --sdp-wallet-address ADDR
-                        Wallet address (for SDP edit/creation only) (default:
-                        None)
-  --sdp-provider-terms TEXT
-                        Provider terms (for SDP edit/creation only) (default:
-                        None)
-  --sdp-provider-ca FILE
-                        Provider CA file (for SDP edit/creation only)
-                        (default: None)
   --sdp-service-crt FILE
                         Provider Proxy crt (for SDP edit/creation only)
                         (default: None)
@@ -156,6 +152,25 @@ optional arguments:
   --sdp-service-verifications NUMBER
                         Verifications needed for Service (for SDP service
                         edit/creation only) (default: None)
+  --ca ca.crt           Set certificate authority file (default: None)
+  --wallet-address ADDRESS
+                        Wallet address (default: None)
+  --wallet-host HOST    Wallet host (default: localhost)
+  --wallet-port PORT    Wallet port (default: 45000)
+  --wallet-username USER
+                        Wallet username (default: None)
+  --wallet-password PW  Wallet passwd (default: None)
+  --sdp-server URL [URL ...]
+                        SDP server(s) (default: None)
+  --provider-id PROVIDERID
+                        ProviderID (public ed25519 key) (default: None)
+  --provider-key PROVIDERKEY
+                        ProviderID (private ed25519 key) (default: None)
+  --provider-name NAME  Provider Name (default: None)
+  --provider-type TYPE  Provider type (default: commercial)
+  --provider-terms TEXT
+                        Provider terms (default: None)
+
 ```
 
 ## Directories

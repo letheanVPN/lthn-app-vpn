@@ -9,8 +9,8 @@ set -v
 [ -z "$CACN" ] && CACN=ITNSFakeNode
 [ -z "$ENDPOINT" ] && ENDPOINT="1.2.3.4"
 [ -z "$PORT" ] && PORT="8080"
-[ -z "$PROVTYPE" ] && PROVTYPE="residental"
-[ -z "$WALLET" ] && WAllet="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+[ -z "$PROVTYPE" ] && PROVTYPE="residential"
+[ -z "$WALLET" ] && WALLET="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 [ -z "$EMAIL" ] && EMAIL=""
 
 sudo apt update
@@ -26,10 +26,10 @@ fi
 git checkout $BRANCH
 pip3 install -r requirements.txt
 ./configure.sh --easy
-make install
-/opt/itns/bin/itnsdispatcher --sdp-provider-type $PROVTYPE \
-     --generate-sdp --provider-name FakeProvider --sdp-wallet-address "$WALLET" \
-     --sdp-service-crt /opt/itns/etc/ca//certs/ha.cert.pem \
+make install FORCE=1
+/opt/itns/bin/itnsdispatcher --provider-type $PROVTYPE \
+     --generate-sdp --provider-name FakeProvider --wallet-address "$WALLET" \
+     --sdp-service-crt /opt/itns/etc/ca/certs/ha.cert.pem \
      --sdp-service-name proxy --sdp-service-id 1a --sdp-service-fqdn $ENDPOINT --sdp-service-port $PORT \
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 2 --sdp-service-verifications 1

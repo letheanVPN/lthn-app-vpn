@@ -55,6 +55,12 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/
     sudo install -C -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./$f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ 
 done)
 
+if [ -f build/etc/systemd/system/itnsdispatcher.service ]; then
+    echo "Installing service file /etc/systemd/system/itnsdispatcher.service as user $ITNS_USER"
+    sed -i "s^User=root^User=$ITNS_USER^" build/etc/systemd/system/itnsdispatcher.service
+    sudo cp build/etc/systemd/system/itnsdispatcher.service /etc/systemd/system/
+fi
+
 # Copy generated configs
 if [ -n "$FORCE" ]; then
     sudo cp -va build/etc/* $INSTALL_PREFIX/$ITNS_PREFIX/etc/
@@ -89,12 +95,6 @@ fi
 
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth ] && [ -n "$OPENVPN_BIN" ] ; then
     "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$ITNS_PREFIX/etc/openvpn.tlsauth
-fi
-
-if [ -f build/itnsdispatcher.service ]; then
-    echo "Installing service file /etc/systemd/system/itnsdispatcher.service as user $ITNS_USER"
-    sed -i "s^User=root^User=$ITNS_USER^" build/itnsdispatcher.service
-    sudo cp build/itnsdispatcher.service /etc/systemd/system/
 fi
 
 sudo chown -R $ITNS_USER:$ITNS_GROUP $INSTALL_PREFIX/$ITNS_PREFIX/etc/

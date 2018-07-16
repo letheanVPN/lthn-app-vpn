@@ -71,11 +71,6 @@ def main(argv):
     Log.setLevel(cfg.d)
     # Initialise config
     CONFIG = Config("dummy")
-    # Initialise authids
-    AUTHIDS = AuthIds()
-    tmpauthids=AUTHIDS.load()
-    if (tmpauthids):
-        AUTHIDS=tmpauthids
     # Initialise services
     SERVICES = Services()
 
@@ -117,6 +112,12 @@ def main(argv):
     if (cfg.D):
         CONFIG=Config("init", SERVICES)
         sys.exit()
+        
+    # Initialise authids
+    AUTHIDS = AuthIds()
+    tmpauthids=AUTHIDS.load()
+    if (tmpauthids):
+        AUTHIDS=tmpauthids
 
     SERVICES.load()
     # Initialise sessions

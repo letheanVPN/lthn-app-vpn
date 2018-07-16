@@ -1,10 +1,10 @@
 
+import configparser
 import json
 import logging
 import os
-import sys
 from sdp import SDP
-import configparser
+import sys
 
 class Config(object):
     """Configuration container"""
@@ -22,7 +22,7 @@ class Config(object):
     # configargparse results
     CAP = None
     
-    def __init__(self,action="read"):
+    def __init__(self, action="read", services=None):
         if (os.getenv('ITNS_PREFIX')):
             type(self).PREFIX = os.getenv('ITNS_PREFIX')
         
@@ -37,37 +37,37 @@ class Config(object):
         
         s = SDP()
         self.load(self.CONFIGFILE)
-        if (action=="init"):
+        if (action == "init"):
             # generate SDP configuration file based on user input
             print('Initialising SDP file %s' % self.SDPFILE)
             s.addService(self.CAP)
-            s.configFile=self.SDPFILE
+            s.configFile = self.SDPFILE
             s.save()
-        elif (action=="read"):
+        elif (action == "read"):
             self.load(self.CONFIGFILE)
             s.load(self.SDPFILE)
-        elif (action=="dummy"):
+        elif (action == "dummy"):
             if (os.path.exists(self.SDPFILE)):
                 s.load(self.SDPFILE)
             else:
                 logging.warning("Missing SDP file" + self.SDPFILE)
-        elif (action=="edit"):
+        elif (action == "edit"):
             # generate SDP configuration file based on user input
             print('Editing SDP file %s' % self.SDPFILE)
-            s.editService(Config.CAP)
+            s.editService(self.CAP)
             print('YOUR CHANGES TO THE SDP CONFIG file ARE UNSAVED!')
             choice = input('Save the file? This will overwrite your existing config file! [y/N] ').strip().lower()[:1]
             if (choice == 'y'):
                 s.save()
-        elif (action=="add"):
+        elif (action == "add"):
             # Add service into SDP file based on user input
             print('Editing configuration file %s' % self.SDPFILE)
-            s.addService(Config.CAP)
+            s.addService(self.CAP)
             print('YOUR CHANGES TO THE SDP CONFIG file ARE UNSAVED!')
             choice = input('Save the file? This will overwrite your existing config file! [y/N] ').strip().lower()[:1]
             if (choice == 'y'):
                 s.save()
-        elif (action =="upload"):
+        elif (action == "upload"):
             s.load(self.SDPFILE)
             s.upload()
         else:
@@ -77,17 +77,18 @@ class Config(object):
     def load(self, filename):
         try:
             logging.debug("Reading config file %s" % (filename))
-            cfg =  configparser.ConfigParser()
+            cfg = configparser.ConfigParser()
             cfg.read(filename)
             self.cfg = cfg
         except IOError:
-            logging.error("Cannot read %s" % (filename))
+            logging.error("Cannot read %s. Exiting." % (filename))
             sys.exit(1)
             
     def getService(self, id):
         section = "service-" + id
         for s in self.cfg.sections():
-            if s.lower()==section.lower():
+            if s.lower() == section.lower():
                 return(self.cfg[s])
         return(None)
-             
+
+CONFIG = Config("dummy")

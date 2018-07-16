@@ -1,27 +1,33 @@
 [global]
 ;debug=DEBUG
-ca=/opt/itns/etc/ca/certs/ca.cert.pem
-providerid={providerid}
-providerkey={providerkey}
+ca={ca}
+;provider-type=commercial
+provider-id={providerid}
+provider-key={providerkey}
+provider-name=Provider
+provider-terms=Some Terms
+;provider-terms=@from_file.txt
 
-[wallet]
-host=localhost
-port=45000
-username=username
-password=pasword
+;;; Wallet
+wallet-address={wallet_address}
+;wallet-host=localhost
+;wallet-port=45000
+;wallet-username={wuser}
+;wallet-password={wpasword}
 
-[sdp]
-servers=[example.com:8080]
+;;; SDP
+;sdp-servers={sdpservers}
 
 [service-1A]
+name=Proxy
 backend-proxy-server=localhost:3128
-crt=/opt/itns/etc/ca/certs/ha.cert.pem
-key=/opt/itns/etc/ca/private/ha.key.pem
-crtkey=/opt/itns/etc/ca/certs/ha.both.pem
+crt={hacrt}
+key={hakey}
+crtkey={haboth}
 
 [service-1B]
-crt=/opt/itns/etc/ca/certs/vpn.cert.pem
-key=/opt/itns/etc/ca/private/vpn.key.pem
-crtkey=/opt/itns/etc/ca/certs/vpn.both.pem
+crt={vpncrt}
+key={vpnkey}
+crtkey={vpnboth}
 reneg=60
 

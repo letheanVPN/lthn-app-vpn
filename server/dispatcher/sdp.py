@@ -1,15 +1,16 @@
 
-import json
-import logging
-import sys
-import re
-import jsonpickle
-import os
-import pprint
 import base64
 import ed25519
+import json
+import jsonpickle
+import logging
+import os
+import pprint
+import re
+import sys
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from urllib.request import urlopen
 
 class SDP(object):
     configFile = None
@@ -18,20 +19,20 @@ class SDP(object):
     sdpEndpoint = 'https://l9d48ixadl.execute-api.us-east-1.amazonaws.com/intense/v1'
     # sample SDP dict
     data = dict(
-        protocolVersion = 1,
-        nodeType = '',
-        provider = dict(
-            id = '',
-            name = ''
-        ),
-        certificates = [],
-        wallet = 'publicWalletAddress',
-        terms = 'Provider Terms',
-        services = {},
-    )
+                protocolVersion=1,
+                nodeType='',
+                provider=dict(
+                id='',
+                name=''
+                ),
+                certificates=[],
+                wallet='publicWalletAddress',
+                terms='Provider Terms',
+                services={},
+                )
 
     """SDP functions"""
-    def addService(self,cap):
+    def addService(self, cap):
         # Create new SDP service
         self.load(None)
         ret = False
@@ -44,7 +45,7 @@ class SDP(object):
             ret = s.checkConfig(cap)
 
         if ret:
-            self.data['services'][s.data['id']]=s.data
+            self.data['services'][s.data['id']] = s.data
 
     def getUsedServiceIds(self):
         serviceIds = []
@@ -52,15 +53,15 @@ class SDP(object):
             serviceIds.append(i['id'])
         return serviceIds
 
-    def editService(self,cap):
+    def editService(self, cap):
         # Revise existing SDP service
         self.load(None)
         ret = False
         while not ret:
-            ret = self.isConfigured()
+            ret = self.isConfigured(cap)
 
         if (not self.data['services'] or len(self.data['services']) == 0):
-            addService()
+            addService(cap, services)
             return
 
         print('Select a service to edit (enter the number only): ')
@@ -68,11 +69,11 @@ class SDP(object):
 
         for i in self.data['services']:
             print('%d: %s [%s] [cost %.8f] (ID %s)' % (count, i['name'], i['type'], i['cost'], i['id']))
-            count+=1
+            count += 1
 
         choice = input('Select a service to edit (enter the number only): ')
         if (choice.isnumeric()):
-            choice=int(choice) - 1
+            choice = int(choice) - 1
             if self.data['services'][choice]:
                 # Select service and begin editing
                 print('Editing service %s (ID %s)' % (self.data['services'][choice]['name'], self.data['services'][choice]['id']))
@@ -80,7 +81,7 @@ class SDP(object):
                 s = SDPService(self.getUsedServiceIds(), encoded, self.certsDir)
                 ret = False
                 while not ret:
-                    ret = s.checkConfig(cap)
+                    ret = s.checkConfig(cap, services)
 
                 if ret:
                     self.data['services'][choice] = s.data
@@ -89,7 +90,7 @@ class SDP(object):
         else:
             logging.error('Invalid selection')
 
-    def isConfigured(self,cap):
+    def isConfigured(self, cap):
         # Checks validity of data and forces configuration if invalid
         self.load(None)
 
@@ -105,7 +106,7 @@ class SDP(object):
                 return False
 
         if (len(self.data['provider']['id']) != 64 or not re.match(r'[a-zA-Z0-9]', self.data['provider']['id'])):
-            if not self.setProviderId(cap.providerId):
+            if not self.setProviderId(cap.providerid):
                 return False
 
         if(not self.data['provider']['name'] or len(self.data['provider']['name']) > 16):
@@ -128,10 +129,10 @@ class SDP(object):
 
         return True
 
-    def loadCertificate(self,ca=None):
+    def loadCertificate(self, ca=None):
         if (self.certsDir is None and ca is None):
-                logging.error('Failed to locate certificates!')
-                return False
+            logging.error('Failed to locate certificates!')
+            return False
         else:
             if (ca):
                 caCert = ca
@@ -170,11 +171,11 @@ class SDP(object):
         return False
 
     def setProviderId(self, providerid=None):
-        if (providerid==None):
+        if (providerid == None):
             print('Enter provider ID (PUBLIC KEY). This should come directly from `itnsdispatcher.py --generate-providerid FILE` - make sure it is the file ending in .public, not .seed or .private!')
             choice = input('[64 character hexadecimal] ').strip()
         else:
-            choice=providerid
+            choice = providerid
         if (len(choice) == 64 and re.match(r'^[a-zA-Z0-9]+$', choice)):
             self.data['provider']['id'] = choice
             return True
@@ -183,7 +184,7 @@ class SDP(object):
             return self.setProviderId()
 
     def setProviderTerms(self, terms=None):
-        if (terms==None):
+        if (terms == None):
             choice = input('Enter provider terms. These will be displayed to users. Up to 50000 characters. ').strip()[:50000]
         else:
             choice = terms
@@ -194,10 +195,10 @@ class SDP(object):
         return True
 
     def setWalletAddr(self, addr=None):
-        if (addr==None):
+        if (addr == None):
             choice = input('Enter wallet address. This wallet will receive all payments for services. ').strip()
         else:
-            choice=addr
+            choice = addr
         if (len(choice) != 97):
             logging.error('Wallets should be exactly 97 characters. Are you sure you entered a real wallet address?')
             return self.setWalletAddr()
@@ -209,7 +210,7 @@ class SDP(object):
         return True
 
     def setProviderName(self, name=None):
-        if (name==None):
+        if (name == None):
             choice = input('Enter provider name. This will be displayed to users. Use up to 16 alphanumeric characters, symbols allowed: ')
         else:
             choice = name
@@ -244,7 +245,7 @@ class SDP(object):
                 logging.error("Cannot write %s" % (self.configFile))
                 sys.exit(1)
 
-    def load(self, config, prefix = None):
+    def load(self, config, prefix=None):
         if self.dataLoaded:
             return
 
@@ -265,8 +266,7 @@ class SDP(object):
                 self.data = jsonpickle.decode(jsonStr)
             self.dataLoaded = True            
         except IOError:
-            logging.error("Cannot read %s" % (self.configFile))
-            sys.exit(1)
+            logging.error("Cannot read SDP file %s" % (self.configFile))
     def upload(self):
         """
         Upload JSON to SDP
@@ -324,51 +324,51 @@ class SDP(object):
 class SDPService(object):
     # sample SDPService dict
     data = dict(
-        id = None,
-        name = None,
-        type = None,
-        allowRefunds = False,
-        cost = 0.00000001,
-        downloadSpeed = None,
-        uploadSpeed = None,
-        firstPrePaidMinutes = 2,
-        subsequentPrePaidMinutes = 2,
-        firstVerificationsNeeded = 1,
-        subsequentVerificationsNeeded = 1,
-        proxy = dict(
-            certificates = [],
-            endpoints = [],
-            port = '',
-            terms = '',
-            policy = dict(
-                addresses = dict(
-                    blocked = []
+                id=None,
+                name=None,
+                type=None,
+                allowRefunds=False,
+                cost=0.00000001,
+                downloadSpeed=None,
+                uploadSpeed=None,
+                firstPrePaidMinutes=2,
+                subsequentPrePaidMinutes=2,
+                firstVerificationsNeeded=1,
+                subsequentVerificationsNeeded=1,
+                proxy=dict(
+                certificates=[],
+                endpoints=[],
+                port='',
+                terms='',
+                policy=dict(
+                addresses=dict(
+                blocked=[]
                 )
-            )
-        ),
-        vpn = dict(
-            certificates = [],
-            endpoints = [],
-            port = '',
-            terms = '',
-            policy = dict(
-                addresses = dict(
-                    blocked = []
                 )
-            ),
-            parameters = dict(
-                cyphers = [
-                    "DESX-CBC",
-                    "AES-256-CBC"
+                ),
+                vpn=dict(
+                certificates=[],
+                endpoints=[],
+                port='',
+                terms='',
+                policy=dict(
+                addresses=dict(
+                blocked=[]
+                )
+                ),
+                parameters=dict(
+                cyphers=[
+                "DESX-CBC",
+                "AES-256-CBC"
                 ],
-                mtuSize = 1
-            )
-        )
-    )
+                mtuSize=1
+                )
+                )
+                )
     existingServiceIds = []
     certsDir = None
 
-    def __init__(self, existingServiceIds_, thisService = None, certsDir = None):
+    def __init__(self, existingServiceIds_, thisService=None, certsDir=None):
         self.existingServiceIds = existingServiceIds_
 
         if (certsDir != None):
@@ -386,6 +386,7 @@ class SDPService(object):
     def checkConfig(self, cap):
         self.setId(cap.serviceId)
         ret = False
+        
         while not ret:
             ret = self.setName(cap.serviceName)
         ret = False
@@ -510,7 +511,7 @@ class SDPService(object):
 
         if (not choice and count == 0 and not validEndpointFound):
             if (endpoint):
-                    choice = endpoint
+                choice = endpoint
             else:
                 choice = input('Enter proxy/VPN endpoint in IP or FQDN format ')
 
@@ -779,7 +780,7 @@ class SDPService(object):
 
     def setName(self, name=None):
         
-        if (name==None):
+        if (name == None):
             print('Specify name of service [32 characters, numbers and spaces allowed] ')
 
         if self.data['name']:

@@ -30,17 +30,26 @@ class Service(object):
     Service class
     """
     
-    OPTS = ["a", "b"]
+    OPTS = dict()
     
     def __init__(self, id, json):
         self.id = id.upper()
         self.type = json["type"]
         self.name = json["name"]
         self.cost = json["cost"]
+        self.json = json
         self.dir = Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
         self.cfg=CONFIG.getService(self.id)
+        for o in self.OPTS:
+            if o in self.cfg:
+                logging.debug("Setting service %s parameter %s to %s" % (id,o,self.cfg[o]))
+            else:
+                logging.debug("Setting service %s parameter %s to default (%s)" % (id,o,self.OPTS[o]))
+                print(self.OPTS[o])
+                self.cfg[o] = "%s" % (self.OPTS[o])
         for c in self.cfg:
-            logging.debug("Setting service %s parameter %s to %s" % (id,c,self.cfg[c]))
+            if c not in self.OPTS.keys():
+                logging.warning("Unknown parameter %s for service %s" % (c,id))
         self.initphase = True
 
     def stop(self):
@@ -68,6 +77,8 @@ class Service(object):
                 return(None)
             
     def mgmtConnect(self, ip, port):
+        self.mgmtip = ip
+        self.mgmtport = port
         if (ip == "socket"):
             self.mgmt = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         else:
@@ -111,7 +122,7 @@ class Service(object):
         try:
             logging.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, msg))
             self.mgmt.send((msg + "\n").encode())
-        except socket.timeout:
+        except (socket.timeout, OSError) as o:
             pass
         else:
             pass
@@ -142,6 +153,13 @@ class ServiceHa(Service):
     """
     HAproxy service class
     """
+    
+    OPTS = dict(
+        backend_proxy_server = 'localhost:3128',
+        client_bind = 'localhost', client_port = 3128,
+        crt = None, key =None, crtkey = None,
+        max_connections = 2000, timeout = '10m', connect_timeout = '30s'
+    )
     
     def run(self):
         self.createConfig()
@@ -178,6 +196,9 @@ class ServiceHa(Service):
             l = self.getLine()
         
         return(self.isAlive())
+    
+    def addAuthId(self, authid):
+        self.mgmtWrite("add acl #20 " + authid + "\n")
         
     def createConfig(self):
         if (not os.path.exists(self.dir)):
@@ -193,21 +214,23 @@ class ServiceHa(Service):
             tmpl = tf.read()
         except (IOError, OSError):
             logging.error("Cannot open haproxy template file %s" % (tfile))
-        
+            
+        port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
-                          maxconn=2000,
-                          timeout="1m",
-                          ctimeout="15s",
+                          port=port,
+                          maxconn=self.cfg['max_connections'],
+                          timeout=self.cfg['timeout'],
+                          ctimeout=self.cfg['connect_timeout'],
                           f_logsocket=Config.PREFIX + '/var/log local0',
                           f_sock=self.mgmtfile,
-                          forward_proxy='127.0.0.1:3128',
+                          forward_proxy=self.cfg['backend_proxy_server'],
                           header='X-ITNS-PaymentID',
                           ctrluri='http://_ITNSVPN_',
                           f_dh=Config.PREFIX + '/etc/dhparam.pem',
                           cabase=Config.PREFIX + '/etc/ca/certs',
                           crtbase=Config.PREFIX + '/etc/ca/certs',
                           ctrldomain='_ITNSVPN_',
-                          f_site_pem=Config.PREFIX + '/etc/ca/certs/ha.both.pem',
+                          f_site_pem=self.cfg['crtkey'],
                           f_credit=Config.PREFIX + '/var/hasrv/credit-',
                           f_status=Config.PREFIX + '/etc/ha_info.http',
                           f_allow_src_ips=Config.PREFIX + '/etc/src_allow.ips',
@@ -230,15 +253,20 @@ class ServiceHa(Service):
         except (IOError, OSError):
             logging.error("Cannot open openvpn template file %s" % (tfile))
             sys.exit(1)
-        with open (Config.PREFIX + '/etc/ca/certs/ca.cert.pem', "r") as f_ca:
+        with open (Config.CAP.ca, "r") as f_ca:
             f_ca = "".join(f_ca.readlines())
+        port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
-                          server='1.2.3.4',
-                          port=11195,
+                          server=self.json['proxy'][0]['endpoint'],
+                          maxconn=self.cfg['max_connections'],
+                          timeout=self.cfg['timeout'],
+                          ctimeout=self.cfg['connect_timeout'],
+                          port=port,
                           f_ca=f_ca,
-                          ca=Config.PREFIX + '/etc/ca/certs/ca.cert.pem',
+                          ca=Config.CAP.ca,
                           header='X-ITNS-PaymentID',
-                          proxyport='3128',
+                          proxyport=self.cfg['client_port'],
+                          bindaddr=self.cfg['client_bind'],
                           paymentid='PaymentID')
         try:
             print(out)
@@ -250,6 +278,11 @@ class ServiceOvpn(Service):
     """
     Openvpn service class
     """ 
+    
+    OPTS =dict(
+        http_proxy = "localhost:3128",
+        crt = None, key = None, crtkey = None
+    )
     
     def run(self):
         self.createConfig()
@@ -450,7 +483,7 @@ class ServiceSyslog(Service):
 
 class Services(object):
     
-    def __init__(self):
+    def load(self):
         
         self.services = {}
         sdp = SDP()
@@ -467,7 +500,7 @@ class Services(object):
                     sys.exit(1)
             self.services[id.upper()] = so
         self.syslog = ServiceSyslog(Config.PREFIX + "/var/log")
-            
+ 
     def run(self):
         for id in self.services:
             s = self.services[id]
@@ -500,6 +533,10 @@ class Services(object):
             s.show()
             
     def get(self, id):
-        return(self.services[id.upper()])
+        key = "%s" % (id)
+        if key.upper() in self.services:
+            return(self.services[key.upper()])
+        else:
+            return(None)
 
 

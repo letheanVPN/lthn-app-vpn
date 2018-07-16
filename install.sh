@@ -1,6 +1,5 @@
 #!/bin/sh
 
-. build/env.sh
 ERRORS=false
 
 if [ "$USER" = "root" ]; then
@@ -51,10 +50,18 @@ sed -i 's^/opt/itns^'"$ITNS_PREFIX"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.p
 sed -i 's^/usr/sbin/openvpn^'"$OPENVPN_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
 sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
 
-# Copy configs
-(cd conf; for f in *tmpl *cfg *ips *doms *http; do
+# Copy dist configs
+(cd conf; for f in *tmpl *ips *doms *http; do
     sudo install -C -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./$f $INSTALL_PREFIX/$ITNS_PREFIX/etc/ 
 done)
+
+# Copy generated configs
+if [ -n "$FORCE" ]; then
+    sudo cp -va build/etc/* $INSTALL_PREFIX/$ITNS_PREFIX/etc/
+else
+    sudo cp -nva build/etc/* $INSTALL_PREFIX/$ITNS_PREFIX/etc/
+fi
+
 if ! [ -f $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.ini ]; then
     echo "ERROR: No dispatcher config file found. You have to create $INSTALL_PREFIX/$ITNS_PREFIX/etc/dispatcher.ini"
     echo "Use conf/dispatcher_example.ini as example"

@@ -25,19 +25,14 @@ else
 fi
 git checkout $BRANCH
 pip3 install -r requirements.txt
-./configure.sh  --runas-user "$USER" --with-capass "$CAPASS"  --with-cn "$CACN" --generate-ca --generate-dh --install-service
+./configure.sh --easy
 make install
-/opt/itns/bin/itnsdispatcher --generate-providerid /opt/itns/etc/provider
-providerid=$(cat /opt/itns/etc/provider.public)
 /opt/itns/bin/itnsdispatcher --sdp-provider-type $PROVTYPE \
-     --generate-sdp --sdp-provider-id "$providerid" \
-     --sdp-provider-name FakeProvider --sdp-wallet-address "$WALLET" \
-     --sdp-provider-ca /opt/itns/etc/ca/certs/ca.cert.pem --sdp-service-crt /opt/itns/etc/ca//certs/ha.cert.pem \
+     --generate-sdp --provider-name FakeProvider --sdp-wallet-address "$WALLET" \
+     --sdp-service-crt /opt/itns/etc/ca//certs/ha.cert.pem \
      --sdp-service-name proxy --sdp-service-id 1a --sdp-service-fqdn $ENDPOINT --sdp-service-port $PORT \
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 2 --sdp-service-verifications 1
-
-/opt/itns/bin/itnsdispatcher -d DEBUG --generate-server-configs
 
 sudo systemctl daemon-reload
 sudo systemctl enable squid

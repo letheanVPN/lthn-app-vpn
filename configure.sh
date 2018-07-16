@@ -10,7 +10,7 @@ ITNS_PREFIX=/opt/itns/
 
 # General usage help
 usage() {
-   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--generate-ca] [--generate-dh] [--generate-sdp] [--install-service]"
+   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet address] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--easy]"
    echo
    exit
 }
@@ -48,7 +48,7 @@ defaults() {
     findcmd openvpn OPENVPN_BIN optional
     findcmd openssl OPENSSL_BIN
     findcmd haproxy HAPROXY_BIN
-    if $HAPROXY_BIN -v |grep -qv "version 1.7"; then
+    if ! $HAPROXY_BIN -v | grep -q "version 1.7"; then
         echo "Your haproxy is outdated! You need at least 1.7 version:"
         $HAPROXY_BIN -v
         exit 1
@@ -59,6 +59,7 @@ defaults() {
 
     [ -z "$ITNS_USER" ] && ITNS_USER=root
     [ -z "$ITNS_GROUP" ] && ITNS_GROUP=root
+    wallet_address="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 }
 
 summary() {
@@ -134,26 +135,20 @@ generate_crt() {
 
 generate_env() {
     cat <<EOF
-ITNS_PREFIX="$ITNS_PREFIX"
-OPENVPN_BIN="$OPENVPN_BIN"
-PYTHON_BIN="$PYTHON_BIN"
-PIP_BIN="$PIP_BIN"
-SUDO_BIN="$SUDO_BIN"
-HAPROXY_BIN="$HAPROXY_BIN"
-OPENSSL_BIN="$OPENSSL_BIN"
-ITNS_USER="$ITNS_USER"
-ITNS_GROUP="$ITNS_GROUP"
+ITNS_PREFIX=$ITNS_PREFIX
+OPENVPN_BIN=$OPENVPN_BIN
+PYTHON_BIN=$PYTHON_BIN
+PIP_BIN=$PIP_BIN
+SUDO_BIN=$SUDO_BIN
+HAPROXY_BIN=$HAPROXY_BIN
+OPENSSL_BIN=$OPENSSL_BIN
+ITNS_USER=$ITNS_USER
+ITNS_GROUP=$ITNS_GROUP
 
-export ITNS_PREFIX OPENVPN_BIN HAPROXY_BIN OPENSSL_BIN ITNS_USER ITNS_GROUP
 EOF
 }
 
-if [ -f build/env.sh ]; then
-    defaults=1
-    . build/env.sh
-else
-    defaults
-fi
+defaults
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -216,6 +211,16 @@ while [[ $# -gt 0 ]]; do
         shift
         shift
     ;;
+    --with-wallet)
+        walet_address="$2"
+        shift
+        shift
+    ;;
+    --generate-providerid)
+        generate_providerid=1
+        generate_ini=1
+        shift
+    ;;
     --generate-ca)
         generate_ca=1
         shift
@@ -224,12 +229,23 @@ while [[ $# -gt 0 ]]; do
         generate_dh=1
         shift
     ;;
-    --generate-sdp)
-        generate_sdp=1
+    --generate-ini)
+        generate_ini=1
         shift
     ;;
     --install-service)
         install_service=1
+        shift
+    ;;
+    --easy)
+        cert_pass="1234"
+        cert_cn="ITNSEasyDeploy"
+        ITNS_USER="$USER"
+        install_service=1
+        generate_providerid=1
+        generate_ca=1
+        generate_ini=1
+        generate_dh=1
         shift
     ;;
     *)
@@ -247,7 +263,7 @@ data_dir=${ITNS_PREFIX}/var/
 tmp_dir=${ITNS_PREFIX}/tmp/
 
 mkdir -p build
-if [ -n "$generate_ca" ] && ! [ -f build/ca/index.txt ]; then
+if [ -n "$generate_ca" ] && ! [ -f build/etc/ca/index.txt ]; then
     export cert_pass cert_cn
     if [ -z "$cert_pass" ] || [ -z "$cert_cn" ] ; then
         echo "You must specify --with-capass yourpassword --with_cn CN!"
@@ -257,39 +273,51 @@ if [ -n "$generate_ca" ] && ! [ -f build/ca/index.txt ]; then
     	echo "Generating with default password!"
     fi
     (
-    rm -rf build/ca
-    mkdir -p build/ca
-    generate_ca build/ca/ "$cert_cn"
+    rm -rf build/etc/ca
+    mkdir -p build/etc/ca
+    generate_ca build/etc/ca/ "$cert_cn"
     generate_crt openvpn "$cert_cn.openvpn"
     generate_crt ha "$cert_cn.ha"
     )
 fi
 
+mkdir -p build/etc
+
 if [ -n "$generate_dh" ]; then
-    if ! [ -f  build/dhparam.pem ]; then 
-      "$OPENSSL_BIN" dhparam -out build/dhparam.pem 2048
-    fi
-else
-    if [ -f etc/dhparam.pem ]; then
-        cp etc/dhparam.pem build/
+    if ! [ -f  build/etc/dhparam.pem ]; then 
+      "$OPENSSL_BIN" dhparam -out build/etc/dhparam.pem 2048
     fi
 fi
 
-if [ -n "$generate_sdp" ]; then
-    "$PYTHON_BIN" server/dispatcher/config.py sdp
+if [ -n "$generate_providerid" ]; then
+    if ! [ -f build/etc/provider.public ]; then
+        "$PYTHON_BIN" server/dispatcher/itnsdispatcher.py --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider
+    fi
+fi
+
+if [ -n "$generate_ini" ]; then
+    sed \
+        -e "s#{ca}#${ITNS_PREFIX}/etc/ca/certs/ca.cert.pem#g" \
+        -e "s#{providerid}#$(cat build/etc/provider.public)#g" \
+        -e "s#{providerkey}#$(cat build/etc/provider.private)#g" \
+        -e "s#{hacrt}#${ITNS_PREFIX}/etc/ca/certs/ha.cert.pem#g" \
+        -e "s#{vpncrt}#${ITNS_PREFIX}/etc/ca/certs/vpn.cert.pem#g" \
+        -e "s#{hakey}#${ITNS_PREFIX}/etc/ca/private/ha.cert.pem#g" \
+        -e "s#{vpnkey}#${ITNS_PREFIX}/etc/ca/private/ha.cert.pem#g" \
+        -e "s#{haboth}#${ITNS_PREFIX}/etc/ca/certs/ha.both.pem#g" \
+        -e "s#{vpnboth}#${ITNS_PREFIX}/etc/ca/certs/vpn.both.pem#g" \
+        -e "s#{wallet_address}#$wallet_address#g" \
+      <conf/dispatcher.ini.tmpl >build/etc/dispatcher.ini 
 fi
 
 if [ -n "$install_service" ]; then
-    cp conf/itnsdispatcher.service build/
+    mkdir -p build/etc/systemd/system
+    cp conf/itnsdispatcher.service build/etc/systemd/system/
 fi
 
+generate_env >env.mk
 summary
-generate_env >| build/env.sh
 
 if [ -n "$PARMS" ]; then
     echo "./configure.sh $PARMS" >configure.log
 fi
-
-echo "Used build/env.sh as env. Remove that file for reconfigure."
-echo "You can continue by sudo ./install.sh"
-echo

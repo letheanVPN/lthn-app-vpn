@@ -13,7 +13,7 @@ global
         ssl-default-bind-options no-sslv3
 
 frontend icproxy
-        bind            :8080 ssl crt {f_site_pem}
+        bind            :{port} ssl crt {f_site_pem}
         mode            http
         log             global
         option          httplog
@@ -44,8 +44,8 @@ frontend icproxy
 
 backend http-proxy
         mode            http
-        timeout connect 5s
-        timeout server  5s
+        timeout connect {ctimeout}
+        timeout server  {timeout}
         retries         2
         option          httplog
 

@@ -19,6 +19,10 @@ class Config(object):
     CONFIGFILE = None
     SDPFILE = None
     AUTHIDSFILE = None
+    MAINSLEEP = 0.1
+    T_SAVE = 10 # How often to save authids (sec)
+    T_CLEANUP = 30 # How often to cleanup stale authids
+    
     # configargparse results
     CAP = None
     

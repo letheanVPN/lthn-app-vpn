@@ -48,8 +48,8 @@ defaults() {
     findcmd openvpn OPENVPN_BIN optional
     findcmd openssl OPENSSL_BIN
     findcmd haproxy HAPROXY_BIN
-    if ! $HAPROXY_BIN -v | grep -q "version 1.7"; then
-        echo "Your haproxy is outdated! You need at least 1.7 version:"
+    if ! $HAPROXY_BIN -v | grep -qe "version 1.7|version 1.6"; then
+        echo "Your haproxy is outdated! You need at least 1.6 version:"
         $HAPROXY_BIN -v
         exit 1
     fi

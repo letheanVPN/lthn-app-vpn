@@ -3,6 +3,11 @@
 set -e
 set -v
 
+if [ "$USER" = "root" ]; then
+    echo "Do not run this as root! It will invoke sudo automatically. Exiting!"
+    exit 2
+fi
+
 # Set defaults. Can be overriden by env variables
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$CAPASS" ] && CAPASS=1234

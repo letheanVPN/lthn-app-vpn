@@ -173,6 +173,34 @@ optional arguments:
 
 ```
 
+## Management interface
+Dispatcher has management interface available by default in /opt/itns/var/mgmt.
+You can manually add or remove authids and see its status.
+```
+echo "help" | socat stdio /opt/itns/var/mgmt
+show authid [authid]
+show session [sessionid]
+topup authid itns
+spend authid itns
+add authid serviceid
+del authid authid
+
+```
+
+Example1: Add static authid:
+```
+echo "add authid authid2 1a" | socat stdio /opt/itns/var/mgmt
+Added (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:07 2018, balance=100000.000000, perminute=0.001000, minsleft=100000000.000000, charged_count=1, discharged_count=0
+
+```
+
+Example2: Topup authid:
+```
+ echo "topup authid2 1" | socat stdio /opt/itns/var/mgmt
+TopUp (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:47 2018, balance=100001.000000, perminute=0.001000, minsleft=100001000.000000, charged_count=2, discharged_count=0
+
+```
+
 ## Directories
 
 ### client

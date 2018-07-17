@@ -15,18 +15,25 @@ import pickle
 import binascii
 from util import *
 from sdp import *
-from services import Services, Service, SERVICES
-from authids import AuthIds, AuthId, AUTHIDS
-from sessions import Sessions, SESSIONS
-from config import Config
+import services
+import authids
+import sessions
+import config
 import configargparse
+
+def getFromWallet():
+        """Connect to wallet and ask for all self.authids from last height"""
+		
+        # Hardcoded payment
+        s1 = authids.AuthId("authid1", "1A", 1)
+        authids.AUTHIDS.update(s1)
 
 # Starting here
 def main(argv):
     p = configargparse.getArgumentParser(ignore_unknown_config_file_keys=True, fromfile_prefix_chars='@')
-    p.add('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=Config.CONFIGFILE, help='Config file')
+    p.add('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=config.Config.CONFIGFILE, help='Config file')
     p.add('-h', '--help',                    metavar='HELP', required=None, action='store_const', dest='h', const='h', help='Help')
-    p.add('-s', '--sdp',                     metavar='SDPFILE', required=None, default=Config.SDPFILE, help='SDP file')
+    p.add('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
     p.add('-d', '--debug',                   dest='d', metavar='LEVEL', help='Debug level', default='WARNING')
     p.add('-v', '--verbose',                 metavar='VERBOSITY', action='store_const', dest='v', const='v', help='Be more verbose on output')
     p.add('-G', '--generate-providerid',     dest='G', metavar='PREFIX', required=None, help='Generate providerid files')
@@ -59,25 +66,25 @@ def main(argv):
     p.add(       '--provider-terms',            dest='providerTerms', metavar='TEXT', required=None, help='Provider terms')
 
     cfg = p.parse_args()
-    Config.CAP = cfg
-    Config.CONFIGFILE = cfg.config
-    Config.SDPFILE = cfg.sdp
+    config.Config.CAP = cfg
+    config.Config.CONFIGFILE = cfg.config
+    config.Config.SDPFILE = cfg.sdp
     if (cfg.d):
-        Config.LOGLEVEL = cfg.d
+        config.Config.LOGLEVEL = cfg.d
     if (cfg.v):
-        Config.VERBOSE = True
+        config.Config.VERBOSE = True
     # Initialise logger
     Log = logging.getLogger()
     Log.setLevel(cfg.d)
     # Initialise config
-    CONFIG = Config("dummy")
+    config.CONFIG = config.Config("dummy")
     # Initialise services
-    SERVICES = Services()
+    services.SERVICES = services.Services()
 
     if (cfg.h):
         print(p.format_help())
         if (Config.VERBOSE):
-            print(p.format_values()) 
+            print(p.format_values())
         sys.exit()
         
     if (cfg.G):
@@ -97,45 +104,58 @@ def main(argv):
         sys.exit()
     
     if (cfg.S):
-        SERVICES.load()
+        services.SERVICES.load()
         # Generate config files for Openvpn and Haproxy only and exit
-        SERVICES.createConfigs()
+        services.SERVICES.createConfigs()
         sys.exit()
         
     if (cfg.C):
-        SERVICES.load()
+        services.SERVICES.load()
         # Generate client config for service id and put to stdout
         id = cfg.C
-        SERVICES.get(id).createClientConfig()
+        services.SERVICES.get(id).createClientConfig()
         sys.exit()
         
     if (cfg.D):
-        CONFIG=Config("init", SERVICES)
+        config.CONFIG=Config("init", SERVICES)
         sys.exit()
         
     # Initialise authids
-    AUTHIDS = AuthIds()
-    tmpauthids=AUTHIDS.load()
+    authids.AUTHIDS = authids.AuthIds()
+    tmpauthids=authids.AUTHIDS.load()
     if (tmpauthids):
-        AUTHIDS=tmpauthids
-
-    SERVICES.load()
-    # Initialise sessions
-    SESSIONS = Sessions()
-    # Show services from SDP
-    SERVICES.show()
-    # Run all services
-    SERVICES.run()
+        authids.AUTHIDS=tmpauthids
     
+    services.SERVICES.load()
+    # Initialise sessions
+    sessions.SESSIONS = sessions.Sessions()
+    # Show services from SDP
+    services.SERVICES.show()
+    # Run all services
+    services.SERVICES.run()
+    
+    getFromWallet()
+    
+    overaltime = 0
+    savedcount = 0
+    cleanupcount = 0
+    starttime = time.time()
+    loopstart = starttime
     while (1):
-        start = time.time()
-        SERVICES.orchestrate()
-        #AUTHIDS.getFromWallet(SERVICES)
-        #AUTHIDS.show()
-        time.sleep(0.1)
-        SERVICES.orchestrate()
-        end = time.time()
-        AUTHIDS.save()
+        looptime = time.time() - loopstart
+        loopstart = time.time()
+        time.sleep(config.Config.MAINSLEEP)
+        services.SERVICES.orchestrate()
+        
+        if (overaltime / config.Config.T_SAVE > savedcount):
+            authids.AUTHIDS.save()
+            savedcount = savedcount + 1
+            
+        if (overaltime / config.Config.T_CLEANUP > cleanupcount):
+            authids.AUTHIDS.cleanup()
+            cleanupcount = cleanupcount + 1
+            
+        overaltime = time.time() - starttime
         
 if __name__ == "__main__":
     main(sys.argv[1:])

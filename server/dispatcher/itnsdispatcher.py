@@ -117,7 +117,7 @@ def main(argv):
         sys.exit()
         
     if (cfg.D):
-        config.CONFIG=Config("init", SERVICES)
+        config.CONFIG=config.Config("init", SERVICES)
         sys.exit()
         
     # Initialise authids

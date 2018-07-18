@@ -130,7 +130,7 @@ class ServiceHa(Service):
         except (IOError, OSError):
             logging.error("Cannot open openvpn template file %s" % (tfile))
             sys.exit(1)
-        with open (config.Config.CAP.ca, "r") as f_ca:
+        with open (config.Config.CAP.providerCa, "r") as f_ca:
             f_ca = "".join(f_ca.readlines())
         port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
@@ -140,7 +140,7 @@ class ServiceHa(Service):
                           ctimeout=self.cfg['connect_timeout'],
                           port=port,
                           f_ca=f_ca,
-                          ca=config.Config.CAP.ca,
+                          ca=config.Config.CAP.providerCa,
                           header='X-ITNS-PaymentID',
                           proxyport=self.cfg['client_port'],
                           bindaddr=self.cfg['client_bind'],

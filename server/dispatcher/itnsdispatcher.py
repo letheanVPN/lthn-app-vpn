@@ -83,7 +83,7 @@ def main(argv):
 
     if (cfg.h):
         print(p.format_help())
-        if (Config.VERBOSE):
+        if (config.Config.VERBOSE):
             print(p.format_values())
         sys.exit()
         

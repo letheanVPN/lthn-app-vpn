@@ -18,6 +18,9 @@ fi
 [ -z "$WALLET" ] && WALLET="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 [ -z "$EMAIL" ] && EMAIL=""
 
+export BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL
+
+(
 sudo apt update
 sudo apt-get -y upgrade
 sudo apt-get install -y joe less mc git python3 python3-pip haproxy openvpn tmux squid
@@ -54,7 +57,6 @@ sudo systemctl enable itnsdispatcher
 sudo systemctl restart itnsdispatcher
 
 cat /opt/itns/etc/sdp.json
-
-if [ -n "$EMAIL" ]; then
-   cat /opt/itns/etc/sdp.json | mail -s "VPN node created. See SDP in email." "$EMAIL"
+) 2>&1 | if [ -n "$EMAIL" ]; then
+   mail -s "VPN node created. See log in email." "$EMAIL"
 fi

@@ -57,6 +57,8 @@ sudo systemctl enable itnsdispatcher
 sudo systemctl restart itnsdispatcher
 
 cat /opt/itns/etc/sdp.json
-) 2>&1 | if [ -n "$EMAIL" ]; then
-   mail -s "VPN node created. See log in email." "$EMAIL"
+) 2>&1 | tee easy.log 
+
+if [ -n "$EMAIL" ]; then
+   cat easy.log | mail -s "VPN node created on $(uname -n)." "$EMAIL"
 fi

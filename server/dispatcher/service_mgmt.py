@@ -5,6 +5,7 @@ import logging
 import re
 import authids
 import services
+import sessions
 
 class ServiceMgmt(Service):
     
@@ -43,7 +44,7 @@ class ServiceMgmt(Service):
         else:
             pass
         if (line != ""):
-            logging.debug("%s[%s]-mgmt-in: %s" % (self.type, self.id, line))
+            logging.debug("%s[%s]-mgmt-in: %s" % (self.type, self.id, repr(line)))
             self.mgmtEvent(line)
             return(line)
         else:
@@ -51,6 +52,7 @@ class ServiceMgmt(Service):
         
     def mgmtWrite(self, msg, inside=None):
         try:
+            logging.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, repr(msg)))
             self.conn.send(msg.encode("utf-8"))
         except socket.timeout:
             pass
@@ -60,16 +62,6 @@ class ServiceMgmt(Service):
             pass
         
     def mgmtEvent(self, msg):
-        p = re.search("^help", msg)
-        if (p):
-            self.mgmtWrite("show authid [authid]\n")
-            self.mgmtWrite("show session [sessionid]\n")
-            self.mgmtWrite("topup authid itns\n")
-            self.mgmtWrite("spend authid itns\n")
-            self.mgmtWrite("add authid serviceid\n")
-            self.mgmtWrite("del authid authid\n")
-            self.conn.close()
-            return()
         p = re.search("^show authid (.*)", msg)
         if (p):
             a = p.group(1)
@@ -79,7 +71,7 @@ class ServiceMgmt(Service):
                 self.mgmtWrite("Bad authid.")
             self.conn.close()
             return()
-        p = re.search("^show authid", msg)
+        p = re.search("^show authid$", msg)
         if (p):
             self.showAuthIds()
             self.conn.close()
@@ -111,14 +103,55 @@ class ServiceMgmt(Service):
             self.delAuthId(a)
             self.conn.close()
             return()
-        self.mgmtWrite("Unknown command!\n")
+        p = re.search("^del authid (.*)", msg)
+        if (p):
+            a = p.group(1)
+            self.delAuthId(a)
+            self.conn.close()
+            return()
+        p = re.search("^show session (.*)", msg)
+        if (p):
+            s = p.group(1)
+            self.showSession(s)
+            self.conn.close()
+            return()
+        p = re.search("^show session$", msg)
+        if (p):
+            self.showSessions()
+            self.conn.close()
+            return()
+        p = re.search("^del session (.*)", msg)
+        if (p):
+            s = p.group(1)
+            self.delSessions(s)
+            self.conn.close()
+            return()
+        p = re.search("^help", msg)
+        if (not p):
+            self.mgmtWrite("Unknown command!\n")
+        self.mgmtWrite("show authid [authid]\n")
+        self.mgmtWrite("show session [sessionid]\n")
+        self.mgmtWrite("del session sessionid\n")
+        self.mgmtWrite("topup authid itns\n")
+        self.mgmtWrite("spend authid itns\n")
+        self.mgmtWrite("add authid serviceid\n")
+        self.mgmtWrite("del authid authid\n")
         self.conn.close()
+        return()
+        
+    def showSessions(self):
+        self.mgmtWrite(sessions.SESSIONS.toString())
+        
+    def showSession(self, id):
+        if sessions.SESSIONS.get(id):
+            self.mgmtWrite(sessions.SESSIONS.get(id).toString())
         
     def showAuthIds(self):
         self.mgmtWrite(authids.AUTHIDS.toString())
     
     def showAuthId(self,id):
-        self.mgmtWrite(authids.AUTHIDS.get(id).toString())
+        if authids.AUTHIDS.get(id):
+            self.mgmtWrite(authids.AUTHIDS.get(id).toString())
         
     def addAuthId(self, id, sid):
         if (authids.AUTHIDS.get(id)):

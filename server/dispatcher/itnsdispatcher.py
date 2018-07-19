@@ -119,14 +119,9 @@ def main(argv):
     if (cfg.D):
         config.CONFIG=config.Config("init", services.SERVICES)
         sys.exit()
-        
-    # Initialise authids
-    authids.AUTHIDS = authids.AuthIds()
-    tmpauthids=authids.AUTHIDS.load()
-    if (tmpauthids):
-        authids.AUTHIDS=tmpauthids
     
     services.SERVICES.load()
+        
     # Initialise sessions
     sessions.SESSIONS = sessions.Sessions()
     # Show services from SDP
@@ -134,6 +129,12 @@ def main(argv):
     # Run all services
     services.SERVICES.run()
     
+    # Initialise authids
+    authids.AUTHIDS = authids.AuthIds()
+    tmpauthids=authids.AUTHIDS.load()
+    if (tmpauthids):
+        authids.AUTHIDS=tmpauthids
+                
     getFromWallet()
     
     overaltime = 0
@@ -159,3 +160,4 @@ def main(argv):
         
 if __name__ == "__main__":
     main(sys.argv[1:])
+    

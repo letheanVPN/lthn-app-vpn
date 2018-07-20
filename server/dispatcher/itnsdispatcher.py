@@ -7,7 +7,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib'
 
 import ed25519
 import getopt
+import log
 import logging
+import logging.config
 import atexit
 from pprint import pprint
 import time
@@ -19,6 +21,7 @@ import services
 import authids
 import sessions
 import config
+import log
 import configargparse
 
 def getFromWallet():
@@ -34,7 +37,11 @@ def main(argv):
     p.add('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=config.Config.CONFIGFILE, help='Config file')
     p.add('-h', '--help',                    metavar='HELP', required=None, action='store_const', dest='h', const='h', help='Help')
     p.add('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
-    p.add('-d', '--debug',                   dest='d', metavar='LEVEL', help='Debug level', default='WARNING')
+    p.add('-l', '--log-level',               dest='d', metavar='LEVEL', help='Log level', default='WARNING')
+    p.add('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
+    p.add(      '--cleanup-time',            dest='ct', metavar='SEC', help='Cleanup frequency', default=config.CONFIG.T_CLEANUP, type=int)
+    p.add(      '--save-time',               dest='st', metavar='SEC', help='Save authid frequency', default=config.CONFIG.T_SAVE, type=int)
+    p.add('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
     p.add('-v', '--verbose',                 metavar='VERBOSITY', action='store_const', dest='v', const='v', help='Be more verbose on output')
     p.add('-G', '--generate-providerid',     dest='G', metavar='PREFIX', required=None, help='Generate providerid files')
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
@@ -69,13 +76,20 @@ def main(argv):
     config.Config.CAP = cfg
     config.Config.CONFIGFILE = cfg.config
     config.Config.SDPFILE = cfg.sdp
-    if (cfg.d):
-        config.Config.LOGLEVEL = cfg.d
-    if (cfg.v):
-        config.Config.VERBOSE = True
-    # Initialise logger
-    Log = logging.getLogger()
-    Log.setLevel(cfg.d)
+    config.Config.d = cfg.d
+    config.Config.a = cfg.a
+    config.Config.T_SAVE = cfg.st
+    config.Config.T_CLEANUP = cfg.ct
+    
+    if (cfg.lc):
+        logging.config.fileConfig(cfg.lc)
+        log.L = log.Log(level=config.Config.d)
+        log.A = log.Audit(level=config.Config.d)
+    else:
+        log.L = log.Log(level=config.Config.d)
+        ah = logging.FileHandler(config.Config.a)
+        log.A = log.Audit(handler=ah)
+    
     # Initialise config
     config.CONFIG = config.Config("dummy")
     # Initialise services
@@ -100,7 +114,7 @@ def main(argv):
             print("Your providerid keys are stored in files %s, %s, %s." % (privatef + ".private", privatef + ".public", privatef + ".seed"))
             print("You must edit your ini file.")
         except (IOError, OSError):
-            logging.error("Cannot open/write %s" % (privatef))
+            log.L.error("Cannot open/write %s" % (privatef))
         sys.exit()
     
     if (cfg.S):
@@ -136,6 +150,7 @@ def main(argv):
         authids.AUTHIDS=tmpauthids
                 
     getFromWallet()
+    sessions.SESSIONS.add('authid1','1.2.3.4','222')
     
     overaltime = 0
     savedcount = 0
@@ -154,6 +169,7 @@ def main(argv):
             
         if (overaltime / config.Config.T_CLEANUP > cleanupcount):
             authids.AUTHIDS.cleanup()
+            sessions.SESSIONS.refresh()
             cleanupcount = cleanupcount + 1
             
         overaltime = time.time() - starttime

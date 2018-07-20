@@ -15,30 +15,8 @@ global
 frontend ssltunnel
         bind            :{port} ssl crt {f_site_pem}
         mode            http
-        log             global
-        option          httplog
-        option          http_proxy
-	option          logasap
-        option          contstats
-	option		http-keep-alive
-        maxconn         {maxconn}
-        timeout client  {timeout}
-
-	capture request header {header} len 64
-        stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
-
-        acl server-domain url_dom {ctrldomain}
-        http-request allow if server-domain
-        use_backend server if server-domain
-
-        # Default is to proxy connection
-        default_backend preproxy
-
-frontend cleartunnel
-        bind            127.0.0.1:{port}
-        mode            http
-        log             global
-        option          httplog
+        log             {f_logsocket}
+        option         httplog
         option          http_proxy
 	option          logasap
         option          contstats

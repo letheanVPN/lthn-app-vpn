@@ -3,7 +3,7 @@ import config
 import os
 import sys
 import re
-import logging
+import log
 from subprocess import Popen
 from subprocess import PIPE
 ON_POSIX = 'posix' in sys.builtin_module_names
@@ -32,13 +32,13 @@ class ServiceOvpn(Service):
                 self.pid = int(p.readline().strip())
         else:
             self.pid = self.process.pid
-        logging.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
+        log.L.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
         self.stdout = select.poll()
         self.stderr = select.poll()
         self.stdout.register(self.process.stdout, select.POLLIN)
         self.stderr.register(self.process.stderr, select.POLLIN)
         self.mgmtConnect("127.0.0.1", "11112")
-        logging.warning("Started service %s[%s]" % (self.name, self.id))
+        log.L.warning("Started service %s[%s]" % (self.name, self.id))
         
     def mgmtAuthClient(self, cid, kid):
         global AUTHIDS
@@ -69,11 +69,11 @@ class ServiceOvpn(Service):
             msg = self.mgmtRead()
             
         if (username == password and AUTHIDS.get(username)):
-            logging.warning("Client %s authorized with %s." % (untrusted_ip, username))
+            log.L.warning("Client %s authorized with %s." % (untrusted_ip, username))
             self.mgmtWrite("client-auth %s %s\r\n" % (cid, kid))
             self.mgmtWrite("END\r\n")
         else:
-            logging.warning("Bad username/password %s/%s" % (username, password))
+            log.L.warning("Bad username/password %s/%s" % (username, password))
             self.mgmtWrite("client-deny %s %s \"Bad auth\"\r\n" % (cid, kid))
         
     def mgmtEvent(self, msg):
@@ -90,7 +90,7 @@ class ServiceOvpn(Service):
             l = self.mgmtRead()
             
     def stop(self):
-        logging.warning("Stopped service %s[%s]" % (self.name, self.id))
+        log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
         return()
     
     def orchestrate(self):
@@ -102,7 +102,7 @@ class ServiceOvpn(Service):
             self.initphase = None
         l = self.getLine()
         while (l is not None):
-            logging.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
+            log.L.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
             l = self.getLine()
         
         return(self.isAlive())
@@ -120,7 +120,7 @@ class ServiceOvpn(Service):
             tf = open(tfile, "rb")
             tmpl = tf.read()
         except (IOError, OSError):
-            logging.error("Cannot open openvpn template file %s" % (tfile))
+            log.L.error("Cannot open openvpn template file %s" % (tfile))
         with open (Config.PREFIX + '/etc/ca/certs/ca.cert.pem', "r") as f:
             f_ca = "".join(f.readlines())
         with open (Config.PREFIX + '/etc/ca/certs/openvpn.cert.pem', "r") as f:
@@ -153,8 +153,8 @@ class ServiceOvpn(Service):
             cf = open(self.cfgfile, "wb")
             cf.write(out.encode())
         except (IOError, OSError):
-            logging.error("Cannot write openvpn config file %s" % (self.cfgfile))
-        logging.info("Created openvpn config file %s" % (self.cfgfile))
+            log.L.error("Cannot write openvpn config file %s" % (self.cfgfile))
+        log.L.info("Created openvpn config file %s" % (self.cfgfile))
         
     def createClientConfig(self):
         tfile = Config.PREFIX + "/etc/openvpn_client.tmpl"
@@ -162,7 +162,7 @@ class ServiceOvpn(Service):
             tf = open(tfile, "rb")
             tmpl = tf.read()
         except (IOError, OSError):
-            logging.error("Cannot open openvpn template file %s" % (tfile))
+            log.L.error("Cannot open openvpn template file %s" % (tfile))
             sys.exit(1)
         with open (Config.PREFIX + '/etc/ca/certs/ca.cert.pem', "r") as f:
             f_ca = "".join(f.readlines())
@@ -187,5 +187,5 @@ class ServiceOvpn(Service):
             print(out)
             sys.exit()
         except (IOError, OSError):
-            logging.error("Cannot write openvpn config file")
+            log.L.error("Cannot write openvpn config file")
 

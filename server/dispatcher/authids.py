@@ -1,6 +1,6 @@
 
 import config
-import logging
+import log
 import os
 import pickle
 import services
@@ -25,10 +25,11 @@ class AuthId(object):
         if (services.SERVICES.get(serviceid)):
             self.cost = services.SERVICES.get(serviceid).getCost()
         else:
-            logging.warning("Dropping authid %s (serviceid %s does not exists)" % (authid, serviceid))
+            log.L.warning("Dropping authid %s (serviceid %s does not exists)" % (authid, serviceid))
             return(None)
         if (balance > 0):
             self.topUp(balance)
+        log.A.audit(log.A.AUTHID, log.A.ADD, authid, "init, balance=%s" % (balance))
         self.discharged_count = 0
         
     def getId(self):
@@ -38,7 +39,7 @@ class AuthId(object):
         return(self.serviceid)
     
     def show(self):
-        logging.info("""PaymentId %s:
+        log.L.info("""PaymentId %s:
             serviceid %s,
             created at %s
             modified at %s
@@ -59,7 +60,8 @@ class AuthId(object):
             self.lastmodify = time.time()
             self.lastcharge = time.time()
             self.charged_count += 1
-            logging.debug("Authid %s: Topup %f, new balance %f" % (self.getId(), itns, self.balance))
+            log.L.debug("Authid %s: Topup %f, new balance %f" % (self.getId(), itns, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,balance=%s" % (self.balance))
         for s in services.SERVICES.getAll():
             services.SERVICES.get(s).addAuthId(self.getId())
     
@@ -69,7 +71,8 @@ class AuthId(object):
             self.lastmodify = time.time()
             self.lastdisCharge = time.time()
             self.discharged_count += 1
-            logging.debug("Authid %s: Spend %f, new balance %f" % (self.getId(), itns, self.balance))
+            log.L.debug("Authid %s: Spend %f, new balance %f" % (self.getId(), itns, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MOD, authid, "spend,balance=" + self.balance)
         if (self.balance <= 0):
             for s in services.SERVICES.getAll():
                 services.SERVICES.get(s).delAuthId(self.getId())
@@ -91,7 +94,7 @@ class AuthIds(object):
         self.lastmodify = time.time()
         
     def add(self, paymentid):
-        logging.warning("New authid %s" % (paymentid.getId()))
+        log.L.warning("New authid %s" % (paymentid.getId()))
         self.authids[paymentid.getId()] = paymentid
         
     def update(self, paymentid):
@@ -117,8 +120,11 @@ class AuthIds(object):
 
     def remove(self, paymentid):
         if (self.get(paymentid)):
-            logging.warning("Removing authid %s (balance=%s)" % (paymentid, self.get(paymentid).getBalance()))
-            self.spend(paymentid, self.get(paymentid).getBalance())
+            log.L.warning("Removing authid %s (balance=%s)" % (paymentid, self.get(paymentid).getBalance()))
+            log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%s" % (self.get(paymentid).getBalance()))
+            for s in services.SERVICES.getAll():
+                services.SERVICES.get(s).delAuthId(paymentid)
+            self.authids.pop(paymentid)
         
     def toString(self):
         str = "%d ids, last updated %s\n" % (len(self.authids), timefmt(self.lastmodify))
@@ -127,7 +133,7 @@ class AuthIds(object):
         return(str)
         
     def show(self):
-        logging.warning("Authids: %d ids, last updated %s" % (len(self.authids), timefmt(self.lastmodify)))
+        log.L.warning("Authids: %d ids, last updated %s" % (len(self.authids), timefmt(self.lastmodify)))
         for id, paymentid in self.authids.items():
             paymentid.show()
         
@@ -140,18 +146,18 @@ class AuthIds(object):
                 deleted += 1
             else:
                 fresh += 1
-        logging.info("Authids clean: %d deleted, %d fresh" % (deleted, fresh))
+        log.L.info("Authids cleanup: %d deleted, %d fresh" % (deleted, fresh))
         
     def load(self):
         if (os.path.isfile(config.Config.AUTHIDSFILE)):
             try:
-                logging.info("Trying to load authids db from %s" % (config.Config.AUTHIDSFILE))
+                log.L.info("Trying to load authids db from %s" % (config.Config.AUTHIDSFILE))
                 aids = pickle.load(open(config.Config.AUTHIDSFILE, "rb"))
                 for id in aids.getAll():
                     aids.get(id).topUp(0)
                 return(aids)
             except (OSError, IOError) as e:
-                logging.warning("Error reading or creating authids db %s" % (config.Config.AUTHIDSFILE))
+                log.L.warning("Error reading or creating authids db %s" % (config.Config.AUTHIDSFILE))
                 sys.exit(2)
         else:
             self.save()
@@ -159,6 +165,6 @@ class AuthIds(object):
     def save(self):
         self.cleanup()
         self.lastmodify = time.time()
-        logging.info("Saving authids db into %s" % (config.Config.AUTHIDSFILE))
+        log.L.info("Saving authids db into %s" % (config.Config.AUTHIDSFILE))
         with open(config.Config.AUTHIDSFILE, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)

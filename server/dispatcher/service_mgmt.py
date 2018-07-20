@@ -1,7 +1,7 @@
 from service import Service
 import os
 import socket
-import logging
+import log
 import re
 import authids
 import services
@@ -23,7 +23,7 @@ class ServiceMgmt(Service):
         self.mgmt.bind(s)
         self.mgmt.listen(1)
         self.mgmt.setblocking(0)
-        logging.warning("Started service %s[%s]" % (self.name, self.id))
+        log.L.warning("Started service %s[%s]" % (self.name, self.id))
         
     def orchestrate(self):
         try:
@@ -44,7 +44,7 @@ class ServiceMgmt(Service):
         else:
             pass
         if (line != ""):
-            logging.debug("%s[%s]-mgmt-in: %s" % (self.type, self.id, repr(line)))
+            log.L.debug("%s[%s]-mgmt-in: %s" % (self.type, self.id, repr(line)))
             self.mgmtEvent(line)
             return(line)
         else:
@@ -52,7 +52,7 @@ class ServiceMgmt(Service):
         
     def mgmtWrite(self, msg, inside=None):
         try:
-            logging.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, repr(msg)))
+            log.L.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, repr(msg)))
             self.conn.send(msg.encode("utf-8"))
         except socket.timeout:
             pass
@@ -126,6 +126,13 @@ class ServiceMgmt(Service):
             self.delSessions(s)
             self.conn.close()
             return()
+        p = re.search("^loglevel (DEBUG|INFO|WARNING|ERROR)", msg)
+        if (p):
+            s = p.group(1)
+            log.L.setLevel(s)
+            self.mgmtWrite("Log level set to %s.\n" % (s))
+            self.conn.close()
+            return()
         p = re.search("^help", msg)
         if (not p):
             self.mgmtWrite("Unknown command!\n")
@@ -136,6 +143,7 @@ class ServiceMgmt(Service):
         self.mgmtWrite("spend authid itns\n")
         self.mgmtWrite("add authid serviceid\n")
         self.mgmtWrite("del authid authid\n")
+        self.mgmtWrite("loglevel {DEBUG|INFO|WARNING|ERROR}\n")
         self.conn.close()
         return()
         
@@ -166,7 +174,7 @@ class ServiceMgmt(Service):
                 
     def delAuthId(self, id):
         if (authids.AUTHIDS.get(id)):
-            self.mgmtWrite("Removed (" + authids.AUTHIDS.get(id).toString() + ")\n")
+            self.mgmtWrite("Deleted (" + authids.AUTHIDS.get(id).toString() + ")\n")
             authids.AUTHIDS.remove(id)
         else:
             self.mgmtWrite("Bad authid?\n")
@@ -188,5 +196,5 @@ class ServiceMgmt(Service):
     def stop(self):
         if (os.path.exists(self.flog)):
             os.remove(self.flog)
-        logging.warning("Stopped service %s[%s]" % (self.name, self.id))
+        log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
 

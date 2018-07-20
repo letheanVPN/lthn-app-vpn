@@ -2,6 +2,7 @@
 import configparser
 import json
 import logging
+import log
 import os
 from sdp import SDP
 import sys
@@ -15,6 +16,7 @@ class Config(object):
     SUDO_BIN = None
     OPENVPN_SUDO = None
     LOGLEVEL = logging.WARNING
+    AUDITLOG = None
     VERBOSE = None
     CONFIGFILE = None
     SDPFILE = None
@@ -54,7 +56,7 @@ class Config(object):
             if (os.path.exists(self.SDPFILE)):
                 s.load(self.SDPFILE)
             else:
-                logging.warning("Missing SDP file" + self.SDPFILE)
+                log.L.warning("Missing SDP file" + self.SDPFILE)
         elif (action == "edit"):
             # generate SDP configuration file based on user input
             print('Editing SDP file %s' % self.SDPFILE)

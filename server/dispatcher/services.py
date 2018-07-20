@@ -1,7 +1,7 @@
 
 import atexit
 import config
-import logging
+import log
 from sdp import *
 import sys
 from service_mgmt import ServiceMgmt
@@ -26,11 +26,11 @@ class Services(object):
                 elif (s["type"] == "proxy"):
                     so = ServiceHa(id, s)
                 else:
-                    logging.error("Unknown service type %s in SDP!" % (s["type"]))
+                    log.L.error("Unknown service type %s in SDP!" % (s["type"]))
                     sys.exit(1)
             self.services[id.upper()] = so
-        self.syslog = ServiceSyslog(config.Config.PREFIX + "/var/log")
-        self.mgmt = ServiceMgmt(config.Config.PREFIX + "/var/mgmt")
+        self.syslog = ServiceSyslog(config.Config.PREFIX + "/var/run/log")
+        self.mgmt = ServiceMgmt(config.Config.PREFIX + "/var/run/mgmt")
  
     def run(self):
         for id in self.services:
@@ -48,7 +48,7 @@ class Services(object):
         self.mgmt.orchestrate()
         for id in self.services:
             if (not self.services[id].orchestrate()):
-                logging.error("Service %s died! Exiting!" % (self.services[id].id))
+                log.L.error("Service %s died! Exiting!" % (self.services[id].id))
                 self.stop()
                 sys.exit(3)
 

@@ -3,9 +3,10 @@ import config
 import os
 import sys
 import time
-import logging
+import log
 import select
 import signal
+import re
 from subprocess import Popen
 from subprocess import PIPE
 ON_POSIX = 'posix' in sys.builtin_module_names
@@ -32,17 +33,17 @@ class ServiceHa(Service):
                 self.pid = int(p.readline().strip())
         else:
             self.pid = self.process.pid
-        logging.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
+        log.L.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
         self.stdout = select.poll()
         self.stderr = select.poll()
         self.stdout.register(self.process.stdout, select.POLLIN)
         self.stderr.register(self.process.stderr, select.POLLIN)
         self.mgmtConnect("socket", self.mgmtfile)
-        logging.warning("Started service %s[%s]" % (self.name, self.id))
+        log.L.warning("Started service %s[%s]" % (self.name, self.id))
         
     def stop(self):
         os.kill(self.pid, signal.SIGTERM)
-        logging.warning("Stoped service %s[%s]" % (self.name, self.id))
+        log.L.warning("Stoped service %s[%s]" % (self.name, self.id))
             
     def isAlive(self):
         try:
@@ -55,7 +56,7 @@ class ServiceHa(Service):
     def orchestrate(self):
         l = self.getLine()
         while (l is not None):
-            logging.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
+            log.L.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
             l = self.getLine()
         l = self.mgmtRead()
         while (l is not None):
@@ -72,10 +73,29 @@ class ServiceHa(Service):
         
     def delAuthId(self, authid):
         self.mgmtWrite("del acl #20 " + authid + "\n")
-        #self.mgmtWrite("show acl #20\n")
         l = self.mgmtRead()
         while (l is not None):
             l = self.mgmtRead()
+    
+    def killSession(self, id):
+        self.mgmtWrite("shutdown session " + id + "\n")
+        l = self.mgmtRead()
+        while (l is not None):
+            l = self.mgmtRead()
+        
+    def getSessions(self):
+        self.mgmtWrite("show sess\n")
+        l=self.mgmtRead()
+        sessions = {}
+        while (l):
+            p = re.search("^(.*):.*src=(\d*\.\d*\.\d*\.\d*):(\d*)", l)
+            if (p):
+                sessid = p.group(1)
+                ip = p.group(2)
+                port = p.group(3)
+                sessions[self.id + ':' + ip + ':' + port] = sessid
+            l=self.mgmtRead()
+        return(sessions)
         
     def createConfig(self):
         if (not os.path.exists(self.dir)):
@@ -90,7 +110,7 @@ class ServiceHa(Service):
             tf = open(tfile, "rb")
             tmpl = tf.read()
         except (IOError, OSError):
-            logging.error("Cannot open haproxy template file %s" % (tfile))
+            log.L.error("Cannot open haproxy template file %s" % (tfile))
             
         port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
@@ -98,7 +118,7 @@ class ServiceHa(Service):
                           maxconn=self.cfg['max_connections'],
                           timeout=self.cfg['timeout'],
                           ctimeout=self.cfg['connect_timeout'],
-                          f_logsocket=config.Config.PREFIX + '/var/log local0',
+                          f_logsocket=config.Config.PREFIX + '/var/run/log local0',
                           f_sock=self.mgmtfile,
                           forward_proxy=self.cfg['backend_proxy_server'],
                           header='X-ITNS-PaymentID',
@@ -119,8 +139,8 @@ class ServiceHa(Service):
             cf = open(self.cfgfile, "wb")
             cf.write(out.encode())
         except (IOError, OSError):
-            logging.error("Cannot write haproxy config file %s" % (self.cfgfile))
-        logging.info("Created haproxy config file %s" % (self.cfgfile))
+            log.L.error("Cannot write haproxy config file %s" % (self.cfgfile))
+        log.L.info("Created haproxy config file %s" % (self.cfgfile))
 
     def createClientConfig(self):
         tfile = config.Config.PREFIX + "/etc/haproxy_client.tmpl"
@@ -128,7 +148,7 @@ class ServiceHa(Service):
             tf = open(tfile, "rb")
             tmpl = tf.read()
         except (IOError, OSError):
-            logging.error("Cannot open openvpn template file %s" % (tfile))
+            log.L.error("Cannot open openvpn template file %s" % (tfile))
             sys.exit(1)
         with open (config.Config.CAP.providerCa, "r") as f_ca:
             f_ca = "".join(f_ca.readlines())
@@ -149,4 +169,4 @@ class ServiceHa(Service):
             print(out)
             sys.exit()
         except (IOError, OSError):
-            logging.error("Cannot write haproxy config file")
+            log.L.error("Cannot write haproxy config file")

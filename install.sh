@@ -27,6 +27,8 @@ install_dir etc
 install_dir var -m 770
 install_dir var/ha -m 770
 install_dir var/ovpn -m 770
+install_dir var/log -m 770
+install_dir var/run -m 770
 install_dir lib
 install_dir dev
 install_dir dev/net
@@ -43,7 +45,7 @@ sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/dispatcher/itnsdis
 sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
 
 # Copy lib files
-for f in authids.py  config.py sdp.py  service.py services.py  sessions.py util.py service_*py; do
+for f in authids.py  config.py sdp.py  service.py services.py  sessions.py util.py log.py service_*py; do
     sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./server/dispatcher/$f $INSTALL_PREFIX/$ITNS_PREFIX/lib/
 done
 sed -i 's^/opt/itns^'"$ITNS_PREFIX"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py

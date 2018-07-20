@@ -3,7 +3,7 @@ import base64
 import ed25519
 import json
 import jsonpickle
-import logging
+import log
 import os
 import pprint
 import re
@@ -86,9 +86,9 @@ class SDP(object):
                 if ret:
                     self.data['services'][choice] = s.data
             else:
-                logging.error('Invalid selection')
+                log.L.error('Invalid selection')
         else:
-            logging.error('Invalid selection')
+            log.L.error('Invalid selection')
 
     def isConfigured(self, cap):
         # Checks validity of data and forces configuration if invalid
@@ -96,12 +96,12 @@ class SDP(object):
 
         if (not isinstance(self.data['protocolVersion'], int) or
             self.data['protocolVersion'] < 1):
-            logging.error('Invalid protocol version (%s)! Setting to 1.' % self.data['protocolVersion'])
+            log.L.error('Invalid protocol version (%s)! Setting to 1.' % self.data['protocolVersion'])
             self.data['protocolVersion'] = 1
 
         validNodeTypes = ['residential', 'commercial', 'government']
         if (self.data['nodeType'] not in validNodeTypes):
-            logging.error('Invalid node type.')
+            log.L.error('Invalid node type.')
             if not self.setNodeType(cap.nodeType):
                 return False
 
@@ -131,7 +131,7 @@ class SDP(object):
 
     def loadCertificate(self, ca=None):
         if (self.certsDir is None and ca is None):
-            logging.error('Failed to locate certificates!')
+            log.L.error('Failed to locate certificates!')
             return False
         else:
             if (ca):
@@ -140,14 +140,14 @@ class SDP(object):
                 caCert = self.certsDir + '/ca.cert.pem'
 
             if (not os.path.isfile(caCert)):
-                logging.error('Failed to find CA cert file %s! Did you run `make ca PASS="password"`?' % caCert)
+                log.L.error('Failed to find CA cert file %s! Did you run `make ca PASS="password"`?' % caCert)
                 return False
             try:
                 f = open(caCert, 'r')
                 caCertContents = f.read()
                 f.close()
             except IOError:
-                logging.error("Failed to read %s" % caCert)
+                log.L.error("Failed to read %s" % caCert)
                 return False
 
             certStart = "-----BEGIN CERTIFICATE-----"
@@ -165,8 +165,8 @@ class SDP(object):
                 self.data['certificates'].append(caCertParsed)
                 return True
             else:
-                logging.error('CA certificate file: %s' % caCert)
-                logging.error('The CA certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
+                log.L.error('CA certificate file: %s' % caCert)
+                log.L.error('The CA certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
                 return False
         return False
 
@@ -180,7 +180,7 @@ class SDP(object):
             self.data['provider']['id'] = choice
             return True
         else:
-            logging.error('Provider ID format or length bad. The ID must be exactly 64 hexadecimal characters.')
+            log.L.error('Provider ID format or length bad. The ID must be exactly 64 hexadecimal characters.')
             return self.setProviderId()
 
     def setProviderTerms(self, terms=None):
@@ -200,10 +200,10 @@ class SDP(object):
         else:
             choice = addr
         if (len(choice) != 97):
-            logging.error('Wallets should be exactly 97 characters. Are you sure you entered a real wallet address?')
+            log.L.error('Wallets should be exactly 97 characters. Are you sure you entered a real wallet address?')
             return self.setWalletAddr()
         if (choice[:2] != 'iz'):
-            logging.error('Wallet addresses must start with iz. Do not enter an integrated address; one will be automatically generated for every client.')
+            log.L.error('Wallet addresses must start with iz. Do not enter an integrated address; one will be automatically generated for every client.')
             return self.setWalletAddr()
 
         self.data['wallet'] = choice
@@ -218,7 +218,7 @@ class SDP(object):
             self.data['provider']['name'] = choice
             return True
         else:
-            logging.error('Invalid provider name!')
+            log.L.error('Invalid provider name!')
             return self.setProviderName()
 
     def setNodeType(self, type):
@@ -229,7 +229,7 @@ class SDP(object):
         self.load(None)
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=3)
         json = jsonpickle.encode(self.data, unpicklable=False)
-        logging.info('Encoded SDP JSON: %s' % json)
+        log.L.info('Encoded SDP JSON: %s' % json)
         return json
 
     def save(self):
@@ -242,7 +242,7 @@ class SDP(object):
                 f.close()
                 print('SDP configuration saved to %s' % self.configFile)
             except IOError:
-                logging.error("Cannot write %s" % (self.configFile))
+                log.L.error("Cannot write %s" % (self.configFile))
                 sys.exit(1)
 
     def load(self, config, prefix=None):
@@ -252,8 +252,8 @@ class SDP(object):
         if prefix != None:
             self.certsDir = prefix + '/etc/ca/certs'
             if not os.path.exists(self.certsDir):
-                logging.error('Certs directory does not exist or is unreadable (%s)!' % self.certsDir)
-                logging.error('Make sure you ran `make install` without errors.')
+                log.L.error('Certs directory does not exist or is unreadable (%s)!' % self.certsDir)
+                log.L.error('Make sure you ran `make install` without errors.')
                 self.certsDir = None
 
         if (self.configFile is None):
@@ -266,14 +266,14 @@ class SDP(object):
                 self.data = jsonpickle.decode(jsonStr)
             self.dataLoaded = True            
         except IOError:
-            logging.error("Cannot read SDP file %s" % (self.configFile))
+            log.L.error("Cannot read SDP file %s" % (self.configFile))
     def upload(self):
         """
         Upload JSON to SDP
         """
         json = self.getJson()
         if not json:
-            logging.error('Failed to load config for uploading! Make sure the SDP config path is correct.')
+            log.L.error('Failed to load config for uploading! Make sure the SDP config path is correct.')
             return False
 
         payload = base64.urlsafe_b64encode(json)
@@ -285,7 +285,7 @@ class SDP(object):
         print('Enter provider ID (PRIVATE KEY .private or .seed). This should come directly from `itnsdispatcher.py --generate-providerid FILE`, using the FILE ending in .seed or .private')
         choice = input('[64 character hexadecimal] ').strip()
         if (not choice or len(choice) != 64 or not re.match(r'^[a-zA-Z0-9]+$', choice)):
-            logging.error('Invalid private key entered, must be 64 hexadecimal characters.')
+            log.L.error('Invalid private key entered, must be 64 hexadecimal characters.')
             return False
 
         signing_key = ed25519.SigningKey(choice)
@@ -295,7 +295,7 @@ class SDP(object):
             verifying_key.verify(signedPayload, signingInput)
             print('Signed data validated successfully!')
         except ed25519.BadSignatureError:
-            logging.error('Failed to validate signed data for SDP. Are you sure you entered a valid private key?')
+            log.L.error('Failed to validate signed data for SDP. Are you sure you entered a valid private key?')
             return False
 
         encodedSignedPayload = base64.urlsafe_b64encode(signedPayload)
@@ -374,7 +374,7 @@ class SDPService(object):
         if (certsDir != None):
             self.certsDir = certsDir
             if not os.path.exists(self.certsDir):
-                logging.error('Certs directory does not exist (%s)! Make sure you ran `make install` without errors.' % self.certsDir)
+                log.L.error('Certs directory does not exist (%s)! Make sure you ran `make install` without errors.' % self.certsDir)
                 self.certsDir = None
 
         if (thisService != None):
@@ -471,7 +471,7 @@ class SDPService(object):
         elif validPortFound:
             return True
         else:
-            logging.error('The port you entered is not a valid number from 1 to 65535.')
+            log.L.error('The port you entered is not a valid number from 1 to 65535.')
 
         return False
 
@@ -529,7 +529,7 @@ class SDPService(object):
                 return False
             return True
         else:
-            logging.error('The endpoint you entered is not a valid IP (eg 172.16.1.1) or FQDN (eg my.test.com).')
+            log.L.error('The endpoint you entered is not a valid IP (eg 172.16.1.1) or FQDN (eg my.test.com).')
 
         return False
 
@@ -549,13 +549,13 @@ class SDPService(object):
 
     def getJson(self):
         json = jsonpickle.encode(self.data, unpicklable=False)
-        logging.info('Encoded SDP Service JSON: %s' % json)
+        log.L.info('Encoded SDP Service JSON: %s' % json)
         return json
 
     def loadCertificate(self, crt):
         if (self.certsDir is None):
             if (crt is None):
-                logging.error('Failed to locate certificates!')
+                log.L.error('Failed to locate certificates!')
                 return False
             
         if self.data['type'] == 'proxy':
@@ -569,11 +569,11 @@ class SDPService(object):
             else:
                 cert = self.certsDir + '/openvpn.cert.pem'
         else:
-            logging.error('Failed to parse service type. Unable to load certificate.')
+            log.L.error('Failed to parse service type. Unable to load certificate.')
             return False
 
         if (not os.path.isfile(cert)):
-            logging.error('Failed to find CA cert file %s! Did you run `make ca PASS="password"`?' % cert)
+            log.L.error('Failed to find CA cert file %s! Did you run `make ca PASS="password"`?' % cert)
             return False
 
         try:
@@ -581,7 +581,7 @@ class SDPService(object):
             certContents = f.read()
             f.close()
         except IOError:
-            logging.error("Failed to read %s" % cert)
+            log.L.error("Failed to read %s" % cert)
             return False
 
         certStart = "-----BEGIN CERTIFICATE-----"
@@ -609,8 +609,8 @@ class SDPService(object):
             return True
 
         else:
-            logging.error('Certificate file: %s' % cert)
-            logging.error('The certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
+            log.L.error('Certificate file: %s' % cert)
+            log.L.error('The certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
             return False
 
         return False
@@ -768,7 +768,7 @@ class SDPService(object):
         if (choice):
             choice = float(choice)
             if (choice < 0.00000001):
-                logging.error('Cost must be at least 0.00000001!')
+                log.L.error('Cost must be at least 0.00000001!')
                 return self.setCost()
             self.data['cost'] = choice
             return True
@@ -800,7 +800,7 @@ class SDPService(object):
                 self.data['name'] = choice
                 return True
             else:
-                logging.error('Invalid service name format. Must be 32 characters or less. Allowed characters a-z 0-9 ,.-_')
+                log.L.error('Invalid service name format. Must be 32 characters or less. Allowed characters a-z 0-9 ,.-_')
         else:
             if self.data['name']:
                 return True
@@ -818,7 +818,7 @@ class SDPService(object):
                 self.data['id'] = format(val + 1, 'X')
             else:
                 # TODO add code to restart service count from 0 and/or scan existingServiceIds to find an unused ID (if possible)
-                logging.critical('Only 240 services are supported! If you encountered this error, please contact the team to add code to support more services!')
+                log.L.critical('Only 240 services are supported! If you encountered this error, please contact the team to add code to support more services!')
                 sys.exit(1)
         else:
             self.data['id'] = 10
@@ -851,5 +851,5 @@ class SDPService(object):
             if self.data['type'] == 'proxy' or self.data['type'] == 'vpn':
                 return True
 
-            logging.error('Invalid option selected. Enter P for proxy or V for VPN.')
+            log.L.error('Invalid option selected. Enter P for proxy or V for VPN.')
             return self.setType()

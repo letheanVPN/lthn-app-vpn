@@ -3,7 +3,7 @@ import config
 import os
 import select
 import socket
-import logging
+import log
 import syslogmp
 import sessions
 import re
@@ -20,7 +20,7 @@ class ServiceSyslog(Service):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.sock.bind(s)
         self.sock.settimeout(self.SOCKET_TIMEOUT)
-        logging.warning("Started service %s[%s]" % (self.name, self.id))
+        log.L.warning("Started service %s[%s]" % (self.name, self.id))
         
     def orchestrate(self):
         s = self.getLine()
@@ -28,12 +28,12 @@ class ServiceSyslog(Service):
             message = syslogmp.parse(s)
             if (message):
                 msg = message.message.decode("utf-8")
-                logging.debug("syslog: " + repr(msg))
+                log.L.debug("syslog: " + repr(msg))
                 # '127.0.0.1:52784 [19/Jul/2018:16:51:19.461] cleartunnel preproxy/<NOSRV> 0/-1/-1/-1/+1 403 +188 - - PR-- 0/0/0/0/2 0/0 {authida1} "GET http://www.seznam.cz/ HTTP/1.1"\n'
                 p = re.search(
                     "(^\d*\.\d*\.\d*\.\d*):(\d*) " # Host and port
-                    + "\[(.*)\] " # Date
-                    + "(\w*) " # Frontend
+                    + "\[(.*)\] " # Date 
+                    + "(\w*)~? " # Frontend
                     + "(\w*)/(<?\w*>?) "  # Backend/Server
                     + "(.\d*/.\d*/.\d*/.\d*/.\d*) " # Times
                     + "(\d*) " # State
@@ -49,7 +49,7 @@ class ServiceSyslog(Service):
                     server = p.group(6)
                     code = p.group(8)
                     authid = p.group(9)
-                    sessions.SESSIONS.add(authid, { ip:ip, port:port})
+                    sessions.SESSIONS.add(authid, ip, port)
             s = self.getLine()
         
     def getLine(self):
@@ -61,4 +61,4 @@ class ServiceSyslog(Service):
     def stop(self):
         if (os.path.exists(self.flog)):
             os.remove(self.flog)
-        logging.warning("Stopped service %s[%s]" % (self.name, self.id))
+        log.L.warning("Stopped service %s[%s]" % (self.name, self.id))

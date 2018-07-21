@@ -59,9 +59,9 @@ make install [FORCE=1]
 For fully automated install, please use our easy deploy script. Please note that this script works only if system is clean and sudo is already configured for user which runs this.
 Never run this on configured system! It will overwrite config files!
 ```bash
-wget https://raw.githubusercontent.com/valiant1x/intense-vpn/config-sdp/server/easy-deploy-node.sh
+wget https://raw.githubusercontent.com/valiant1x/intense-vpn/master/server/easy-deploy-node.sh
 chmod +x easy-deploy-node.sh
-BRANCH=config-sdp ./easy-deploy-node.sh
+BRANCH=master ./easy-deploy-node.sh
 
 ```
 

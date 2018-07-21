@@ -75,8 +75,6 @@ class Service(object):
             except socket.error:
                 time.sleep(self.SOCKET_TIMEOUT)
                 i += 1
-            except OSError:
-                print("aaaa")
             else:
                 break
         self.mgmt.settimeout(self.SOCKET_TIMEOUT)
@@ -98,7 +96,7 @@ class Service(object):
                 log.L.error("%s[%s]-mgmt-in: Cannot reconnect. Exiting!" % (self.type, self.id))
                 sys.exit(2)
             else:
-                log.L.info("%s[%s]-mgmt-in: reconnecting." % (self.type, self.id))
+                log.L.debug("%s[%s]-mgmt-in: reconnecting." % (self.type, self.id))
                 self.mgmtConnect(self.mgmtip, self.mgmtport)
                 return(self.mgmtRead(True))
         else:
@@ -121,7 +119,7 @@ class Service(object):
                 log.L.error("%s[%s]-mgmt-out: Cannot reconnect. Exiting!" % (self.type, self.id))
                 sys.exit(2)
             else:
-                log.L.info("%s[%s]-mgmt-out: reconnecting." % (self.type, self.id))
+                log.L.debug("%s[%s]-mgmt-out: reconnecting." % (self.type, self.id))
                 self.mgmtConnect(self.mgmtip, self.mgmtport)
                 return(self.mgmtWrite(msg, True))
         else:

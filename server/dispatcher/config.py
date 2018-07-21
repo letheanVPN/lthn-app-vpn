@@ -24,6 +24,8 @@ class Config(object):
     MAINSLEEP = 0.1
     T_SAVE = 10 # How often to save authids (sec)
     T_CLEANUP = 30 # How often to cleanup stale authids
+    FORCE_REFRESH = None
+    FORCE_SAVE = None
     
     # configargparse results
     CAP = None
@@ -97,4 +99,4 @@ class Config(object):
                 return(self.cfg[s])
         return(None)
 
-CONFIG = Config("dummy")
+CONFIG = None

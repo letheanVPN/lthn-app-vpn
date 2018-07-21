@@ -33,14 +33,16 @@ def getFromWallet():
 
 # Starting here
 def main(argv):
+    config.CONFIG = config.Config("dummy")
     p = configargparse.getArgumentParser(ignore_unknown_config_file_keys=True, fromfile_prefix_chars='@')
     p.add('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=config.Config.CONFIGFILE, help='Config file')
     p.add('-h', '--help',                    metavar='HELP', required=None, action='store_const', dest='h', const='h', help='Help')
     p.add('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
     p.add('-l', '--log-level',               dest='d', metavar='LEVEL', help='Log level', default='WARNING')
+    p.add('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file. Use "none" to disable.', default=config.Config.AUTHIDSFILE)
     p.add('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
-    p.add(      '--cleanup-time',            dest='ct', metavar='SEC', help='Cleanup frequency', default=config.CONFIG.T_CLEANUP, type=int)
-    p.add(      '--save-time',               dest='st', metavar='SEC', help='Save authid frequency', default=config.CONFIG.T_SAVE, type=int)
+    p.add(      '--refresh-time',            dest='ct', metavar='SEC', help='Refresh frequency. Set to 0 for disable autorefresh.', default=config.CONFIG.T_CLEANUP, type=int)
+    p.add(      '--save-time',               dest='st', metavar='SEC', help='Save authid frequency. Use 0 to not save authid regularly.', default=config.CONFIG.T_SAVE, type=int)
     p.add('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
     p.add('-v', '--verbose',                 metavar='VERBOSITY', action='store_const', dest='v', const='v', help='Be more verbose on output')
     p.add('-G', '--generate-providerid',     dest='G', metavar='PREFIX', required=None, help='Generate providerid files')
@@ -73,6 +75,18 @@ def main(argv):
     p.add(       '--provider-terms',            dest='providerTerms', metavar='TEXT', required=None, help='Provider terms')
 
     cfg = p.parse_args()
+    
+    if (cfg.lc):
+        logging.config.fileConfig(cfg.lc)
+        log.L = log.Log(level=cfg.d)
+        log.A = log.Audit(level=logging.WARNING)
+    else:
+        log.L = log.Log(level=cfg.d)
+        ah = logging.FileHandler(cfg.a)
+        log.A = log.Audit(handler=ah)
+    
+    # Initialise config
+    config.CONFIG = config.Config("dummy")
     config.Config.CAP = cfg
     config.Config.CONFIGFILE = cfg.config
     config.Config.SDPFILE = cfg.sdp
@@ -80,18 +94,11 @@ def main(argv):
     config.Config.a = cfg.a
     config.Config.T_SAVE = cfg.st
     config.Config.T_CLEANUP = cfg.ct
+    config.Config.AUTHIDSFILE = cfg.A
+    if (config.Config.AUTHIDSFILE == "none"):
+        config.Config.T_SAVE = 0
+        config.Config.AUTHIDSFILE = ''
     
-    if (cfg.lc):
-        logging.config.fileConfig(cfg.lc)
-        log.L = log.Log(level=config.Config.d)
-        log.A = log.Audit(level=config.Config.d)
-    else:
-        log.L = log.Log(level=config.Config.d)
-        ah = logging.FileHandler(config.Config.a)
-        log.A = log.Audit(handler=ah)
-    
-    # Initialise config
-    config.CONFIG = config.Config("dummy")
     # Initialise services
     services.SERVICES = services.Services()
 
@@ -150,27 +157,30 @@ def main(argv):
         authids.AUTHIDS=tmpauthids
                 
     getFromWallet()
-    sessions.SESSIONS.add('authid1','1.2.3.4','222')
     
     overaltime = 0
     savedcount = 0
     cleanupcount = 0
     starttime = time.time()
     loopstart = starttime
+    lastrefresh = starttime
     while (1):
         looptime = time.time() - loopstart
         loopstart = time.time()
         time.sleep(config.Config.MAINSLEEP)
         services.SERVICES.orchestrate()
         
-        if (overaltime / config.Config.T_SAVE > savedcount):
+        if ((config.Config.T_SAVE > 0 and overaltime / config.Config.T_SAVE > savedcount) or config.Config.FORCE_SAVE):
             authids.AUTHIDS.save()
             savedcount = savedcount + 1
+            config.Config.FORCE_SAVE = None
             
-        if (overaltime / config.Config.T_CLEANUP > cleanupcount):
+        if ((config.Config.T_CLEANUP > 0 and overaltime / config.Config.T_CLEANUP > cleanupcount) or config.Config.FORCE_REFRESH):
             authids.AUTHIDS.cleanup()
-            sessions.SESSIONS.refresh(looptime)
+            sessions.SESSIONS.refresh(time.time() - lastrefresh)
             cleanupcount = cleanupcount + 1
+            lastrefresh = time.time()
+            config.Config.FORCE_REFRESH = None
             
         overaltime = time.time() - starttime
         

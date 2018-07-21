@@ -6,6 +6,7 @@ import re
 import authids
 import services
 import sessions
+import config
 
 class ServiceMgmt(Service):
     
@@ -23,7 +24,7 @@ class ServiceMgmt(Service):
         self.mgmt.bind(s)
         self.mgmt.listen(1)
         self.mgmt.setblocking(0)
-        log.L.warning("Started service %s[%s]" % (self.name, self.id))
+        log.L.warning("Started service %s[%s] on socket %s" % (self.name, self.id, s))
         
     def orchestrate(self):
         try:
@@ -120,10 +121,25 @@ class ServiceMgmt(Service):
             self.showSessions()
             self.conn.close()
             return()
-        p = re.search("^del session (.*)", msg)
+        p = re.search("^kill session (.*)", msg)
         if (p):
             s = p.group(1)
-            self.delSessions(s)
+            self.delSession(s)
+            self.conn.close()
+            return()
+        p = re.search("^refresh$", msg)
+        if (p):
+            config.Config.FORCE_REFRESH = True
+            self.mgmtWrite("Forcing refresh of authids and sessions now.\n")
+            self.conn.close()
+            return()
+        p = re.search("^save$", msg)
+        if (p):
+            if (config.CONFIG.AUTHIDSFILE != ""):
+                config.Config.FORCE_SAVE = True
+                self.mgmtWrite("Forcing save of authids now.\n")
+            else:
+                self.mgmtWrite("Authids save is not enabled.\n")
             self.conn.close()
             return()
         p = re.search("^loglevel (DEBUG|INFO|WARNING|ERROR)", msg)
@@ -138,12 +154,14 @@ class ServiceMgmt(Service):
             self.mgmtWrite("Unknown command!\n")
         self.mgmtWrite("show authid [authid]\n")
         self.mgmtWrite("show session [sessionid]\n")
-        self.mgmtWrite("del session sessionid\n")
-        self.mgmtWrite("topup authid itns\n")
-        self.mgmtWrite("spend authid itns\n")
-        self.mgmtWrite("add authid serviceid\n")
-        self.mgmtWrite("del authid authid\n")
+        self.mgmtWrite("kill session <sessionid>\n")
+        self.mgmtWrite("topup <authid> <itns>\n")
+        self.mgmtWrite("spend <authid> <itns>\n")
+        self.mgmtWrite("add authid <authid> <serviceid>\n")
+        self.mgmtWrite("del authid <authid>\n")
         self.mgmtWrite("loglevel {DEBUG|INFO|WARNING|ERROR}\n")
+        self.mgmtWrite("refresh\n")
+        self.mgmtWrite("cleanup\n")
         self.conn.close()
         return()
         
@@ -153,7 +171,25 @@ class ServiceMgmt(Service):
     def showSession(self, id):
         if sessions.SESSIONS.get(id):
             self.mgmtWrite(sessions.SESSIONS.get(id).toString())
-        
+    
+    def delSession(self, id):
+        s = sessions.SESSIONS.get(id)
+        if s:
+            srv = services.SERVICES.get(s.getServiceId())
+            service_sessions = srv.getSessions()
+            killed = 0
+            for sid in service_sessions.keys():
+                ss = service_sessions[sid]
+                if ("id" in ss):
+                    sess = sessions.SESSIONS.find(s.getServiceId(), ss['ip'], ss['port'])
+                    if sess:
+                        # Session does not exists in our db - kill it.
+                        services.SERVICES.get(s.getServiceId()).killSession(sid)
+                        self.mgmtWrite("Killed session %s (%s:%s)\n" % (sid, ss['ip'], ss['port']))
+                        killed = 1
+            if (killed==0):
+                self.mgmtWrite("Session %s not found!\n" % (sid))
+            
     def showAuthIds(self):
         self.mgmtWrite(authids.AUTHIDS.toString())
     
@@ -181,14 +217,14 @@ class ServiceMgmt(Service):
         
     def topUpAuthId(self, id, itns):
         if (authids.AUTHIDS.get(id)):
-            authids.AUTHIDS.get(id).topUp(int(itns))
+            authids.AUTHIDS.get(id).topUp(int(itns), "MGMT")
             self.mgmtWrite("TopUp (" + authids.AUTHIDS.get(id).toString() + ")\n")
         else:
             self.mgmtWrite("Bad authid?\n")
     
     def spendAuthId(self, id, itns):
         if (authids.AUTHIDS.get(id)):
-            authids.AUTHIDS.get(id).spend(int(itns))
+            authids.AUTHIDS.get(id).spend(int(itns), "MGMT")
             self.mgmtWrite("Spent (" + authids.AUTHIDS.get(id).toString() + ")\n")
         else:
             self.mgmtWrite("Bad authid?\n")

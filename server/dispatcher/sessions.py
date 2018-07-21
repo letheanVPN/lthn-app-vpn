@@ -11,15 +11,15 @@ SESSIONS = None
 
 class Session(object):
     
-    def __init__(self, authid, srvid, conninfo, id=None):
+    def __init__(self, authid, srvid, ip, port, id=None):
         if (not id):
-            str = "%s" % (random.random())
-            id = hashlib.sha256(str.encode("utf-8")).hexdigest()
+            id = "%s:%s:%s:%s" % (srvid, authid, ip, port)
         self.id = id
         self.srvid = srvid
         self.authid = authid
-        self.conninfo = conninfo
-        log.A.audit(log.A.SESSION, log.A.ADD, self.id)
+        self.ip = ip
+        self.port = port
+        log.A.audit(log.A.SESSION, log.A.ADD, self.id, "service=%s,ip=%s,port=%s" % (srvid, ip, port))
         self.started = time.time()
     
     def isAlive(self):
@@ -52,20 +52,24 @@ class Sessions(object):
     def __init__(self):
         self.sessions = {}
         
-    def get(self,id):
+    def get(self, id):
         if (id in self.sessions):
             return(self.sessions[id])
         else:
             return(None)
         
+    def find(self, srv, ip, port):
+        for s in self.sessions:
+            sess = self.get(s)
+            if (sess.ip == ip and sess.port == port and sess.srvid == srv):
+                return(sess.getId())
+        
     def add(self, authid, ip, port, conninfo='', id=None):
         aid = authids.AUTHIDS.get(authid)
         if (aid):
             sid = aid.getServiceId()
-            if not id:
-                id = sid + ':' + ip + ':' + port
-            session = Session(authid, aid.getServiceId(), conninfo, id)
-            self.sessions[id] = session
+            session = Session(authid, sid, ip, port, id)
+            self.sessions[session.getId()] = session
                 
     def remove(self, id):
         s = self.get(id)
@@ -87,26 +91,32 @@ class Sessions(object):
             aids = {}
             for sid in list(self.sessions):
                 sess = self.get(sid)
-                aids[sid] = sess.getAuthId()
-                if (sess.getServiceId() == srv) and (sid not in service_sessions):
+                aids[sess.getAuthId()] = sid
+                if (sess.getServiceId() == srv) and ((sess.ip + ':' + sess.port) not in service_sessions):
+                    # Session in ur db is stale
                     deleted = deleted + 1
                     self.remove(sid)
                 elif not sess.isAlive():
-                    # If session is not alive (spended authid), delete it from db and kill session from service
+                    # If session should not be alive (spended authid), delete it from db and kill session from service
                     self.remove(sid)
-                    service.killSession(service_sessions[sid])
-                    killed = killed + 1
-                    deleted = deleted + 1
+                    if (sess.ip + ':' + sess.port) in service_sessions:
+                        service.killSession(service_sessions[sess.ip + ':' + sess.port])
+                        killed = killed + 1
+                        deleted = deleted + 1
             # For all alive authids, spend time for last loop
             for aid in aids:
-                aids[aid].spendTime(looptime)
+                authid = authids.AUTHIDS.get(aid)
+                if authid:
+                    authid.spendTime(looptime)
             # List all active sessions in our db
             for sid in service_sessions.keys():
-                sess = self.get(sid)
-                if not sess:
-                    # Session does not exists in our db - kill it.
-                    service.killSession(service_sessions[sid])
-                    killed = killed + 1
+                ss = service_sessions[sid]
+                if ("id" in ss):
+                    sess = self.find(srv, ss['ip'], ss['port'])
+                    if not sess:
+                        # Session does not exists in our db - kill it.
+                        service.killSession(ss['id'])
+                        killed = killed + 1
         log.L.info("Sessions refresh: %d deleted, %d killed, %d fresh" % (deleted, killed, len(self.sessions)))
      
     def toString(self):

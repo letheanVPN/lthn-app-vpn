@@ -93,7 +93,8 @@ class ServiceHa(Service):
                 sessid = p.group(1)
                 ip = p.group(2)
                 port = p.group(3)
-                sessions[self.id + ':' + ip + ':' + port] = sessid
+                sessions[sessid] = { 'ip': ip, 'port': port, 'id': sessid }
+                sessions[ip + ':' + port] = sessid
             l=self.mgmtRead()
         return(sessions)
         

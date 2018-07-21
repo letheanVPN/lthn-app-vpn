@@ -74,21 +74,38 @@ class Sessions(object):
             log.L.debug("Removing session " + id)
             self.sessions.pop(id)
             
-    def refresh(self):
+    def refresh(self, looptime):
         deleted=0
         killed=0
+        # Get all services
         for srv in services.SERVICES.getAll():
+            # For eaach service, list sessions from its internal
             service = services.SERVICES.get(srv)
-            lsess = service.getSessions()
-            for s in list(self.sessions):
-                sess = self.get(s)
-                if (sess.getServiceId() == srv) and (s not in lsess):
+            service_sessions = service.getSessions()
+            # Compare with our sessions - remove all sessions in our db which are not alive
+            # Create array of living authids to spend
+            aids = {}
+            for sid in list(self.sessions):
+                sess = self.get(sid)
+                aids[sid] = sess.getAuthId()
+                if (sess.getServiceId() == srv) and (sid not in service_sessions):
                     deleted = deleted + 1
-                    self.remove(s)
-            for s in lsess.keys():
-                sess = self.get(s)
-                if sess and not sess.isAlive():
-                    service.killSession(lsess[s])
+                    self.remove(sid)
+                elif not sess.isAlive():
+                    # If session is not alive (spended authid), delete it from db and kill session from service
+                    self.remove(sid)
+                    service.killSession(service_sessions[sid])
+                    killed = killed + 1
+                    deleted = deleted + 1
+            # For all alive authids, spend time for last loop
+            for aid in aids:
+                aids[aid].spendTime(looptime)
+            # List all active sessions in our db
+            for sid in service_sessions.keys():
+                sess = self.get(sid)
+                if not sess:
+                    # Session does not exists in our db - kill it.
+                    service.killSession(service_sessions[sid])
                     killed = killed + 1
         log.L.info("Sessions refresh: %d deleted, %d killed, %d fresh" % (deleted, killed, len(self.sessions)))
      

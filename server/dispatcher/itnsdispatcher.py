@@ -169,7 +169,7 @@ def main(argv):
             
         if (overaltime / config.Config.T_CLEANUP > cleanupcount):
             authids.AUTHIDS.cleanup()
-            sessions.SESSIONS.refresh()
+            sessions.SESSIONS.refresh(looptime)
             cleanupcount = cleanupcount + 1
             
         overaltime = time.time() - starttime

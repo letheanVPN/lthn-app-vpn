@@ -77,8 +77,8 @@ class AuthId(object):
             for s in services.SERVICES.getAll():
                 services.SERVICES.get(s).delAuthId(self.getId())
                 
-    def spendTime(self, minutes):
-        self.spend(self.cost * minutes)
+    def spendTime(self, seconds):
+        self.spend(self.cost * seconds * 60)
             
     def getBalance(self):
         return(self.balance)

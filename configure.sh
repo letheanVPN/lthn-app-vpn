@@ -291,7 +291,7 @@ fi
 
 if [ -n "$generate_providerid" ]; then
     if ! [ -f build/etc/provider.public ]; then
-        "$PYTHON_BIN" server/dispatcher/itnsdispatcher.py --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider
+        "$PYTHON_BIN" server/dispatcher/itnsdispatcher.py --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
     fi
 fi
 

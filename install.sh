@@ -20,6 +20,9 @@ nopip() {
     echo 'You have to manually install python packages '$*
 }
 
+# Old itnsdispatcher had /var/log as socket. Remove
+[ -S "$INSTALL_PREFIX/$ITNS_PREFIX/var/log" ] && rm -f "$INSTALL_PREFIX/$ITNS_PREFIX/var/log"
+
 # Create directories
 install_dir /
 install_dir bin

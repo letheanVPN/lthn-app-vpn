@@ -1,12 +1,13 @@
 
-import time
-import logging
-import pickle
+import config
+import log
 import os
+import pickle
+import services
+import time
 from util import *
-from config import Config
 
-AUTHIDS=None
+AUTHIDS = None
 
 class AuthId(object):
     """
@@ -14,23 +15,31 @@ class AuthId(object):
     All payments for given authid are in one session.
     """
     
-    def __init__(self, authid, serviceid, cost, balance):
+    def __init__(self, authid, serviceid, balance):
         self.id = authid
         self.balance = 0
         self.serviceid = serviceid
-        self.cost = cost
         self.created = time.time()
         self.charged_count = 0
         self.lastmodify = time.time()
+        if (services.SERVICES.get(serviceid)):
+            self.cost = services.SERVICES.get(serviceid).getCost()
+        else:
+            log.L.warning("Dropping authid %s (serviceid %s does not exists)" % (authid, serviceid))
+            return(None)
         if (balance > 0):
             self.topUp(balance)
+        log.A.audit(log.A.AUTHID, log.A.ADD, authid, "init, balance=%s" % (balance))
         self.discharged_count = 0
         
     def getId(self):
         return(self.id)
 
+    def getServiceId(self):
+        return(self.serviceid)
+    
     def show(self):
-        logging.info("""PaymentId %s:
+        log.L.info("""PaymentId %s:
             serviceid %s,
             created at %s
             modified at %s
@@ -40,21 +49,37 @@ class AuthId(object):
             charged_count %d
             discharged_count %d
             """ % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count))
-        
-    def topUp(self, balance):
-        self.balance += balance
-        self.lastmodify = time.time()
-        self.lastcharge = time.time()
-        self.charged_count += 1
-        logging.debug("Authid %s: Topup %f, new balance %f" % (self.getId(), balance, self.balance))
     
-    def spend(self, minutes):
-        self.balance -= (self.cost * minutes)
-        self.lastmodify = time.time()
-        self.lastdisCharge = time.time()
-        self.discharged_count += 1
-        logging.debug("Authid %s: Spend %f minutes, cost %f, new balance %f" % (self.getId(), minutes, self.cost * minutes, self.balance))
+    def toString(self):
+        str = "%s: serviceid=%s, created=%s,modified=%s, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
+        return(str)
     
+    def topUp(self, itns, msg=""):
+        if (itns > 0):
+            self.balance += itns
+            self.lastmodify = time.time()
+            self.lastcharge = time.time()
+            self.charged_count += 1
+            log.L.debug("Authid %s: Topup %f, new balance %f" % (self.getId(), itns, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%s,balance=%s %s" % (itns, self.balance, msg))
+        for s in services.SERVICES.getAll():
+            services.SERVICES.get(s).addAuthId(self.getId())
+    
+    def spend(self, itns, msg=""):
+        if (itns > 0):
+            self.balance -= itns
+            self.lastmodify = time.time()
+            self.lastdisCharge = time.time()
+            self.discharged_count += 1
+            log.L.debug("Authid %s: Spend %f, new balance %f" % (self.getId(), itns, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "spend,amount=%s,balance=%s %s" % (itns, self.balance, msg))
+        if (self.balance <= 0):
+            for s in services.SERVICES.getAll():
+                services.SERVICES.get(s).delAuthId(self.getId())
+                
+    def spendTime(self, seconds):
+        self.spend(self.cost * seconds / 60, "(%.2f minutes*%f)" % (seconds/60, self.cost))
+            
     def getBalance(self):
         return(self.balance)
     
@@ -68,29 +93,47 @@ class AuthIds(object):
         self.authids = {}
         self.lastmodify = time.time()
         
+    def add(self, paymentid):
+        log.L.warning("New authid %s" % (paymentid.getId()))
+        self.authids[paymentid.getId()] = paymentid
+        
     def update(self, paymentid):
         if paymentid.getId() in self.authids.keys():
             self.topUp(paymentid.getId(), paymentid.getBalance())
         else:
-            self.authids[paymentid.getId()] = paymentid
-        
-    def topUp(self, paymentid, balance):
-        self.authids[paymentid].topUp(balance)
+            self.add(paymentid)
+    
+    def topUp(self, paymentid, balance, msg=""):
+        self.authids[paymentid].topUp(balance, msg)
 
-    def spend(self, paymentid, balance):
-        self.authids[paymentid].spend(balance)
+    def spend(self, paymentid, balance, msg=""):
+        self.authids[paymentid].spend(balance, msg)
         
     def get(self, paymentid):
         if (paymentid in self.authids.keys()):
             return(self.authids[paymentid])
         else:
             return(None)
+        
+    def getAll(self):
+        return(self.authids.keys())
 
     def remove(self, paymentid):
-        self.authids.pop(paymentid.getId())
+        if (self.get(paymentid)):
+            log.L.warning("Removing authid %s (balance=%s)" % (paymentid, self.get(paymentid).getBalance()))
+            log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%s" % (self.get(paymentid).getBalance()))
+            for s in services.SERVICES.getAll():
+                services.SERVICES.get(s).delAuthId(paymentid)
+            self.authids.pop(paymentid)
+        
+    def toString(self):
+        str = "%d ids, last updated %s\n" % (len(self.authids), timefmt(self.lastmodify))
+        for id, paymentid in self.authids.items():
+            str = str + paymentid.getId() + "\n"
+        return(str)
         
     def show(self):
-        logging.warning("Authids: %d ids, last updated %s" %(len(self.authids),timefmt(self.lastmodify)))
+        log.L.warning("Authids: %d ids, last updated %s" % (len(self.authids), timefmt(self.lastmodify)))
         for id, paymentid in self.authids.items():
             paymentid.show()
             
@@ -100,41 +143,37 @@ class AuthIds(object):
     def cleanup(self):
         fresh = 0
         deleted = 0
-        for id in self.authids.keys():
+        for id in list(self.authids.keys()):
             if not self.authids[id].checkAlive():
-                self.authids.pop(id)
+                self.remove(id)
                 deleted += 1
             else:
                 fresh += 1
-        logging.info("Authids clean: %d deleted, %d fresh" % (deleted, fresh))
-                
-    def getFromWallet(self,services):
-        """Connect to wallet and ask for all self.authids from last height"""
-		
-        # Hardcoded payment
-        s1 = AuthId("authid1", "1A", services.get("1A").getCost(), 1)
-        s2 = AuthId("authid2", "2B", services.get("2B").getCost(), 10)
-        s3 = AuthId("authid3", "1A", services.get("1A").getCost(), 20)
-        s4 = AuthId("authid1", "1A", services.get("1A").getCost(), 10)
-        self.update(s1)
-        self.update(s2)
-        self.update(s3)
-        self.update(s4)
+        log.L.info("Authids cleanup: %d deleted, %d fresh" % (deleted, fresh))
         
     def load(self):
-        if (os.path.isfile(Config.AUTHIDSFILE)):
-            try:
-                logging.info("Trying to load authids db from %s" % (Config.AUTHIDSFILE))
-                return(pickle.load( open( Config.AUTHIDSFILE, "rb" ) ))
-            except (OSError, IOError) as e:
-                logging.warning("Error reading or creating authids db %s" % (Config.AUTHIDSFILE))
-                sys.exit(2)
-        else:
-            self.save()
+        if (config.Config.AUTHIDSFILE != ""):
+            if os.path.isfile(config.Config.AUTHIDSFILE):
+                try:
+                    log.L.info("Trying to load authids db from %s" % (config.Config.AUTHIDSFILE))
+                    aids = pickle.load(open(config.Config.AUTHIDSFILE, "rb"))
+                    for id in aids.getAll():
+                        aids.get(id).topUp(0)
+                    return(aids)
+                except (OSError, IOError) as e:
+                    log.L.warning("Error reading or creating authids db %s" % (config.Config.AUTHIDSFILE))
+                    sys.exit(2)
+            else:
+                self.save()
 
     def save(self):
-        self.cleanup()
-        self.lastmodify=time.time()
-        logging.info("Saving authids db into %s" % (Config.AUTHIDSFILE))
-        with open(Config.AUTHIDSFILE, 'wb') as output:
-            pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+        if (config.Config.AUTHIDSFILE != ""):
+            try:
+                self.lastmodify = time.time()
+                log.L.debug("Saving authids db into %s" % (config.Config.AUTHIDSFILE))
+                with open(config.Config.AUTHIDSFILE, 'wb') as output:
+                    pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
+            except (OSError, IOError) as e:
+                log.L.warning("Error writing authids db %s" % (config.Config.AUTHIDSFILE))
+                sys.exit(2)
+

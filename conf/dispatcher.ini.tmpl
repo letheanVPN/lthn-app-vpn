@@ -1,0 +1,33 @@
+[global]
+;debug=DEBUG
+ca={ca}
+;provider-type=commercial
+provider-id={providerid}
+provider-key={providerkey}
+provider-name=Provider
+provider-terms=Some Terms
+;provider-terms=@from_file.txt
+
+;;; Wallet
+wallet-address={wallet_address}
+;wallet-host=localhost
+;wallet-port=45000
+;wallet-username={wuser}
+;wallet-password={wpasword}
+
+;;; SDP
+;sdp-servers={sdpservers}
+
+[service-1A]
+name=Proxy
+backend_proxy_server=localhost:3128
+crt={hacrt}
+key={hakey}
+crtkey={haboth}
+
+[service-1B]
+crt={vpncrt}
+key={vpnkey}
+crtkey={vpnboth}
+reneg=60
+

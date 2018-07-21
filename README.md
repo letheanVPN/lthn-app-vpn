@@ -20,6 +20,11 @@ Easiest way is to use with squid but it can be any kind of HTTP proxy.
 ### VPN mode
 If you decide to run ITNS VPN dispatcher in VPN mode, it starts OpenVpn server authenticated by ITNS payments. 
 
+### Session management
+Dispatcher orchestrates all proxy and VPN instances and take care of authentication and session creation. 
+In huge sites, this could generate big load. Session management can be turned off. In such cases, sessions which are alive after payment is spent,
+will not be terminated automatically.
+
 ## Requirements
  * python3
  * python3-pip
@@ -76,8 +81,9 @@ You can use more env variables to tune parameters. See script header for availab
 ## Usage 
 ```bash
  /opt/itns/bin/itnsdispatcher -h
-usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-d LEVEL] [-v]
-                      [-G PREFIX] [-S] [-C SERVICEID] [-D]
+usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-l LEVEL] [-A FILE]
+                      [-a FILE] [--refresh-time SEC] [--save-time SEC]
+                      [-lc FILE] [-v] [-G PREFIX] [-S] [-C SERVICEID] [-D]
                       [--sdp-service-crt FILE] [--sdp-service-type TYPE]
                       [--sdp-service-fqdn FQDN] [--sdp-service-port NUMBER]
                       [--sdp-service-name NAME] [--sdp-service-id NUMBER]
@@ -105,8 +111,19 @@ optional arguments:
   -h, --help            Help (default: None)
   -s SDPFILE, --sdp SDPFILE
                         SDP file (default: /opt/itns//etc/sdp.json)
-  -d LEVEL, --debug LEVEL
-                        Debug level (default: WARNING)
+  -l LEVEL, --log-level LEVEL
+                        Log level (default: WARNING)
+  -A FILE, --authids FILE
+                        Authids db file. Use "none" to disable. (default:
+                        /opt/itns//var/authids.db)
+  -a FILE, --audit-log FILE
+                        Audit log file (default: /opt/itns//var/log/audit.log)
+  --refresh-time SEC    Refresh frequency. Set to 0 for disable autorefresh.
+                        (default: 30)
+  --save-time SEC       Save authid frequency. Use 0 to not save authid
+                        regularly. (default: 10)
+  -lc FILE, --logging-conf FILE
+                        Logging config file (default: None)
   -v, --verbose         Be more verbose on output (default: None)
   -G PREFIX, --generate-providerid PREFIX
                         Generate providerid files (default: None)
@@ -174,16 +191,20 @@ optional arguments:
 ```
 
 ## Management interface
-Dispatcher has management interface available by default in /opt/itns/var/mgmt.
+Dispatcher has management interface available by default in /opt/itns/var/run/mgmt.
 You can manually add or remove authids and see its status.
 ```
 echo "help" | socat stdio /opt/itns/var/mgmt
 show authid [authid]
 show session [sessionid]
-topup authid itns
-spend authid itns
-add authid serviceid
-del authid authid
+kill session <sessionid>
+topup <authid> <itns>
+spend <authid> <itns>
+add authid <authid> <serviceid>
+del authid <authid>
+loglevel {DEBUG|INFO|WARNING|ERROR}
+refresh
+cleanup
 
 ```
 

@@ -35,7 +35,7 @@ class Services(object):
     def run(self):
         for id in self.services:
             s = self.services[id]
-            s.run(authids)
+            s.run()
         atexit.register(self.stop)
     
     def createConfigs(self):

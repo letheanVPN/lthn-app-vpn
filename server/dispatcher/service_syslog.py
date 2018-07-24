@@ -15,6 +15,9 @@ class ServiceSyslog(Service):
         self.id  = "SS"
         self.name = "Syslog server"
         self.type = "syslog"
+        self.mgmtfile = None
+        self.process = None
+        self.pidfile = None
         if (os.path.exists(s)):
             os.remove(s)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -38,7 +41,8 @@ class ServiceSyslog(Service):
                     + "(.\d*/.\d*/.\d*/.\d*/.\d*) " # Times
                     + "(\d*) " # State
                     + ".*" # Not needed
-                    + "{(.*)}" # authid
+                    + "{(.*)} " # authid
+                    + '"(.*)"'
                     , msg)
                 if (p):
                     ip = p.group(1)
@@ -49,7 +53,8 @@ class ServiceSyslog(Service):
                     server = p.group(6)
                     code = p.group(8)
                     authid = p.group(9)
-                    sessions.SESSIONS.add(authid, ip, port)
+                    action = p.group(10)
+                    sessions.SESSIONS.add(authid, ip, port, action)
             s = self.getLine()
         
     def getLine(self):
@@ -61,4 +66,4 @@ class ServiceSyslog(Service):
     def stop(self):
         if (os.path.exists(self.flog)):
             os.remove(self.flog)
-        log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
+        super().stop()

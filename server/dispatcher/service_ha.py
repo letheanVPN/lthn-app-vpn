@@ -39,11 +39,11 @@ class ServiceHa(Service):
         self.stdout.register(self.process.stdout, select.POLLIN)
         self.stderr.register(self.process.stderr, select.POLLIN)
         self.mgmtConnect("socket", self.mgmtfile)
-        log.L.warning("Started service %s[%s]" % (self.name, self.id))
+        super().run()
         
     def stop(self):
         os.kill(self.pid, signal.SIGTERM)
-        log.L.warning("Stoped service %s[%s]" % (self.name, self.id))
+        super().stop()
             
     def isAlive(self):
         try:
@@ -77,11 +77,12 @@ class ServiceHa(Service):
         while (l is not None):
             l = self.mgmtRead()
     
-    def killSession(self, id):
+    def killSession(self, id, info=''):
         self.mgmtWrite("shutdown session " + id + "\n")
         l = self.mgmtRead()
         while (l is not None):
             l = self.mgmtRead()
+        log.A.audit(log.A.SESSION, log.A.KILL, id, info)
         
     def getSessions(self):
         self.mgmtWrite("show sess\n")

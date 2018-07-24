@@ -11,20 +11,20 @@ import config
 class ServiceMgmt(Service):
     
     def __init__(self, s):
-        self.flog = s
         self.id  = "MS"
         self.name = "Mgmt"
         self.type = "management"
         self.mgmtip = "socket"
         self.mgmtport = s
         self.mgmtfile = s
-        if (os.path.exists(s)):
-            os.remove(s)
+        self.pidfile = None
+        self.process = None
+        if (os.path.exists(self.mgmtfile)):
+            os.remove(self.mgmtfile)
         self.mgmt = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.mgmt.bind(s)
+        self.mgmt.bind(self.mgmtfile)
         self.mgmt.listen(1)
         self.mgmt.setblocking(0)
-        log.L.warning("Started service %s[%s] on socket %s" % (self.name, self.id, s))
         
     def orchestrate(self):
         try:
@@ -33,7 +33,10 @@ class ServiceMgmt(Service):
                 s = self.mgmtRead()
         except OSError as o:
             pass
-            
+        
+    def mgmtConnect(self):
+            return
+        
     def mgmtRead(self, inside=None):
         line = ""
         try:
@@ -230,7 +233,5 @@ class ServiceMgmt(Service):
             self.mgmtWrite("Bad authid?\n")
             
     def stop(self):
-        if (os.path.exists(self.flog)):
-            os.remove(self.flog)
-        log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
+        super().stop()
 

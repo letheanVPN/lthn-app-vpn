@@ -1,6 +1,7 @@
 import config
 import log
 import socket
+import os
 
 class Service(object):
     """
@@ -28,14 +29,19 @@ class Service(object):
             if c not in self.OPTS.keys():
                 log.L.warning("Unknown parameter %s for service %s" % (c,id))
         self.initphase = True
+        
+    def run(self):
+        log.A.audit(log.A.START, log.A.SERVICE, self.name)
 
     def stop(self):
-        if (os.path.exists(self.mgmtfile)):
+        if (self.mgmtfile is not None and os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
-        if (os.path.exists(self.pidfile)):
+        if (self.pidfile is not None and os.path.exists(self.pidfile)):
             os.remove(self.pidfile)
-        self.process.kill()
+        if self.process:
+            self.process.kill()
         log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
+        log.A.audit(log.A.STOP, log.A.SERVICE, self.name)
         
     def getCost(self):
         return(self.cost)

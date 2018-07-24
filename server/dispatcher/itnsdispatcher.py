@@ -140,6 +140,8 @@ def main(argv):
     if (cfg.D):
         config.CONFIG=config.Config("init", services.SERVICES)
         sys.exit()
+        
+    log.A.audit(log.A.START, log.A.SERVICE, "itnsdispatcher")
     
     services.SERVICES.load()
         
@@ -150,12 +152,21 @@ def main(argv):
     # Run all services
     services.SERVICES.run()
     
-    # Initialise authids
+    # Preinitialise authids
     authids.AUTHIDS = authids.AuthIds()
+    
+    # Wait for all services to settle
+    i = 1
+    while i < 20:
+        services.SERVICES.orchestrate()
+        time.sleep(0.1)
+        i = i + 1
+    
+    # Load authids from file
     tmpauthids=authids.AUTHIDS.load()
     if (tmpauthids):
         authids.AUTHIDS=tmpauthids
-                
+
     getFromWallet()
     
     overaltime = 0

@@ -58,6 +58,7 @@ class Services(object):
             if (s.isAlive()):
                 s.stop()
         self.syslog.stop()
+        self.mgmt.stop()
             
     def show(self):
         for id in self.services:

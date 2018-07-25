@@ -53,7 +53,21 @@ class ServiceHa(Service):
         else:
             return True
         
+    def mgmtWaitPrompt(self):
+        sent = None
+        while not sent:
+            l = self.mgmtRead()
+            if l:
+                sent = re.search("^> ", l)
+        
+    def mgmtWrite(self, msg, inside=None):
+        log.L.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, repr(msg)))
+        self.mgmt.send(b"prompt\n")
+        self.mgmt.send(msg.encode())
+        self.mgmtWaitPrompt()
+        
     def orchestrate(self):
+        self.mgmtConnect()
         l = self.getLine()
         while (l is not None):
             log.L.debug("%s[%s]-stderr: %s" % (self.type, self.id, l))
@@ -61,42 +75,43 @@ class ServiceHa(Service):
         l = self.mgmtRead()
         while (l is not None):
             l = self.mgmtRead()
+        self.mgmtClose()
         return(self.isAlive())
     
     def addAuthId(self, authid):
-        self.delAuthId(authid)
+        self.mgmtConnect()
+        self.mgmtWrite("del acl #20 " + authid + "\n")
         self.mgmtWrite("add acl #20 " + authid + "\n")
-        #self.mgmtWrite("show acl #20\n")
-        l = self.mgmtRead()
-        while (l is not None):
-            l = self.mgmtRead()
+        self.mgmtClose()
         
     def delAuthId(self, authid):
+        self.mgmtConnect()
         self.mgmtWrite("del acl #20 " + authid + "\n")
-        l = self.mgmtRead()
-        while (l is not None):
-            l = self.mgmtRead()
+        self.mgmtClose()
     
     def killSession(self, id, info=''):
+        self.mgmtConnect()
         self.mgmtWrite("shutdown session " + id + "\n")
-        l = self.mgmtRead()
-        while (l is not None):
-            l = self.mgmtRead()
         log.A.audit(log.A.SESSION, log.A.KILL, id, info)
+        self.mgmtClose()
         
     def getSessions(self):
+        self.mgmtConnect()
         self.mgmtWrite("show sess\n")
         l=self.mgmtRead()
         sessions = {}
         while (l):
-            p = re.search("^(.*):.*src=(\d*\.\d*\.\d*\.\d*):(\d*)", l)
+            p = re.search("^.{0,2}(.*):.*src=(\d*\.\d*\.\d*\.\d*):(\d*)", l)
             if (p):
                 sessid = p.group(1)
                 ip = p.group(2)
                 port = p.group(3)
                 sessions[sessid] = { 'ip': ip, 'port': port, 'id': sessid }
                 sessions[ip + ':' + port] = sessid
+            else:
+                log.L.debug("Unknown haproxy session " + l)
             l=self.mgmtRead()
+        self.mgmtClose()
         return(sessions)
         
     def createConfig(self):

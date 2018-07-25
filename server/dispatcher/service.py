@@ -2,6 +2,7 @@ import config
 import log
 import socket
 import os
+import time
 
 class Service(object):
     """
@@ -64,26 +65,31 @@ class Service(object):
             else:
                 return(None)
             
-    def mgmtConnect(self, ip, port):
-        self.mgmtip = ip
-        self.mgmtport = port
-        if (ip == "socket"):
+    def mgmtConnect(self, ip=None, port=None):
+        if (ip):
+            self.mgmtip = ip
+        if (port):
+            self.mgmtport = port
+        if (self.mgmtip == "socket"):
             self.mgmt = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         else:
             self.mgmt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         i = 0
         while (i < 50):
             try:
-                if (ip == "socket"):
+                if (self.mgmtip == "socket"):
                     self.mgmt.connect(self.mgmtfile)
                 else:
-                    self.mgmt.connect((ip, int(port)))
+                    self.mgmt.connect((self.mgmtip, int(self.mgmtport)))
             except socket.error:
                 time.sleep(self.SOCKET_TIMEOUT)
                 i += 1
             else:
                 break
         self.mgmt.settimeout(self.SOCKET_TIMEOUT)
+        
+    def mgmtClose(self):
+        return(self.mgmt.close())
         
     def mgmtRead(self, inside=None):
         line = ""
@@ -117,20 +123,21 @@ class Service(object):
     def mgmtWrite(self, msg, inside=None):
         try:
             log.L.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, repr(msg)))
-            self.mgmt.send(msg.encode())
-        except socket.timeout:
-            pass
-        except OSError:
+            ret = not self.mgmt.sendall(msg.encode())
+            reconnect = None
+        except:
             if (inside):
                 log.L.error("%s[%s]-mgmt-out: Cannot reconnect. Exiting!" % (self.type, self.id))
                 sys.exit(2)
             else:
                 log.L.debug("%s[%s]-mgmt-out: reconnecting." % (self.type, self.id))
                 self.mgmtConnect(self.mgmtip, self.mgmtport)
-                return(self.mgmtWrite(msg, True))
+                reconnect = True        
+        if reconnect:
+            return(self.mgmtWrite(msg, True))
         else:
-            pass
-        
+            return(ret)
+
     def mgmtEvent(self, msg):
         pass
     

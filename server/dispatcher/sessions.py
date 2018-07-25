@@ -59,12 +59,25 @@ class Sessions(object):
         else:
             return(None)
         
-    def find(self, srv, ip, port):
-        for s in self.sessions:
-            sess = self.get(s)
-            if (sess.ip == ip and sess.port == port and sess.srvid == srv):
-                return(sess.getId())
-        
+    def find(self, srv=None, ip=None, port=None, authid=None):
+        if (srv and ip and port):
+            for s in self.sessions:
+                sess = self.get(s)
+                if (sess.ip == ip and sess.port == port and sess.srvid == srv):
+                    return(sess.getId())
+        elif (srv and authid):
+            for s in self.sessions:
+                sess = self.get(s)
+                if (sess.authid == authid and sess.srvid == srv):
+                    return(sess.getId())
+        elif (authid):
+            for s in self.sessions:
+                sess = self.get(s)
+                if (sess.authid == authid):
+                    return(sess.getId())
+        else:
+                return(None)
+            
     def add(self, authid, ip, port, conninfo='', id=None):
         aid = authids.AUTHIDS.get(authid)
         if (aid):
@@ -110,20 +123,19 @@ class Sessions(object):
             for sid in service_sessions.keys():
                 ss = service_sessions[sid]
                 if ("id" in ss):
-                    sess = self.find(srv, ss['ip'], ss['port'])
+                    sess = self.find(srv=srv, ip=ss['ip'], port=ss['port'])
                     if not sess:
                         # Session does not exists in our db - kill it.
                         service.killSession(ss['id'],'Inactive session')
                         killed = killed + 1
-                    # First get all unique authids from all sessions
-        for aid in authids.AUTHIDS.getAll():
-            aids[aid] = authids.AUTHIDS.get(aid)
         # For all alive authids, spend time for last loop
-        for authid in aids:
-            if authid:
+        spended = 0
+        for authid in authids.AUTHIDS.getAll():
+            if self.find(authid=authid):
                 authids.AUTHIDS.get(authid).spendTime(looptime)
+                spended = spended + 1
                 
-        log.L.info("Sessions refresh: %d deleted, %d killed, %d fresh" % (deleted, killed, len(self.sessions)))
+        log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d sepnded authids" % (len(self.sessions), deleted, killed, spended))
      
     def toString(self):
         str = "%d sessions\n" % (len(self.sessions))

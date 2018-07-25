@@ -33,9 +33,11 @@ class Audit(object):
     START  = "START"
     STOP  = "STOP"
     MODIFY = "MOD"
+    UPLOAD = "UPLOAD"
     AUTHID =  "AUTHID"
     SESSION = "SESSION"
     SERVICE = "SERVICE"
+    SDP = "SDP"
     
     def __init__(self, handler=None, level=logging.INFO):
         self.logger = logging.getLogger('audit')

@@ -16,18 +16,18 @@ class SDP(object):
     configFile = None
     dataLoaded = False
     certsDir = None
-    sdpEndpoint = 'https://l9d48ixadl.execute-api.us-east-1.amazonaws.com/intense/v1'
+    
     # sample SDP dict
     data = dict(
                 protocolVersion=1,
-                nodeType='',
+                nodeType='{nodetype}',
                 provider=dict(
-                id='',
-                name=''
+                id='{providerid}',
+                name='{providername}'
                 ),
                 certificates=[],
-                wallet='publicWalletAddress',
-                terms='Provider Terms',
+                wallet='{walletaddress}',
+                terms='{providerterms}',
                 services={},
                 )
 
@@ -232,7 +232,7 @@ class SDP(object):
         log.L.info('Encoded SDP JSON: %s' % json)
         return json
 
-    def save(self):
+    def save(self, cfg):
         self.load(None)
         if (self.configFile and self.dataLoaded):
             jsonStr = self.getJson()
@@ -267,7 +267,8 @@ class SDP(object):
             self.dataLoaded = True            
         except IOError:
             log.L.error("Cannot read SDP file %s" % (self.configFile))
-    def upload(self):
+            
+    def upload(self, cfg):
         """
         Upload JSON to SDP
         """
@@ -276,32 +277,32 @@ class SDP(object):
             log.L.error('Failed to load config for uploading! Make sure the SDP config path is correct.')
             return False
 
-        payload = base64.urlsafe_b64encode(json)
+        payload = base64.urlsafe_b64encode(json.encode("utf-8"))
 
         # begin ed25519 signing
         # note - perhaps the provider key should be copied to the install directory so users do not need to manually input public/private keys..
-        header = base64.urlsafe_b64encode('{"alg":"EdDSA"}')
-        signingInput = header + '.' + payload
-        print('Enter provider ID (PRIVATE KEY .private or .seed). This should come directly from `itnsdispatcher.py --generate-providerid FILE`, using the FILE ending in .seed or .private')
-        choice = input('[64 character hexadecimal] ').strip()
-        if (not choice or len(choice) != 64 or not re.match(r'^[a-zA-Z0-9]+$', choice)):
+        header = base64.urlsafe_b64encode(b'{"alg":"EdDSA"}')
+        signingInput = header + b'.' + payload
+        key  = cfg.CAP.providerkey
+        if (not key or len(key) != 64 or not re.match(r'^[a-zA-Z0-9]+$', key)):
             log.L.error('Invalid private key entered, must be 64 hexadecimal characters.')
             return False
 
-        signing_key = ed25519.SigningKey(choice)
+        signing_key = ed25519.SigningKey(key.encode("utf-8"))
         signedPayload = signing_key.sign(signingInput)
         verifying_key = signing_key.get_verifying_key()
         try:
             verifying_key.verify(signedPayload, signingInput)
             print('Signed data validated successfully!')
         except ed25519.BadSignatureError:
+            print(base64.urlsafe_b64decode(signingInput).decode("utf-8"))
             log.L.error('Failed to validate signed data for SDP. Are you sure you entered a valid private key?')
             return False
 
         encodedSignedPayload = base64.urlsafe_b64encode(signedPayload)
         # end ed25519 signing
 
-        sdpAddServiceEndpoint = self.sdpEndpoint + '/services/add/'
+        sdpAddServiceEndpoint = cfg.CAP.sdpUri + '/services/add/'
 
         request = Request(sdpAddServiceEndpoint, payload)
         request.add_header('JWS', encodedSignedPayload)
@@ -309,7 +310,6 @@ class SDP(object):
         response = urlopen(request).read()
         print('SDP server response: %s' % response)
         return True
-
     
     def listServices(self):
         ret = dict()

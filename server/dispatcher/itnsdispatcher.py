@@ -16,7 +16,7 @@ import time
 import pickle
 import binascii
 from util import *
-from sdp import *
+import sdp
 import services
 import authids
 import sessions
@@ -49,6 +49,7 @@ def main(argv):
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
     p.add('-C', '--generate-client-config',  dest='C', metavar='SERVICEID', required=None, help='Generate client config for specified service on stdout and exit')
     p.add('-D',  '--generate-sdp',           dest='D', action='store_const', const='generate-sdp', required=None, help='Generate SDP by wizzard')
+    p.add('-U',  '--upload-sdp',             dest='U', action='store_const', const='upload-sdp', required=None, help='Upload SDP')
     p.add(       '--sdp-service-crt',        dest='serviceCrt', metavar='FILE', required=None, help='Provider Proxy crt (for SDP edit/creation only)')
     p.add(       '--sdp-service-type',       dest='serviceType', metavar='TYPE', required=None, help='Provider VPN crt (for SDP edit/creation only)')
     p.add(       '--sdp-service-fqdn',       dest='serviceFqdn', metavar='FQDN', required=None, help='Service FQDN or IP (for SDP service edit/creation only)')
@@ -67,7 +68,7 @@ def main(argv):
     p.add(       '--wallet-port',               dest='walletPort', metavar='PORT', required=None, default='45000', help='Wallet port')
     p.add(       '--wallet-username',           dest='walletUsername', metavar='USER', required=None, help='Wallet username')
     p.add(       '--wallet-password',           dest='walletPassword', metavar='PW', required=None, help='Wallet passwd')
-    p.add(       '--sdp-server',                dest='sdpServer', nargs='+', metavar='URL', required=None, help='SDP server(s)')
+    p.add(       '--sdp-uri',                   dest='sdpUri', nargs='+', metavar='URL', required=None, help='SDP server(s)', default='https://l9d48ixadl.execute-api.us-east-1.amazonaws.com/intense/v1')
     p.add(       '--provider-id',               dest='providerid', metavar='PROVIDERID', required=True, help='ProviderID (public ed25519 key)')
     p.add(       '--provider-key',              dest='providerkey', metavar='PROVIDERKEY', required=True, help='ProviderID (private ed25519 key)')
     p.add(       '--provider-name',             dest='providerName', metavar='NAME', required=True, help='Provider Name') 
@@ -95,6 +96,7 @@ def main(argv):
     config.Config.T_SAVE = cfg.st
     config.Config.T_CLEANUP = cfg.ct
     config.Config.AUTHIDSFILE = cfg.A
+    config.Config.SDPURI = cfg.sdpUri
     if (config.Config.AUTHIDSFILE == "none"):
         config.Config.T_SAVE = 0
         config.Config.AUTHIDSFILE = ''
@@ -123,7 +125,17 @@ def main(argv):
         except (IOError, OSError):
             log.L.error("Cannot open/write %s" % (privatef))
         sys.exit()
-    
+        
+    if (cfg.U):
+        log.L.warning("Uploading SDP to server %s" % (config.CONFIG.CAP.sdpUri))
+        log.A.audit(log.A.UPLOAD, log.A.SDP, config.CONFIG.SDPFILE)
+        s=sdp.SDP()
+        s.load(config.CONFIG.SDPFILE)
+        if (not s.upload(config.CONFIG)):
+            log.L.error("Error uploading SDP!")
+            sys.exit(2)
+        sys.exit()
+        
     if (cfg.S):
         services.SERVICES.load()
         # Generate config files for Openvpn and Haproxy only and exit

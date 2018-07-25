@@ -135,7 +135,7 @@ class Sessions(object):
                 authids.AUTHIDS.get(authid).spendTime(looptime)
                 spended = spended + 1
                 
-        log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d sepnded authids" % (len(self.sessions), deleted, killed, spended))
+        log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d spended authids" % (len(self.sessions), deleted, killed, spended))
      
     def toString(self):
         str = "%d sessions\n" % (len(self.sessions))

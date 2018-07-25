@@ -101,15 +101,17 @@ class ServiceHa(Service):
         l=self.mgmtRead()
         sessions = {}
         while (l):
-            p = re.search("^.{0,2}(.*):.*src=(\d*\.\d*\.\d*\.\d*):(\d*)", l)
-            if (p):
-                sessid = p.group(1)
-                ip = p.group(2)
-                port = p.group(3)
-                sessions[sessid] = { 'ip': ip, 'port': port, 'id': sessid }
-                sessions[ip + ':' + port] = sessid
-            else:
-                log.L.debug("Unknown haproxy session " + l)
+            if (re.search("proto=tcp", l)):
+                p = re.search("^.{0,2}(.*):.*proto=(.*) src=(\d*\.\d*\.\d*\.\d*):(\d*)", l)
+                if (p):
+                    sessid = p.group(1)
+                    proto = p.group(2)
+                    ip = p.group(3)
+                    port = p.group(4)
+                    sessions[sessid] = { 'ip': ip, 'port': port, 'id': sessid }
+                    sessions[ip + ':' + port] = sessid
+                else:
+                    log.L.debug("Unknown haproxy session " + l)
             l=self.mgmtRead()
         self.mgmtClose()
         return(sessions)

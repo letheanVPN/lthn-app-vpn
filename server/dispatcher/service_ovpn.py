@@ -13,9 +13,14 @@ class ServiceOvpn(Service):
     Openvpn service class
     """ 
     
-    OPTS =dict(
+    OPTS = dict(
         http_proxy = "localhost:3128",
-        crt = None, key = None, crtkey = None
+        crt = None, key = None, crtkey = None,
+        reneg = 600
+    )
+    OPTSHELP = dict(
+        http_proxy = "HTTP proxy used for connection to ovpn",
+        reneg = "Renegotiation interval"
     )
     
     def run(self):

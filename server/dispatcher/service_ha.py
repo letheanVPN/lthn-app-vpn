@@ -7,6 +7,7 @@ import log
 import select
 import signal
 import re
+import shutil
 from subprocess import Popen
 from subprocess import PIPE
 ON_POSIX = 'posix' in sys.builtin_module_names
@@ -17,10 +18,15 @@ class ServiceHa(Service):
     """
     
     OPTS = dict(
-        name='Proxy', backend_proxy_server = 'localhost:3128',
-        client_bind = 'localhost', client_port = 3128,
-        crt = None, key =None, crtkey = None,
-        max_connections = 2000, timeout = '10m', connect_timeout = '30s'
+        name='Proxy', backend_proxy_server = '127.0.0.1:3128',
+        client_bind = '127.0.0.1', client_port = 8180, status_port = 8181,
+        bind_addr = '',
+        crt = None, key = None, crtkey = None,
+        max_connections = 2000, timeout = '30s', connect_timeout = '5s',
+        paymentid = 'authid1', uniqueid = 'abcd1234'
+    )
+    OPTSHELP = dict(
+        client_bind = 'Client bind address'
     )
     
     def run(self):
@@ -55,15 +61,21 @@ class ServiceHa(Service):
         
     def mgmtWaitPrompt(self):
         sent = None
-        while not sent:
+        i = 1
+        while not sent and i<10:
             l = self.mgmtRead()
+            i = i + 1
             if l:
                 sent = re.search("^> ", l)
+        return(i<10)
         
     def mgmtWrite(self, msg, inside=None):
         log.L.debug("%s[%s]-mgmt-out: %s" % (self.type, self.id, repr(msg)))
-        self.mgmt.send(b"prompt\n")
-        self.mgmt.send(msg.encode())
+        try:
+            self.mgmt.send(b"prompt\n")
+            self.mgmt.send(msg.encode())
+        except:
+            pass
         self.mgmtWaitPrompt()
         
     def orchestrate(self):
@@ -130,24 +142,26 @@ class ServiceHa(Service):
             tmpl = tf.read()
         except (IOError, OSError):
             log.L.error("Cannot open haproxy template file %s" % (tfile))
-            
+        shutil.copy(config.Config.PREFIX + '/etc/ha_credit.http', self.dir + '/ha_credit.http')
         port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
-                          port=port,
+                          bind_addr=self.cfg['bind_addr'],
+                          bind_port=port,
                           maxconn=self.cfg['max_connections'],
                           timeout=self.cfg['timeout'],
                           ctimeout=self.cfg['connect_timeout'],
                           f_logsocket=config.Config.PREFIX + '/var/run/log local0',
                           f_sock=self.mgmtfile,
+                          s_port=self.cfg['status_port'],
                           forward_proxy=self.cfg['backend_proxy_server'],
                           header='X-ITNS-PaymentID',
-                          ctrluri='http://_ITNSVPN_',
+                          ctrldomain=config.Config.CAP.providerid,
                           f_dh=config.Config.PREFIX + '/etc/dhparam.pem',
                           cabase=config.Config.PREFIX + '/etc/ca/certs',
                           crtbase=config.Config.PREFIX + '/etc/ca/certs',
-                          ctrldomain='_ITNSVPN_',
+                          f_err=config.Config.PREFIX + '/etc/ha_err.http',
                           f_site_pem=self.cfg['crtkey'],
-                          f_credit=config.Config.PREFIX + '/var/hasrv/credit-',
+                          f_credit=self.dir + 'ha_credit.http',
                           f_status=config.Config.PREFIX + '/etc/ha_info.http',
                           f_allow_src_ips=config.Config.PREFIX + '/etc/src_allow.ips',
                           f_deny_src_ips=config.Config.PREFIX + '/etc/src_deny.ips',
@@ -179,11 +193,15 @@ class ServiceHa(Service):
                           ctimeout=self.cfg['connect_timeout'],
                           port=port,
                           f_ca=f_ca,
+                          ctrldomain=self.cfg['uniqueid'],
                           ca=config.Config.CAP.providerCa,
                           header='X-ITNS-PaymentID',
                           proxyport=self.cfg['client_port'],
                           bindaddr=self.cfg['client_bind'],
-                          paymentid='PaymentID')
+                          s_port=self.cfg['status_port'],
+                          f_status=config.Config.PREFIX + '/etc/ha_info.http',
+                          f_err=config.Config.PREFIX + '/etc/ha_err.http',
+                          paymentid=self.cfg['paymentid'])
         try:
             print(out)
             sys.exit()

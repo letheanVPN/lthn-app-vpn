@@ -1,11 +1,10 @@
-HTTP/1.0 200 OK
+HTTP/1.0 503 Service Unavailable
 Cache-Control: no-cache
 Connection: close
 Content-Type: text/html
 
 <html>
 <body>
-<h1>ITNSVPN service is working here!</h1>
+<h1>503 ITNSVPN service unavailable now</h1>
 </body>
 </html>
-

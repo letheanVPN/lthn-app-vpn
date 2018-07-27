@@ -10,16 +10,29 @@ class Service(object):
     """
     
     OPTS = dict()
+    OPTS_HELP = dict ()
     SOCKET_TIMEOUT = 0.01
     
-    def __init__(self, id, json):
-        self.id = id.upper()
-        self.type = json["type"]
-        self.name = json["name"]
-        self.cost = json["cost"]
-        self.json = json
+    def __init__(self, id=None, json=None):
+        if (id):
+            self.id = id.upper()
+        else:
+            self.id = "00"
+        if (not json):
+            self.type = "none"
+            self.name = "none"
+            self.cost = "none"
+            self.json = "{}" 
+        else:
+            self.type = json["type"]
+            self.name = json["name"]
+            self.cost = json["cost"]
+            self.json = json    
+            
         self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
         self.cfg = config.CONFIG.getService(self.id)
+        if (not self.cfg):
+            self.cfg = {}
         for o in self.OPTS:
             if o in self.cfg:
                 log.L.debug("Setting service %s parameter %s to %s" % (id,o,self.cfg[o]))
@@ -30,6 +43,14 @@ class Service(object):
             if c not in self.OPTS.keys():
                 log.L.warning("Unknown parameter %s for service %s" % (c,id))
         self.initphase = True
+        
+    def helpOpts(self, name):
+        print(name)
+        for o in self.OPTS:
+            if not o in self.OPTSHELP:
+                self.OPTSHELP[o] = ''
+            print("%s:      %s\n      default: %s" % (o, self.OPTSHELP[o], self.OPTS[o]))
+        print()
         
     def run(self):
         log.A.audit(log.A.START, log.A.SERVICE, self.name)

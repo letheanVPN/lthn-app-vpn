@@ -1,8 +1,8 @@
 global
         maxconn         {maxconn}
         daemon
-        ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
-        ssl-default-bind-options no-sslv3
+        ssl-default-bind-ciphers ECDH+AESGCM
+        ssl-default-bind-options force-tlsv12
 
 frontend icproxy
         bind            {bindaddr}:{proxyport}
@@ -15,22 +15,47 @@ frontend icproxy
         option          contstats
         maxconn         8000
         timeout client  {timeout}
+        timeout server  {timeout}
+        timeout connect {ctimeout}
+
+        acl is_mgmt url_dom _{ctrldomain}_
+        use_backend b-status if is_mgmt
 
         default_backend http-proxy
 
 # Backend for proxying requests to another proxy
 backend http-proxy
-        
         mode            http
-        timeout connect {ctimeout}
+        timeout client  {timeout}
         timeout server  {timeout}
+        timeout connect {ctimeout}
         retries         2
         option          nolinger
         option          httplog
-
+        
         http-request add-header {header} {paymentid}
-        server hatls {server}:{port} ssl ca-file {ca}
 
-# This certificate needs to be written to {ca}
-{f_ca}
+        server hatls {server}:{port} force-tlsv12 ssl ca-file {ca}
+        #server hatls {server}:{port} force-tlsv12 ssl ca-file {ca} check inter 10000
+        #server s-error 127.0.0.1:{s_port} backup
 
+backend b-status
+        mode            http
+        timeout client  {timeout}
+        timeout server  {timeout}
+        timeout connect {ctimeout}
+
+        http-response add-header X-ITNS-Status OK
+        http-response add-header X-ITNS-Id {ctrldomain}
+        server s-error 127.0.0.1:{s_port}
+
+listen s-http
+        bind            127.0.0.1:{s_port}
+        mode            http
+        timeout client  {timeout}
+        timeout server  {timeout}
+        timeout connect {ctimeout}
+
+        acl is_mgmt url_dom _{ctrldomain}_
+        http-request deny if !is_mgmt
+        errorfile 503 {f_status}

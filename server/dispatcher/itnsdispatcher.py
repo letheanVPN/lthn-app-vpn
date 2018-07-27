@@ -23,6 +23,8 @@ import sessions
 import config
 import log
 import configargparse
+from service_ha import ServiceHa
+from service_ovpn import ServiceOvpn
 
 def getFromWallet():
         """Connect to wallet and ask for all self.authids from last height"""
@@ -89,6 +91,7 @@ def main(argv):
     # Initialise config
     config.CONFIG = config.Config("dummy")
     config.Config.CAP = cfg
+    config.Config.VERBOSE = cfg.v
     config.Config.CONFIGFILE = cfg.config
     config.Config.SDPFILE = cfg.sdp
     config.Config.d = cfg.d
@@ -108,6 +111,16 @@ def main(argv):
         print(p.format_help())
         if (config.Config.VERBOSE):
             print(p.format_values())
+            print('Service options (can be set by [service-id] sections in ini file:')
+            ha = ServiceHa()
+            ha.helpOpts("==Haproxy==")
+            ovpn = ServiceOvpn()
+            ovpn.helpOpts("==OpenVPN==")
+            print('Use log level DEBUG during startup to see values assigned to services from SDP.')
+            print()
+        else:
+            print("Use -v option to more help info.")
+            print("Happy flying with better privacy!")
         sys.exit()
         
     if (cfg.G):

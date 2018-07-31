@@ -1,6 +1,7 @@
 #!/bin/sh
 
-sudo -i -u ubuntu <<EOF
+## Run as:
+#wget https://raw.githubusercontent.com/valiant1x/intense-vpn/master/server/easy-deploy-aws.sh && sudo -i -u ubuntu easy-deploy-aws.sh
 
 DAEMONURL=https://github.com/valiant1x/intensecoin/releases/download/v2.0.2.1/intensecoin-cli-linux-64bit-v2.0.2.1.tar.bz2
 DAEMONBZ2=$(basename $DAEMONURL)
@@ -52,6 +53,4 @@ cd
 install_zabbix >zabbix.log 2>&1 || mail -s "Zabbix installation error" $EMAIL <zabbix.log
 cd
 install_dispatcher >dispatcher.log 2>&1
-
-EOF
 

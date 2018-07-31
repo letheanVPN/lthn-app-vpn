@@ -50,7 +50,7 @@ class Config(object):
             print('Initialising SDP file %s' % self.SDPFILE)
             s.addService(self.CAP)
             s.configFile = self.SDPFILE
-            s.save()
+            s.save(self.SDPFILE)
         elif (action == "read"):
             self.load(self.CONFIGFILE)
             s.load(self.SDPFILE)

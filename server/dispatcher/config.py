@@ -58,7 +58,7 @@ class Config(object):
             if (os.path.exists(self.SDPFILE)):
                 s.load(self.SDPFILE)
             else:
-                log.L.warning("Missing SDP file" + self.SDPFILE)
+                logging.warning("Missing SDP file" + self.SDPFILE)
         elif (action == "edit"):
             # generate SDP configuration file based on user input
             print('Editing SDP file %s' % self.SDPFILE)

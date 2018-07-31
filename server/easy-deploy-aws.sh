@@ -6,7 +6,7 @@ DAEMONURL=https://github.com/valiant1x/intensecoin/releases/download/v2.0.2.1/in
 DAEMONBZ2=$(basename $DAEMONURL)
 DAEMONDIR=$(basename $DAEMONURL .tar.bz2)
 EMAIL=lukas@intensecoin.com 
-export EMAIL
+export EMAIL DAEMONBZ2 DAEMONDIR DAEMONURL
 
 install_daemon(){
   wget -nc -c $DAEMONURL && \

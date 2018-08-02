@@ -186,3 +186,14 @@ class Service(object):
     
     def show(self):
         log.L.info("Service %s (%s), id %s" % (self.getName(), self.getType(), self.getId()))
+        
+    def addAuthIdIfTopup(authid):
+        """ Should be probably more sophisticated. """
+        if (authid.getBalance()>self.json["firstPrePaidMinutes"]):
+            self.addAuthId(authid)
+        
+    def delAuthIdIfSpent(authid):
+        """ Should be probably more sophisticated. """
+         if (authid.getBalance()<0):
+            self.delAuthId(authid)
+            

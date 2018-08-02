@@ -113,10 +113,10 @@ class Sessions(object):
                     deleted = deleted + 1
                     self.remove(sid, 'Session not active in service')
                 elif not sess.isAlive():
-                    # If session should not be alive (spended authid), delete it from db and kill session from service
-                    self.remove(sid, 'Session is not alive (spended authid)')
+                    # If session should not be alive (spent authid), delete it from db and kill session from service
+                    self.remove(sid, 'Session is not alive (spent authid)')
                     if (sess.ip + ':' + sess.port) in service_sessions:
-                        service.killSession(service_sessions[sess.ip + ':' + sess.port], 'Spended: ' + sess.conninfo)
+                        service.killSession(service_sessions[sess.ip + ':' + sess.port], 'Spent: ' + sess.conninfo)
                         killed = killed + 1
                         deleted = deleted + 1
             # List all active sessions in our db per service
@@ -129,13 +129,13 @@ class Sessions(object):
                         service.killSession(ss['id'],'Inactive session')
                         killed = killed + 1
         # For all alive authids, spend time for last loop
-        spended = 0
+        spent = 0
         for authid in authids.AUTHIDS.getAll():
             if self.find(authid=authid):
                 authids.AUTHIDS.get(authid).spendTime(looptime)
-                spended = spended + 1
+                spent = spent + 1
                 
-        log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d spended authids" % (len(self.sessions), deleted, killed, spended))
+        log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d spent authids" % (len(self.sessions), deleted, killed, spent))
      
     def toString(self):
         str = "%d sessions\n" % (len(self.sessions))

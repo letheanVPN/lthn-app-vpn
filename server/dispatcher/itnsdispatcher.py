@@ -26,12 +26,26 @@ import configargparse
 from service_ha import ServiceHa
 from service_ovpn import ServiceOvpn
 
-def getFromWallet():
-        """Connect to wallet and ask for all self.authids from last height"""
+def getFromWallet(lastheight):
+        """
+        Connect to wallet and ask for all self.authids from last height.
+        """
 		
-        # Hardcoded payment
-        s1 = authids.AuthId("authid1", "1A", 1)
-        authids.AUTHIDS.update(s1)
+        # Create authid object from wallet
+        s1 = authids.AuthId("authid1", "1A", 0.1, 1, "paymentid or other related info here or nothing. Will be logged to audit log.")
+        
+        # If serviceid is not alive, false will be returned and it will be automatically logged
+        if (s1):
+            # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
+            # Internal logic is automatically applied to activate or not in corresponding services
+            authids.AUTHIDS.update(s1)
+
+def getHeighFromWallet():
+    """
+    We should connect to wallet or daemon and get actual height during startup of dispatcher.
+    Whe we loaded authids from disk, we will use last height processed but if we have clean db, we need to start here.
+    """
+    
 
 # Starting here
 def main(argv):

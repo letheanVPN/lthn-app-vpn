@@ -189,11 +189,13 @@ class Service(object):
         
     def addAuthIdIfTopup(authid):
         """ Should be probably more sophisticated. """
+        
         if (authid.getBalance()>self.json["firstPrePaidMinutes"]):
             self.addAuthId(authid)
         
     def delAuthIdIfSpent(authid):
         """ Should be probably more sophisticated. """
-         if (authid.getBalance()<0):
+        
+        if (authid.getBalance()<0):
             self.delAuthId(authid)
             

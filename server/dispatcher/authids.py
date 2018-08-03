@@ -6,6 +6,10 @@ import pickle
 import services
 import time
 from util import *
+import json
+import requests
+from requests.auth import HTTPDigestAuth
+import socket
 
 AUTHIDS = None
 
@@ -162,13 +166,36 @@ class AuthIds(object):
             else:
                 fresh += 1
         log.L.info("Authids cleanup: %d deleted, %d fresh" % (deleted, fresh))
-        
+
+    def walletJSONCall(method, height):
+        d = {
+            "id": "0",
+            "method": method,
+            "jsonrpc": "2.0",
+            "params": {
+                "in": True,
+                "filter_by_height": True,
+                "min_height": height,
+                "max_height": 99999999
+            }
+        }
+        # TODO put url, user and pass in config
+        url = "http://127.0.0.1:13660/json_rpc"
+        log.L.info("Calling RPC " + url)
+        r = requests.post(url, data=json.dumps(d), auth=HTTPDigestAuth("dispatcher", "547fth87t2ytgj"), headers={"Content-Type": "application/json"})
+        if (r.status_code == 200):
+            return(r.text)
+        else:
+            log.L.warning("RPC error %s!" % (r.status_code))
+            return(None)
+
     def getHeighFromWallet(self):
         """
         We should connect to wallet or daemon and get actual height
         Whe we loaded authids from disk, we will use last height processed but if we have clean db, we need to start here.
         """
-        return(1000)
+        # TODO even though it works with hardcoded height, best to get the real starting eight
+        return(100000)
 
     def getFromWallet(self):
         """
@@ -177,16 +204,24 @@ class AuthIds(object):
         if (self.lastheight==0):
             self.lastheight = self.getHeighFromWallet()
         
-        # Create authid object from wallet
-        s1 = AuthId("authid1", "1A", 0.1, 1, "paymentid or other related info here or nothing. Will be logged to audit log.")
-        
-        # If serviceid is not alive, false will be returned and it will be automatically logged
-        if (s1):
-            # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
-            # Internal logic is automatically applied to activate or not in corresponding services
-            self.update(s1)
-        self.lastheight = self.getHeighFromWallet()
+        res = json.loads(walletJSONCall("get_vpn_transfers", self.lastheight))
+        if (res['result']['in']):
+            for tx in res['result']['in']:
+                if (tx['height'] > self.lastheight):
+                    self.lastheight = tx['height']
 
+                service_id = tx['payment_id'][0:2]
+                auth_id = tx['payment_id'][2:16]
+                amount = tx['amount'] / 100000000
+                log.L.info("Got payment for service " + service_id + " auth " + auth_id + " amount " + amount)
+
+                # Create authid object from wallet
+                s1 = AuthId(auth_id, service_id, amount, 1, "")
+                # If serviceid is not alive, false will be returned and it will be automatically logged
+                if (s1):
+                    # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
+                    # Internal logic is automatically applied to activate or not in corresponding services
+                    self.update(s1)
         
     def load(self):
         if (config.Config.AUTHIDSFILE != ""):

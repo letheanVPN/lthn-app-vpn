@@ -8,6 +8,7 @@ import os
 import pprint
 import re
 import sys
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request
 from urllib.request import urlopen
@@ -277,10 +278,9 @@ class SDP(object):
             log.L.error('Failed to load config for uploading! Make sure the SDP config path is correct.')
             return False
 
-        payload = base64.urlsafe_b64encode(json.encode("utf-8"))
+        payload = base64.urlsafe_b64encode(json.encode('utf-8'))
 
         # begin ed25519 signing
-        # note - perhaps the provider key should be copied to the install directory so users do not need to manually input public/private keys..
         header = base64.urlsafe_b64encode(b'{"alg":"EdDSA"}')
         signingInput = header + b'.' + payload
         key  = cfg.CAP.providerkey
@@ -288,9 +288,12 @@ class SDP(object):
             log.L.error('Invalid private key entered, must be 64 hexadecimal characters.')
             return False
 
-        signing_key = ed25519.SigningKey(key.encode("utf-8"))
+        signing_key = ed25519.SigningKey(key.encode("utf-8"), encoding="hex")
         signedPayload = signing_key.sign(signingInput)
-        verifying_key = signing_key.get_verifying_key()
+        verifying_key = ed25519.VerifyingKey(cfg.CAP.providerid, encoding="hex")
+        if verifying_key.to_ascii(encoding="hex").lower() != signing_key.get_verifying_key().to_ascii(encoding="hex").lower():
+            log.L.warning('Provider ID may be incorrect - failed to match provider ID to private-derived public key!')
+
         try:
             verifying_key.verify(signedPayload, signingInput)
             print('Signed data validated successfully!')
@@ -305,11 +308,18 @@ class SDP(object):
         sdpAddServiceEndpoint = cfg.CAP.sdpUri + '/services/add/'
 
         request = Request(sdpAddServiceEndpoint, payload)
-        request.add_header('JWS', encodedSignedPayload)
+        request.add_header('JWS', signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
         request.add_header('Content-Type', 'text/plain')
-        response = urlopen(request).read()
-        print('SDP server response: %s' % response)
-        return True
+
+        try:
+            response = urlopen(request).read()
+            print('SDP server response: %s' % response)
+            return True
+        except HTTPError as err:
+            log.L.error('Error %s sending data to SDP server: %s\n%s' % (err.code, err.reason, err.headers))
+            #print('Request headers %s' % request.headers)
+        
+        return False
     
     def listServices(self):
         ret = dict()

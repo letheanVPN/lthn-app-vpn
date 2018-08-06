@@ -84,7 +84,7 @@ You can use more env variables to tune parameters. See script header for availab
 usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-l LEVEL] [-A FILE]
                       [-a FILE] [--refresh-time SEC] [--save-time SEC]
                       [-lc FILE] [-v] [-G PREFIX] [-S] [-C SERVICEID] [-D]
-                      [--sdp-service-crt FILE] [--sdp-service-type TYPE]
+                      [-U] [--sdp-service-crt FILE] [--sdp-service-type TYPE]
                       [--sdp-service-fqdn FQDN] [--sdp-service-port NUMBER]
                       [--sdp-service-name NAME] [--sdp-service-id NUMBER]
                       [--sdp-service-cost ITNS] [--sdp-service-refunds NUMBER]
@@ -94,7 +94,7 @@ usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-l LEVEL] [-A FILE]
                       [--sdp-service-verifications NUMBER] --ca ca.crt
                       --wallet-address ADDRESS [--wallet-host HOST]
                       [--wallet-port PORT] [--wallet-username USER]
-                      [--wallet-password PW] [--sdp-server URL [URL ...]]
+                      [--wallet-password PW] [--sdp-uri URL [URL ...]]
                       --provider-id PROVIDERID --provider-key PROVIDERKEY
                       --provider-name NAME [--provider-type TYPE]
                       [--provider-terms TEXT]
@@ -133,6 +133,7 @@ optional arguments:
                         Generate client config for specified service on stdout
                         and exit (default: None)
   -D, --generate-sdp    Generate SDP by wizzard (default: None)
+  -U, --upload-sdp      Upload SDP (default: None)
   --sdp-service-crt FILE
                         Provider Proxy crt (for SDP edit/creation only)
                         (default: None)
@@ -177,8 +178,9 @@ optional arguments:
   --wallet-username USER
                         Wallet username (default: None)
   --wallet-password PW  Wallet passwd (default: None)
-  --sdp-server URL [URL ...]
-                        SDP server(s) (default: None)
+  --sdp-uri URL [URL ...]
+                        SDP server(s) (default: https://l9d48ixadl.execute-
+                        api.us-east-1.amazonaws.com/intense/v1)
   --provider-id PROVIDERID
                         ProviderID (public ed25519 key) (default: None)
   --provider-key PROVIDERKEY
@@ -188,13 +190,16 @@ optional arguments:
   --provider-terms TEXT
                         Provider terms (default: None)
 
+Use -v option to more help info.
+Happy flying with better privacy!
+
 ```
 
 ## Management interface
 Dispatcher has management interface available by default in /opt/itns/var/run/mgmt.
 You can manually add or remove authids and see its status.
 ```
-echo "help" | socat stdio /opt/itns/var/mgmt
+echo "help" | socat stdio /opt/itns/var/run/mgmt
 show authid [authid]
 show session [sessionid]
 kill session <sessionid>
@@ -210,14 +215,14 @@ cleanup
 
 Example1: Add static authid:
 ```
-echo "add authid authid2 1a" | socat stdio /opt/itns/var/mgmt
+echo "add authid authid2 1a" | socat stdio /opt/itns/var/run/mgmt
 Added (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:07 2018, balance=100000.000000, perminute=0.001000, minsleft=100000000.000000, charged_count=1, discharged_count=0
 
 ```
 
 Example2: Topup authid:
 ```
- echo "topup authid2 1" | socat stdio /opt/itns/var/mgmt
+ echo "topup authid2 1" | socat stdio /opt/itns/var/run/mgmt
 TopUp (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:47 2018, balance=100001.000000, perminute=0.001000, minsleft=100001000.000000, charged_count=2, discharged_count=0
 
 ```

@@ -26,13 +26,6 @@ import configargparse
 from service_ha import ServiceHa
 from service_ovpn import ServiceOvpn
 
-def getFromWallet():
-        """Connect to wallet and ask for all self.authids from last height"""
-		
-        # Hardcoded payment
-        s1 = authids.AuthId("authid1", "1A", 1)
-        authids.AUTHIDS.update(s1)
-
 # Starting here
 def main(argv):
     config.CONFIG = config.Config("dummy")
@@ -191,8 +184,8 @@ def main(argv):
     tmpauthids=authids.AUTHIDS.load()
     if (tmpauthids):
         authids.AUTHIDS=tmpauthids
-
-    getFromWallet()
+    
+    authids.AUTHIDS.getFromWallet()
     
     overaltime = 0
     savedcount = 0
@@ -207,11 +200,13 @@ def main(argv):
         services.SERVICES.orchestrate()
         
         if ((config.Config.T_SAVE > 0 and overaltime / config.Config.T_SAVE > savedcount) or config.Config.FORCE_SAVE):
+            authids.AUTHIDS.getFromWallet()
             authids.AUTHIDS.save()
             savedcount = savedcount + 1
             config.Config.FORCE_SAVE = None
             
         if ((config.Config.T_CLEANUP > 0 and overaltime / config.Config.T_CLEANUP > cleanupcount) or config.Config.FORCE_REFRESH):
+            authids.AUTHIDS.getFromWallet()
             authids.AUTHIDS.cleanup()
             sessions.SESSIONS.refresh(time.time() - lastrefresh)
             cleanupcount = cleanupcount + 1

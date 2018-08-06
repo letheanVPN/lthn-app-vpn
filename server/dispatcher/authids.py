@@ -15,25 +15,33 @@ class AuthId(object):
     All payments for given authid are in one session.
     """
     
-    def __init__(self, authid, serviceid, balance):
+    def __init__(self, authid, serviceid, balance, verifications, msg=""):
         self.id = authid
         self.balance = 0
         self.serviceid = serviceid
+        self.verifications = verifications
         self.created = time.time()
         self.charged_count = 0
         self.lastmodify = time.time()
         if (services.SERVICES.get(serviceid)):
             self.cost = services.SERVICES.get(serviceid).getCost()
         else:
-            log.L.warning("Dropping authid %s (serviceid %s does not exists)" % (authid, serviceid))
+            log.L.error("Dropping authid %s (serviceid %s does not exists)" % (authid, serviceid))
+            #log.A.audit(log.A.AUTHID, log.A.DEL, authid, "Serviceid %s does not exists" % (serviceid))
             return(None)
         if (balance > 0):
             self.topUp(balance)
-        log.A.audit(log.A.AUTHID, log.A.ADD, authid, "init, balance=%s" % (balance))
+        log.A.audit(log.A.AUTHID, log.A.ADD, authid, "init, balance=%s, verifications=%s" % (balance,verifications))
         self.discharged_count = 0
         
     def getId(self):
         return(self.id)
+    
+    def getBalance(self):
+        return(self.balance)
+    
+    def getVerifications(self):
+        return(self.verifications)
 
     def getServiceId(self):
         return(self.serviceid)
@@ -54,7 +62,10 @@ class AuthId(object):
         str = "%s: serviceid=%s, created=%s,modified=%s, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
         return(str)
     
-    def topUp(self, itns, msg=""):
+    def topUp(self, itns, msg="", verifications=None):
+        """ TopUp authid. If itns is zero, only update internal acls of services. If verifications is set, it is updated. """
+        if verifications:
+            self.verifications = verifications
         if (itns > 0):
             self.balance += itns
             self.lastmodify = time.time()
@@ -63,19 +74,19 @@ class AuthId(object):
             log.L.debug("Authid %s: Topup %f, new balance %f" % (self.getId(), itns, self.balance))
             log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%s,balance=%s %s" % (itns, self.balance, msg))
         for s in services.SERVICES.getAll():
-            services.SERVICES.get(s).addAuthId(self.getId())
+            services.SERVICES.get(s).addAuthIdIfTopup(self)
     
     def spend(self, itns, msg=""):
+        """ Spend authid. If balance is not enough for given service, remove it from its acl. """
         if (itns > 0):
             self.balance -= itns
             self.lastmodify = time.time()
             self.lastdisCharge = time.time()
             self.discharged_count += 1
-            log.L.debug("Authid %s: Spend %f, new balance %f" % (self.getId(), itns, self.balance))
-            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "spend,amount=%s,balance=%s %s" % (itns, self.balance, msg))
-        if (self.balance <= 0):
+            log.L.debug("Authid %s: Spent %f, new balance %f" % (self.getId(), itns, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "spent,amount=%s,balance=%s %s" % (itns, self.balance, msg))
             for s in services.SERVICES.getAll():
-                services.SERVICES.get(s).delAuthId(self.getId())
+                services.SERVICES.get(s).delAuthIdIfSpent(self)
                 
     def spendTime(self, seconds):
         self.spend(self.cost * seconds / 60, "(%.2f minutes*%f)" % (seconds/60, self.cost))
@@ -92,6 +103,7 @@ class AuthIds(object):
     def __init__(self):
         self.authids = {}
         self.lastmodify = time.time()
+        self.lastheight = 0
         
     def add(self, paymentid):
         log.L.warning("New authid %s" % (paymentid.getId()))
@@ -99,11 +111,11 @@ class AuthIds(object):
         
     def update(self, paymentid):
         if paymentid.getId() in self.authids.keys():
-            self.topUp(paymentid.getId(), paymentid.getBalance())
+            self.topUp(paymentid.getId(), paymentid.getBalance(), paymentid.getVerifications())
         else:
             self.add(paymentid)
     
-    def topUp(self, paymentid, balance, msg=""):
+    def topUp(self, paymentid, balance, verifications, msg=""):
         self.authids[paymentid].topUp(balance, msg)
 
     def spend(self, paymentid, balance, msg=""):
@@ -150,6 +162,31 @@ class AuthIds(object):
             else:
                 fresh += 1
         log.L.info("Authids cleanup: %d deleted, %d fresh" % (deleted, fresh))
+        
+    def getHeighFromWallet(self):
+        """
+        We should connect to wallet or daemon and get actual height
+        Whe we loaded authids from disk, we will use last height processed but if we have clean db, we need to start here.
+        """
+        return(1000)
+
+    def getFromWallet(self):
+        """
+        Connect to wallet and ask for all self.authids from last height.
+        """
+        if (self.lastheight==0):
+            self.lastheight = self.getHeighFromWallet()
+        
+        # Create authid object from wallet
+        s1 = AuthId("authid1", "1A", 0.1, 1, "paymentid or other related info here or nothing. Will be logged to audit log.")
+        
+        # If serviceid is not alive, false will be returned and it will be automatically logged
+        if (s1):
+            # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
+            # Internal logic is automatically applied to activate or not in corresponding services
+            self.update(s1)
+        self.lastheight = self.getHeighFromWallet()
+
         
     def load(self):
         if (config.Config.AUTHIDSFILE != ""):

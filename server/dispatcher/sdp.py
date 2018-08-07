@@ -311,7 +311,7 @@ class SDP(object):
 
         sdpAddServiceEndpoint = cfg.CAP.sdpUri + '/services/add/'
 
-        request = Request(sdpAddServiceEndpoint, payload)
+        request = Request(sdpAddServiceEndpoint, json.encode())
         request.add_header('JWS', signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
         request.add_header('Content-Type', 'text/plain')
 
@@ -320,9 +320,11 @@ class SDP(object):
             print('SDP server response: %s' % response)
             return True
         except HTTPError as err:
-            log.L.error('Error %s sending data to SDP server: %s\n%s' % (err.code, err.reason, err.headers))
-            #print('Request headers %s' % request.headers)
-        
+            error_message = err.read()
+            log.L.error('Request headers %s' % request.headers)
+            log.L.error('Request data %s' % request.data)
+            log.L.error('Error %s sending data to SDP server: %s\n\n%s\n%s' % (error_message, err.code, err.reason, err.headers))
+
         return False
     
     def listServices(self):

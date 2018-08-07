@@ -20,16 +20,16 @@ class SDP(object):
     
     # sample SDP dict
     data = dict(
-                protocolVersion=1,
-                nodeType='{nodetype}',
+                protocolVersion=1,                
                 provider=dict(
                 id='{providerid}',
-                name='{providername}'
-                ),
-                certificates=[],
+                name='',
+                nodeType='{nodetype}',
+                certificates={},
                 wallet='{walletaddress}',
                 terms='{providerterms}',
-                services={},
+                ),                                
+                services=[],
                 )
 
     """SDP functions"""
@@ -101,7 +101,7 @@ class SDP(object):
             self.data['protocolVersion'] = 1
 
         validNodeTypes = ['residential', 'commercial', 'government']
-        if (self.data['nodeType'] not in validNodeTypes):
+        if (self.data['provider']['nodeType'] not in validNodeTypes):
             log.L.error('Invalid node type.')
             if not self.setNodeType(cap.nodeType):
                 return False
@@ -114,15 +114,15 @@ class SDP(object):
             if not self.setProviderName(cap.providerName):
                 return False
 
-        if (not self.data['wallet'] or len(self.data['wallet']) != 97):
+        if (not self.data['provider']['wallet'] or len(self.data['provider']['wallet']) != 97):
             if not self.setWalletAddr(cap.walletAddr):
                 return False
 
-        if (not self.data['terms'] or len(self.data['terms']) > 50000):
+        if (not self.data['provider']['terms'] or len(self.data['provider']['terms']) > 50000):
             if not self.setProviderTerms(cap.providerTerms):
                 return False
 
-        if (not self.data['certificates'] or len(self.data['certificates']) < 1):
+        if (not self.data['provider']['certificates'] or len(self.data['provider']['certificates']) < 1):
             if not self.loadCertificate(cap.providerCa):
                 # need to use exit() here or the script will loop
                 # above it loops intentionally to get user input but here it's pointless
@@ -160,10 +160,15 @@ class SDP(object):
                 end = caCertParsed.index(certEnd)
                 caCertParsed = caCertParsed[:end]
                 print('Found new CA cert %s..%s, adding to config' % (caCertParsed[:8], caCertParsed[len(caCertParsed) - 5:len(caCertParsed)]))
-                if not self.data['certificates']:
-                    self.data['certificates'] = []
+                if not self.data['provider']['certificates']:
+                    self.data['provider']['certificates'] = []
 
-                self.data['certificates'].append(caCertParsed)
+                certObjectToAppend = {}
+                certObjectToAppend['content'] = caCertParsed
+                certObjectToAppend['id'] = 0
+                certObjectToAppend['cn'] = 'ignored' #remove after SDP is updated - this field is unnecessary
+
+                self.data['provider']['certificates'].append(certObjectToAppend)
                 return True
             else:
                 log.L.error('CA certificate file: %s' % caCert)
@@ -192,7 +197,7 @@ class SDP(object):
         if not choice:
             choice = 'None'
 
-        self.data['terms'] = choice
+        self.data['provider']['terms'] = choice
         return True
 
     def setWalletAddr(self, addr=None):
@@ -207,7 +212,7 @@ class SDP(object):
             log.L.error('Wallet addresses must start with iz. Do not enter an integrated address; one will be automatically generated for every client.')
             return self.setWalletAddr()
 
-        self.data['wallet'] = choice
+        self.data['provider']['wallet'] = choice
         return True
 
     def setProviderName(self, name=None):
@@ -223,7 +228,7 @@ class SDP(object):
             return self.setProviderName()
 
     def setNodeType(self, type):
-        self.data['nodeType'] = type
+        self.data['provider']['nodeType'] = type
         return True
     
     def getJson(self):
@@ -335,10 +340,11 @@ class SDPService(object):
     # sample SDPService dict
     data = dict(
                 id=None,
+                disable='false',
                 name=None,
                 type=None,
-                allowRefunds=False,
-                cost=0.00000001,
+                allowRefunds='false',
+                cost='0.00000001',
                 downloadSpeed=None,
                 uploadSpeed=None,
                 firstPrePaidMinutes=2,
@@ -416,6 +422,9 @@ class SDPService(object):
         ret = False
         while not ret:
             ret = self.setAllowRefunds(cap.serviceAllowRefunds)
+        ret = False
+        while not ret:
+            ret = self.setDisable(cap.serviceDisable)
         ret = False
         while not ret:
             ret = self.setDownloadSpeed(cap.serviceDownloadSpeed)
@@ -563,6 +572,16 @@ class SDPService(object):
         return json
 
     def loadCertificate(self, crt):
+        #SDP now expects only the CA? to be determined - for now we hardcode id 0
+        if 'certificates' not in self.data:
+            self.data['certificates'] = []
+            certObject = {}
+            certObject['id'] = 0
+            self.data['certificates'].append(certObject)   
+
+        return True     
+        #end hardcode       
+
         if (self.certsDir is None):
             if (crt is None):
                 log.L.error('Failed to locate certificates!')
@@ -705,6 +724,9 @@ class SDPService(object):
 
         return False
 
+    def setDisable(self, disable):
+        self.data['disable'] = disable
+        return True
 
     def setAllowRefunds(self, allow):
         self.data['allowRefunds'] = allow

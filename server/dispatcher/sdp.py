@@ -9,7 +9,6 @@ import pprint
 import re
 import sys
 from urllib.error import HTTPError
-from urllib.parse import urlencode
 from urllib.request import Request
 from urllib.request import urlopen
 
@@ -46,7 +45,7 @@ class SDP(object):
             ret = s.checkConfig(cap)
 
         if ret:
-            self.data['services'][s.data['id']] = s.data
+            self.data['services'].append(s.data)
 
     def getUsedServiceIds(self):
         serviceIds = []
@@ -327,13 +326,17 @@ class SDP(object):
         return False
     
     def listServices(self):
-        ret = dict()
-        for id in self.data["services"].keys():
-            ret[id] = self.data["services"][id]
+        ret = []
+        for item in self.data["services"]:
+            ret.append(item['id'])
         return(ret)
     
     def getService(self, id):
-        return(self.data["services"][id])
+        for item in self.data["services"]:
+            if item['id'] == id:
+                return item
+
+        return False
             
 
 class SDPService(object):
@@ -789,7 +792,7 @@ class SDPService(object):
             if (cost):
                 choice = cost
             else:
-                print('Existing cost: %.8f' % self.data['cost'])
+                print('Existing cost: %.8f' % float(self.data['cost']))
                 choice = input('Enter new cost? [leave blank to keep existing] ')
         else:
             if (cost):
@@ -802,7 +805,7 @@ class SDPService(object):
             if (choice < 0.00000001):
                 log.L.error('Cost must be at least 0.00000001!')
                 return self.setCost()
-            self.data['cost'] = choice
+            self.data['cost'] = str(choice)
             return True
         else:
             if self.data['cost']:
@@ -847,13 +850,13 @@ class SDPService(object):
         elif self.existingServiceIds and len(self.existingServiceIds) > 0:
             val = int(self.existingServiceIds[len(self.existingServiceIds) - 1], base=16)
             if (val <= 254):
-                self.data['id'] = format(val + 1, 'X')
+                self.data['id'] = str(format(val + 1, 'X'))
             else:
                 # TODO add code to restart service count from 0 and/or scan existingServiceIds to find an unused ID (if possible)
                 log.L.critical('Only 240 services are supported! If you encountered this error, please contact the team to add code to support more services!')
                 sys.exit(1)
         else:
-            self.data['id'] = 10
+            self.data['id'] = "10"
 
     def setType(self, type):
         if self.data['type']:
@@ -869,12 +872,12 @@ class SDPService(object):
             else:
                 choice = input('Which type of service is this? vpn or proxy? ').strip().lower()
 
-        if (choice == 'proxy'):
+        if (choice == 'proxy' or choice == 'p'):
             self.data['type'] = 'proxy'
             self.data['proxy'] = []
             self.data['vpn'] = None
             return True
-        elif (choice == 'vpn'):
+        elif (choice == 'vpn' or choice == 'v'):
             self.data['type'] = 'vpn'
             self.data['proxy'] = None
             self.data['vpn'] = []

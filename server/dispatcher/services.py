@@ -18,17 +18,18 @@ class Services(object):
         self.services = {}
         sdp = SDP()
         sdp.load(config.Config.SDPFILE)
-        for id in sdp.listServices():
-            s = sdp.getService(id)
+        for id_ in sdp.listServices():
+            s = sdp.getService(id_)
+            print('Found service %s' % s)
             if (s["type"]):
                 if (s["type"] == "vpn"):
-                    so = ServiceOvpn(id, s)
+                    so = ServiceOvpn(id_, s)
                 elif (s["type"] == "proxy"):
-                    so = ServiceHa(id, s)
+                    so = ServiceHa(id_, s)
                 else:
                     log.L.error("Unknown service type %s in SDP!" % (s["type"]))
                     sys.exit(1)
-            self.services[id.upper()] = so
+            self.services[id_.upper()] = so
         self.syslog = ServiceSyslog(config.Config.PREFIX + "/var/run/log")
         self.mgmt = ServiceMgmt(config.Config.PREFIX + "/var/run/mgmt")
  

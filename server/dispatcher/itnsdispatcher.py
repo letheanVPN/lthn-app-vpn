@@ -68,7 +68,7 @@ def main(argv):
     p.add(       '--provider-id',               dest='providerid', metavar='PROVIDERID', required=True, help='ProviderID (public ed25519 key)')
     p.add(       '--provider-key',              dest='providerkey', metavar='PROVIDERKEY', required=True, help='ProviderID (private ed25519 key)')
     p.add(       '--provider-name',             dest='providerName', metavar='NAME', required=True, help='Provider Name') 
-    p.add(       '--provider-type',             dest='nodeType', metavar='TYPE', required=None, help='Provider type', default='commercial', choices=['commercial', 'residential', 'government'])
+    p.add(       '--provider-type',             dest='nodeType', metavar='TYPE', required=None, help='Provider type', default='residential', choices=['commercial', 'residential', 'government'])
     p.add(       '--provider-terms',            dest='providerTerms', metavar='TEXT', required=None, help='Provider terms')
 
     cfg = p.parse_args()

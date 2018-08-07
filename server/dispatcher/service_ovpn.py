@@ -29,7 +29,7 @@ class ServiceOvpn(Service):
         if (config.Config.OPENVPN_SUDO):
             cmd = ["/usr/bin/sudo", Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
         else:
-            cmd = [conifg.Config.SUDO_BIN, Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
+            cmd = [config.Config.SUDO_BIN, Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         time.sleep(0.3)
         if (os.path.exists(self.pidfile)):
@@ -120,7 +120,7 @@ class ServiceOvpn(Service):
         self.mgmtfile = self.dir + "/mgmt"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
-        tfile = Config.PREFIX + "/etc/openvpn_server.tmpl"
+        tfile = config.Config.PREFIX + "/etc/openvpn_server.tmpl"
         try:
             tf = open(tfile, "rb")
             tmpl = tf.read()

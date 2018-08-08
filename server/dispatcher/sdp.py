@@ -108,7 +108,7 @@ class SDP(object):
         if (len(self.data['provider']['id']) != 64 or not re.match(r'[a-zA-Z0-9]', self.data['provider']['id'])):
             if not self.setProviderId(cap.providerid):
                 return False
-
+        
         if(not self.data['provider']['name'] or len(self.data['provider']['name']) > 16):
             if not self.setProviderName(cap.providerName):
                 return False
@@ -154,11 +154,12 @@ class SDP(object):
             certEnd = "-----END CERTIFICATE-----"
             if (caCertContents and certStart in caCertContents and certEnd in caCertContents):
                 caCertContents = re.sub(r'[\n\r]+', '', caCertContents)
-                start = caCertContents.index(certStart)                
+                """start = caCertContents.index(certStart)                
                 caCertParsed = caCertContents[start + len(certStart):]
                 end = caCertParsed.index(certEnd)
-                caCertParsed = caCertParsed[:end]
-                print('Found new CA cert %s..%s, adding to config' % (caCertParsed[:8], caCertParsed[len(caCertParsed) - 5:len(caCertParsed)]))
+                caCertParsed = caCertParsed[:end]"""
+                caCertParsed = caCertContents
+                log.L.info('Found new CA cert %s..%s, adding to config' % (caCertParsed[:8], caCertParsed[len(caCertParsed) - 5:len(caCertParsed)]))
                 if not self.data['provider']['certificates']:
                     self.data['provider']['certificates'] = []
 
@@ -300,9 +301,9 @@ class SDP(object):
 
         try:
             verifying_key.verify(signedPayload, signingInput)
-            print('Signed data validated successfully!')
+            log.L.info('Signed data validated successfully!')
         except ed25519.BadSignatureError:
-            print(base64.urlsafe_b64decode(signingInput).decode("utf-8"))
+            log.L.error(base64.urlsafe_b64decode(signingInput).decode("utf-8"))
             log.L.error('Failed to validate signed data for SDP. Are you sure you entered a valid private key?')
             return False
 
@@ -313,7 +314,7 @@ class SDP(object):
 
         request = Request(sdpAddServiceEndpoint, json.encode())
         request.add_header('JWS', signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
-        request.add_header('Content-Type', 'text/plain')
+        request.add_header('Content-Type', 'application/json')
 
         try:
             response = urlopen(request).read()
@@ -345,10 +346,10 @@ class SDPService(object):
     # sample SDPService dict
     data = dict(
                 id=None,
-                disable='false',
+                disable=False,
                 name=None,
                 type=None,
-                allowRefunds='false',
+                allowRefunds=False,
                 cost='0.00000001',
                 downloadSpeed=None,
                 uploadSpeed=None,
@@ -448,6 +449,9 @@ class SDPService(object):
     def setPort(self, port=None):
         nodeType = self.data['type']
         
+        if (nodeType == 'openvpn'):
+            nodeType = 'vpn'
+
         if nodeType not in self.data:
             self.data[nodeType] = []
 
@@ -503,6 +507,9 @@ class SDPService(object):
     def setEndpoints(self, endpoint):
         nodeType = self.data['type']
         
+        if (nodeType == 'openvpn'):
+            nodeType = 'vpn'
+
         if nodeType not in self.data:
             self.data[nodeType] = []
 
@@ -572,11 +579,13 @@ class SDPService(object):
         return re.match(r'((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))|(^\s*((?=.{1,255}$)(?=.*[A-Za-z].*)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*)\s*$)', testEndpoint)
 
     def getJson(self):
+        jsonpickle.set_encoder_options('json', sort_keys=True, indent=3)
         json = jsonpickle.encode(self.data, unpicklable=False)
         log.L.info('Encoded SDP Service JSON: %s' % json)
         return json
 
     def loadCertificate(self, crt):
+
         #SDP now expects only the CA? to be determined - for now we hardcode id 0
         if 'certificates' not in self.data:
             self.data['certificates'] = []
@@ -597,7 +606,7 @@ class SDPService(object):
                 cert = crt
             else:
                 cert = self.certsDir + '/ha.cert.pem'
-        elif self.data['type'] == 'vpn':
+        elif self.data['type'] == 'openvpn':
             if (crt):
                 cert = crt
             else:
@@ -622,12 +631,17 @@ class SDPService(object):
         certEnd = "-----END CERTIFICATE-----"
         if (certContents and certStart in certContents and certEnd in certContents):
             certContents = re.sub(r'[\n\r]+', '', certContents)
-            start = certContents.index(certStart)                
+            """start = certContents.index(certStart)                
             certParsed = certContents[start + len(certStart):]
             end = certParsed.index(certEnd)
             certParsed = certParsed[:end]            
+            """
+            certParsed = certContents
 
             nodeType = self.data['type']
+
+            if (nodeType == 'openvpn'):
+                nodeType = 'vpn'
 
             if not self.data[nodeType]:
                 self.data[nodeType] = []
@@ -877,15 +891,15 @@ class SDPService(object):
         if (choice == 'proxy' or choice == 'p'):
             self.data['type'] = 'proxy'
             self.data['proxy'] = []
-            self.data['vpn'] = None
+            self.data['vpn'] = []
             return True
         elif (choice == 'vpn' or choice == 'v'):
-            self.data['type'] = 'vpn'
-            self.data['proxy'] = None
+            self.data['type'] = 'openvpn'
+            self.data['proxy'] = []
             self.data['vpn'] = []
             return True
         else:
-            if self.data['type'] == 'proxy' or self.data['type'] == 'vpn':
+            if self.data['type'] == 'proxy' or self.data['type'] == 'openvpn':
                 return True
 
             log.L.error('Invalid option selected. Enter P for proxy or V for VPN.')

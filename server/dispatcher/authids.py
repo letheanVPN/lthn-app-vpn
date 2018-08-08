@@ -222,7 +222,7 @@ class AuthIds(object):
                     # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
                     # Internal logic is automatically applied to activate or not in corresponding services
                     self.update(s1)
-            self.lastheight++
+            self.lastheight += 1
         
     def load(self):
         if (config.Config.AUTHIDSFILE != ""):

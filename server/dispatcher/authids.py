@@ -167,17 +167,12 @@ class AuthIds(object):
                 fresh += 1
         log.L.info("Authids cleanup: %d deleted, %d fresh" % (deleted, fresh))
 
-    def walletJSONCall(method, height):
+    def walletJSONCall(method, params):
         d = {
             "id": "0",
             "method": method,
             "jsonrpc": "2.0",
-            "params": {
-                "in": True,
-                "filter_by_height": True,
-                "min_height": height,
-                "max_height": 99999999
-            }
+            "params": params
         }
         # TODO put url, user and pass in config
         url = "http://127.0.0.1:13660/json_rpc"
@@ -194,8 +189,9 @@ class AuthIds(object):
         We should connect to wallet or daemon and get actual height
         Whe we loaded authids from disk, we will use last height processed but if we have clean db, we need to start here.
         """
-        # TODO even though it works with hardcoded height, best to get the real starting eight
-        return(100000)
+        res = json.loads(self.walletJSONCall("getheight", {}))
+        return res['result']['height']
+
 
     def getFromWallet(self):
         """
@@ -203,8 +199,15 @@ class AuthIds(object):
         """
         if (self.lastheight==0):
             self.lastheight = self.getHeighFromWallet()
+            
+        params = {
+            "in": True,
+            "filter_by_height": True,
+            "min_height": self.lastheight,
+            "max_height": 99999999
+        }
+        res = json.loads(self.walletJSONCall("get_vpn_transfers", params))
         
-        res = json.loads(self.walletJSONCall("get_vpn_transfers", self.lastheight))
         if (res['result']['in']):
             for tx in res['result']['in']:
                 if (tx['height'] > self.lastheight):

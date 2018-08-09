@@ -197,8 +197,9 @@ class AuthIds(object):
         """
         Connect to wallet and ask for all self.authids from last height.
         """
+        cur_height = self.getHeighFromWallet()
         if (self.lastheight==0):
-            self.lastheight = self.getHeighFromWallet()
+            self.lastheight = cur_height
             
         params = {
             "in": True,
@@ -210,16 +211,21 @@ class AuthIds(object):
         
         if (res['result']['in']):
             for tx in res['result']['in']:
+                if (tx['height'] > cur_height):
+                    log.L.warning("Wallet not in sync! Got a payment for a future block height")
+                    break
+
                 if (tx['height'] > self.lastheight):
                     self.lastheight = tx['height']
 
                 service_id = tx['payment_id'][0:2]
                 auth_id = tx['payment_id'][2:16]
                 amount = tx['amount'] / 100000000
-                log.L.info("Got payment for service " + service_id + " auth " + auth_id + " amount " + amount)
+                confirmations = cur_height - tx['height'] + 1
+                log.L.info("Got payment for service " + service_id + " auth " + auth_id + " amount " + amount + " confirmations " + confirmations)
 
                 # Create authid object from wallet
-                s1 = AuthId(auth_id, service_id, amount, 1, "")
+                s1 = AuthId(auth_id, service_id, amount, confirmations, "")
                 # If serviceid is not alive, false will be returned and it will be automatically logged
                 if (s1):
                     # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.

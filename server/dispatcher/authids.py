@@ -167,26 +167,21 @@ class AuthIds(object):
                 fresh += 1
         log.L.info("Authids cleanup: %d deleted, %d fresh" % (deleted, fresh))
 
-    def walletJSONCall(method, height):
+    def walletJSONCall(self, method, params):
         d = {
             "id": "0",
             "method": method,
             "jsonrpc": "2.0",
-            "params": {
-                "in": True,
-                "filter_by_height": True,
-                "min_height": height,
-                "max_height": 99999999
-            }
+            "params": params
         }
-        # TODO put url, user and pass in config
-        url = "http://127.0.0.1:13660/json_rpc"
-        log.L.info("Calling RPC " + url)
-        r = requests.post(url, data=json.dumps(d), auth=HTTPDigestAuth("dispatcher", "547fth87t2ytgj"), headers={"Content-Type": "application/json"})
+        url = config.CONFIG.CAP.walletUri
+        log.L.debug("Calling wallet RPC " + url)
+        r = requests.post(url, data=json.dumps(d), auth=HTTPDigestAuth(config.CONFIG.CAP.walletUsername, config.CONFIG.CAP.walletPassword), headers={"Content-Type": "application/json"})
         if (r.status_code == 200):
             return(r.text)
         else:
-            log.L.warning("RPC error %s!" % (r.status_code))
+            log.L.error("Wallet RPC error %s!" % (r.status_code))
+            sys.exit(2)
             return(None)
 
     def getHeighFromWallet(self):
@@ -194,35 +189,52 @@ class AuthIds(object):
         We should connect to wallet or daemon and get actual height
         Whe we loaded authids from disk, we will use last height processed but if we have clean db, we need to start here.
         """
-        # TODO even though it works with hardcoded height, best to get the real starting eight
-        return(100000)
+        res = json.loads(self.walletJSONCall("getheight", {}))
+        return res['result']['height']
+
 
     def getFromWallet(self):
         """
         Connect to wallet and ask for all self.authids from last height.
         """
+        cur_height = self.getHeighFromWallet()
         if (self.lastheight==0):
-            self.lastheight = self.getHeighFromWallet()
+            self.lastheight = cur_height
+            
+        params = {
+            "in": True,
+            "filter_by_height": True,
+            "min_height": self.lastheight,
+            "max_height": 99999999
+        }
+        res = json.loads(self.walletJSONCall("get_vpn_transfers", params))
         
-        res = json.loads(self.walletJSONCall("get_vpn_transfers", self.lastheight))
-        if (res['result']['in']):
+        if ('in' in res['result']):
             for tx in res['result']['in']:
+                if (tx['height'] > cur_height):
+                    log.L.warning("Wallet not in sync! Got a payment for a future block height")
+                    break
+
                 if (tx['height'] > self.lastheight):
                     self.lastheight = tx['height']
 
                 service_id = tx['payment_id'][0:2]
                 auth_id = tx['payment_id'][2:16]
                 amount = tx['amount'] / 100000000
-                log.L.info("Got payment for service " + service_id + " auth " + auth_id + " amount " + amount)
+                confirmations = cur_height - tx['height'] + 1
+                log.L.info("Got payment for service " + service_id + " auth " + auth_id + " amount " + amount + " confirmations " + confirmations)
 
                 # Create authid object from wallet
-                s1 = AuthId(auth_id, service_id, amount, 1, "")
+                s1 = AuthId(auth_id, service_id, amount, confirmations, "")
                 # If serviceid is not alive, false will be returned and it will be automatically logged
                 if (s1):
                     # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
                     # Internal logic is automatically applied to activate or not in corresponding services
                     self.update(s1)
             self.lastheight += 1
+            log.L.info("All payments from wallet processed")  
+        else:
+            log.L.info("No new payments in wallet")
         
     def load(self):
         if (config.Config.AUTHIDSFILE != ""):
@@ -249,4 +261,3 @@ class AuthIds(object):
             except (OSError, IOError) as e:
                 log.L.warning("Error writing authids db %s" % (config.Config.AUTHIDSFILE))
                 sys.exit(2)
-

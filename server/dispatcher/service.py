@@ -190,7 +190,7 @@ class Service(object):
     def addAuthIdIfTopup(self, authid):
         """ Should be probably more sophisticated. """
         
-        if (authid.getBalance()>int(self.json["firstPrePaidMinutes"])*self.cost):
+        if (authid.getBalance()>int(self.json["firstPrePaidMinutes"])*float(self.cost)):
             self.addAuthId(authid)
         
     def delAuthIdIfSpent(self, authid):

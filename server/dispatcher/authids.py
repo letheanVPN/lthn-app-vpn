@@ -204,7 +204,7 @@ class AuthIds(object):
         if (self.lastheight==0):
             self.lastheight = self.getHeighFromWallet()
         
-        res = json.loads(walletJSONCall("get_vpn_transfers", self.lastheight))
+        res = json.loads(self.walletJSONCall("get_vpn_transfers", self.lastheight))
         if (res['result']['in']):
             for tx in res['result']['in']:
                 if (tx['height'] > self.lastheight):

@@ -62,7 +62,7 @@ dispatcher:<somepassword> --password <walletpassword>
 
 ```bash
 pip3 install -r requirements.txt
-./configure.sh --with-capass 'SomePass' --with-cn 'someCommonName' --generate-ca --generate-dh --runas-user "$USER" --generate-sdp --install-service
+./configure.sh --with-capass 'SomePass' --with-cn 'someCommonName' --generate-ca --generate-dh --runas-user "$USER" --install-service
 make install [FORCE=1]
 
 ``` 

@@ -55,7 +55,7 @@ Without this flag, all configs and keys are left untouched.
 Dispatcher needs to have wallet configured before run and it needs to have
 wallet-vpn-rpc binary runing. Please note that there are two passwords. One
 for unlocking wallet and one for dispatcher RPC calls.
-You can download these binary from [here]:(https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/385/intensecoin-cli-linux-64bit-HEAD-44a4437.tar.bz2) (you need master intensecoin branch)
+You can download these binary from [here](https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/385/intensecoin-cli-linux-64bit-HEAD-44a4437.tar.bz2) (you need master intensecoin branch)
 ```bash
 intense-wallet-vpn-rpc --vpn-rpc-bind-port 13660 --wallet-file itnsvpn --rpc-login
 dispatcher:<somepassword> --password <walletpassword>

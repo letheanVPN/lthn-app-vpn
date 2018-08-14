@@ -606,7 +606,7 @@ class SDPService(object):
                 cert = crt
             else:
                 cert = self.certsDir + '/ha.cert.pem'
-        elif self.data['type'] == 'openvpn':
+        elif self.data['type'] == 'vpn':
             if (crt):
                 cert = crt
             else:
@@ -894,12 +894,12 @@ class SDPService(object):
             self.data['vpn'] = []
             return True
         elif (choice == 'vpn' or choice == 'v'):
-            self.data['type'] = 'openvpn'
+            self.data['type'] = 'vpn'
             self.data['proxy'] = []
             self.data['vpn'] = []
             return True
         else:
-            if self.data['type'] == 'proxy' or self.data['type'] == 'openvpn':
+            if self.data['type'] == 'proxy' or self.data['type'] == 'vpn':
                 return True
 
             log.L.error('Invalid option selected. Enter P for proxy or V for VPN.')

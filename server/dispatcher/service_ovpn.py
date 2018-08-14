@@ -4,6 +4,8 @@ import os
 import sys
 import re
 import log
+import time
+import select
 from subprocess import Popen
 from subprocess import PIPE
 ON_POSIX = 'posix' in sys.builtin_module_names
@@ -27,7 +29,7 @@ class ServiceOvpn(Service):
         self.createConfig()
         verb = "3"
         if (config.Config.OPENVPN_SUDO):
-            cmd = ["/usr/bin/sudo", Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
+            cmd = ["/usr/bin/sudo", config.Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
         else:
             cmd = [config.Config.SUDO_BIN, Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
@@ -126,19 +128,19 @@ class ServiceOvpn(Service):
             tmpl = tf.read()
         except (IOError, OSError):
             log.L.error("Cannot open openvpn template file %s" % (tfile))
-        with open (Config.PREFIX + '/etc/ca/certs/ca.cert.pem', "r") as f:
+        with open (config.Config.PREFIX + '/etc/ca/certs/ca.cert.pem', "r") as f:
             f_ca = "".join(f.readlines())
-        with open (Config.PREFIX + '/etc/ca/certs/openvpn.cert.pem', "r") as f:
+        with open (config.Config.PREFIX + '/etc/ca/certs/openvpn.cert.pem', "r") as f:
             f_crt = "".join(f.readlines())
-        with open (Config.PREFIX + '/etc/ca/certs/openvpn.both.pem', "r") as f:
+        with open (config.Config.PREFIX + '/etc/ca/certs/openvpn.both.pem', "r") as f:
             f_key = "".join(f.readlines())        
-        with open (Config.PREFIX + '/etc/openvpn.tlsauth', "r") as f:
+        with open (config.Config.PREFIX + '/etc/openvpn.tlsauth', "r") as f:
             f_ta = "".join(f.readlines())
         out = tmpl.decode("utf-8").format(
                           port=11194,
                           proto="udp",
-                          f_dh=Config.PREFIX + '/etc/dhparam.pem',
-                          tunnode=Config.PREFIX + '/dev/net/tun',
+                          f_dh=config.Config.PREFIX + '/etc/dhparam.pem',
+                          tunnode=config.Config.PREFIX + '/dev/net/tun',
                           f_ca=f_ca,
                           f_crt=f_crt,
                           f_key=f_key,

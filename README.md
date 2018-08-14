@@ -120,7 +120,6 @@ reneg=60
 ```
 
 ### Automated install
-``` 
 For fully automated install, please use our easy deploy script. Please note that this script works only if system is clean and sudo is already configured for user which runs this.
 Never run this on configured system! It will overwrite config files!
 ```bash

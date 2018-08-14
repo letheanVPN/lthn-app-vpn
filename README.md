@@ -51,21 +51,75 @@ you want to change parameters but you have to do *make clean* first.
 If you use *FORCE=1* during make install, it will overwrite your configs.
 Without this flag, all configs and keys are left untouched.
 
+### Wallet
 Dispatcher needs to have wallet configured before run and it needs to have
 wallet-vpn-rpc binary runing. Please note that there are two passwords. One
 for unlocking wallet and one for dispatcher RPC calls.
 You can download these binary from [here]:(https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/385/intensecoin-cli-linux-64bit-HEAD-44a4437.tar.bz2) (you need master intensecoin branch)
-```
+```bash
 intense-wallet-vpn-rpc --vpn-rpc-bind-port 13660 --wallet-file itnsvpn --rpc-login
 dispatcher:<somepassword> --password <walletpassword>
 
 ```
 
+### Basic install
+See ./configure.sh --help for more fine-tuned options
 ```bash
 pip3 install -r requirements.txt
-./configure.sh --with-capass 'SomePass' --with-cn 'someCommonName' --generate-ca --generate-dh --runas-user "$USER" --install-service
+./configure.sh --easy [--with-wallet wallet_address]
 make install [FORCE=1]
+```
 
+### Public configuration - sdp.json
+*/opt/itns/etc/sdp.json* describes local services for orchestration. It is uploaded to SDP server by --upload-sdp option. Note that uploading to SDP server is paid service. 
+After installation, you must generate SDP which is required to run.
+You can either answer question during wizard or you can use cmdline option to set defaults. See help.
+```bash
+/opt/itns/bin/itnsdispatcher --generate-sdp --wallet-address some_wallet_address [--sdp-service-name someName] ...
+
+```
+
+### Private configuration - dispatcher.ini
+*/opt/itns/etc/dispatcher.ini* contains local information needed to run dispatcher. It is local file containing private information. Do not upload it to any place.
+By default, *make install* will generate default file for you but you need to configure it to respect your needs.
+File format:
+```ini
+[global]
+;debug=DEBUG
+ca={ca}
+;provider-type=commercial
+provider-id={providerid}
+provider-key={providerkey}
+provider-name=Provider
+provider-terms=Some Terms
+;provider-terms=@from_file.txt
+
+;;; Wallet
+;wallet-address={wallet_address}
+;wallet-rpc-url=http://127.0.0.1:13660/json_rpc
+;wallet-username={wuser}
+;wallet-password={wpasword}
+
+;;; SDP
+;sdp-servers={sdpservers}
+
+; Service specific options. Each section [service-id] contains settings for service with given id (need to correspond with SDP)
+[service-1A]
+name=Proxy
+backend_proxy_server=localhost:3128
+crt={hacrt}
+key={hakey}
+crtkey={haboth}
+
+[service-1B]
+crt={vpncrt}
+key={vpnkey}
+crtkey={vpnboth}
+reneg=60
+
+```
+
+### Automated install
 ``` 
 For fully automated install, please use our easy deploy script. Please note that this script works only if system is clean and sudo is already configured for user which runs this.
 Never run this on configured system! It will overwrite config files!

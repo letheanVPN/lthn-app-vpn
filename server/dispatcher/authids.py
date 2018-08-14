@@ -10,6 +10,7 @@ import json
 import requests
 from requests.auth import HTTPDigestAuth
 import socket
+import sys
 
 AUTHIDS = None
 

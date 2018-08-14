@@ -20,13 +20,20 @@ class ServiceHa(Service):
     OPTS = dict(
         name='Proxy', backend_proxy_server = '127.0.0.1:3128',
         client_bind = '127.0.0.1', client_port = 8180, status_port = 8181,
-        bind_addr = '',
+        bind_addr = '0.0.0.0',
         crt = None, key = None, crtkey = None,
         max_connections = 2000, timeout = '30s', connect_timeout = '5s',
         paymentid = 'authid1', uniqueid = 'abcd1234'
     )
-    OPTSHELP = dict(
+    OPTS_HELP = dict(
         client_bind = 'Client bind address'
+    )
+    OPTS_REQUIRED = (
+         'backend_proxy_server', 
+         'crt',
+         'key',
+         'crtkey',
+         'bind_addr'
     )
     
     def run(self):

@@ -18,7 +18,7 @@ class ServiceOvpn(Service):
         crt = None, key = None, crtkey = None,
         reneg = 600
     )
-    OPTSHELP = dict(
+    OPTS_HELP = dict(
         http_proxy = "HTTP proxy used for connection to ovpn",
         reneg = "Renegotiation interval"
     )

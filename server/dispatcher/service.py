@@ -3,6 +3,7 @@ import log
 import socket
 import os
 import time
+import sys
 
 class Service(object):
     """
@@ -10,7 +11,8 @@ class Service(object):
     """
     
     OPTS = dict()
-    OPTS_HELP = dict ()
+    OPTS_HELP = dict()
+    OPTS_REQUIRED = dict()
     SOCKET_TIMEOUT = 0.01
     
     def __init__(self, id=None, json=None):
@@ -37,19 +39,24 @@ class Service(object):
             if o in self.cfg:
                 log.L.debug("Setting service %s parameter %s to %s" % (id,o,self.cfg[o]))
             else:
-                log.L.debug("Setting service %s parameter %s to default (%s)" % (id,o,self.OPTS[o]))
-                self.cfg[o] = "%s" % (self.OPTS[o])
+                if (self.OPTS[o]):
+                    log.L.debug("Setting service %s parameter %s to default (%s)" % (id,o,self.OPTS[o]))
+                    self.cfg[o] = "%s" % (self.OPTS[o])
         for c in self.cfg:
             if c not in self.OPTS.keys():
                 log.L.warning("Unknown parameter %s for service %s" % (c,id))
+        for o in self.OPTS_REQUIRED:
+            if o not in self.cfg:
+                log.L.error("Service %s is not configured. You need to edit config file to add:\n[service-%s]\n%s=something" % (id, id, o))
+                sys.exit(2)
         self.initphase = True
         
     def helpOpts(self, name):
         print(name)
         for o in self.OPTS:
-            if not o in self.OPTSHELP:
-                self.OPTSHELP[o] = ''
-            print("%s:      %s\n      default: %s" % (o, self.OPTSHELP[o], self.OPTS[o]))
+            if not o in self.OPTS_HELP:
+                self.OPTS_HELP[o] = ''
+            print("%s:      %s\n      default: %s" % (o, self.OPTS_HELP[o], self.OPTS[o]))
         print()
         
     def run(self):

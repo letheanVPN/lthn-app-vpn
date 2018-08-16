@@ -208,6 +208,7 @@ class AuthIds(object):
         params = {
             "in": True,
             "filter_by_height": True,
+            "pending": True,
             "min_height": self.lastheight,
             "max_height": 99999999
         }

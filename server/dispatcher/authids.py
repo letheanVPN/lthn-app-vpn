@@ -207,25 +207,36 @@ class AuthIds(object):
             
         params = {
             "in": True,
+            "pending": True,
             "filter_by_height": True,
             "min_height": self.lastheight,
             "max_height": 99999999
         }
         res = json.loads(self.walletJSONCall("get_vpn_transfers", params))
-        
+
+        txes = []
         if ('in' in res['result']):
-            for tx in res['result']['in']:
-                if (tx['height'] > cur_height):
-                    log.L.warning("Wallet not in sync! Got a payment for a future block height")
-                    break
+            txes.extend(res['result']['in'])
+        if ('pending' in res['result']):
+            txes.extend(res['result']['pending'])
+            
+        if (len(txes) > 0):
+            for tx in txes:
+                if ('height' in tx)
+                    if (tx['height'] > cur_height):
+                        log.L.warning("Wallet not in sync! Got a payment for a future block height")
+                        break
 
-                if (tx['height'] > self.lastheight):
-                    self.lastheight = tx['height']
-
+                    if (tx['height'] > self.lastheight):
+                        self.lastheight = tx['height']
+                        
+                    confirmations = cur_height - tx['height'] + 1
+                else:
+                    confirmations = 0
+                        
                 service_id = tx['payment_id'][0:2].lower()
                 auth_id = tx['payment_id'].upper()
                 amount = tx['amount'] / 100000000
-                confirmations = cur_height - tx['height'] + 1
                 log.L.info("Got payment for service %s, auth=%s, amount=%s, confirmations=%s" % (service_id, auth_id, amount, confirmations))
 
                 # Create authid object from wallet

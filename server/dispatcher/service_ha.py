@@ -100,7 +100,7 @@ class ServiceHa(Service):
     def addAuthId(self, authid):
         """ Add authid to internal acl on haproxy """
         self.mgmtConnect()
-        self.mgmtWrite("del acl #20 " + authid.getId() + "\n")
+        #self.mgmtWrite("del acl #20 " + authid.getId() + "\n")
         self.mgmtWrite("add acl #20 " + authid.getId() + "\n")
         self.mgmtClose()
         
@@ -132,7 +132,7 @@ class ServiceHa(Service):
                     sessions[sessid] = { 'ip': ip, 'port': port, 'id': sessid }
                     sessions[ip + ':' + port] = sessid
                 else:
-                    log.L.debug("Unknown haproxy session " + l)
+                    log.L.info("Unknown haproxy session " + l)
             l=self.mgmtRead()
         self.mgmtClose()
         return(sessions)

@@ -28,7 +28,7 @@ class Service(object):
         else:
             self.type = json["type"]
             self.name = json["name"]
-            self.cost = json["cost"]
+            self.cost = float(json["cost"])
             self.json = json    
             
         self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)

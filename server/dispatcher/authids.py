@@ -200,7 +200,10 @@ class AuthIds(object):
         """
         cur_height = self.getHeighFromWallet()
         if (self.lastheight==0):
-            self.lastheight = cur_height
+            if (config.CONFIG.CAP.initHeight==-1):
+                self.lastheight = cur_height
+            else:
+                self.lastheight = config.CONFIG.CAP.initHeight
             
         params = {
             "in": True,
@@ -219,14 +222,14 @@ class AuthIds(object):
                 if (tx['height'] > self.lastheight):
                     self.lastheight = tx['height']
 
-                service_id = tx['payment_id'][0:2]
-                auth_id = tx['payment_id'][2:16]
+                service_id = tx['payment_id'][0:2].lower()
+                auth_id = tx['payment_id'].upper()
                 amount = tx['amount'] / 100000000
                 confirmations = cur_height - tx['height'] + 1
-                log.L.info("Got payment for service " + service_id + " auth " + auth_id + " amount " + amount + " confirmations " + confirmations)
+                log.L.info("Got payment for service %s, auth=%s, amount=%s, confirmations=%s" % (service_id, auth_id, amount, confirmations))
 
                 # Create authid object from wallet
-                s1 = AuthId(auth_id, service_id, amount, confirmations, "")
+                s1 = AuthId(auth_id, service_id, float(amount), int(confirmations), "")
                 # If serviceid is not alive, false will be returned and it will be automatically logged
                 if (s1):
                     # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.

@@ -62,6 +62,7 @@ def main(argv):
     p.add(       '--wallet-address',            dest='walletAddr', metavar='ADDRESS', required=True, help='Wallet address')
     p.add(       '--wallet-rpc-uri',            dest='walletUri', metavar='URI', default='http://127.0.0.1:13660/json_rpc', help='Wallet URI')
     p.add(       '--wallet-username',           dest='walletUsername', metavar='USER', required=None, default='dispatcher', help='Wallet username')
+    p.add('-H',  '--from-height',               dest='initHeight', metavar='HEIGHT', required=None, type=int, default=-1, help='Initial height to start scan payments. Default is actual height.')
     p.add(       '--wallet-password',           dest='walletPassword', metavar='PW', required=None, help='Wallet passwd')
     p.add(       '--sdp-uri',                   dest='sdpUri', nargs='+', metavar='URL', required=None, help='SDP server(s)', default='https://jhx4eq5ijc.execute-api.us-east-1.amazonaws.com/dev/v1')
     p.add(       '--provider-id',               dest='providerid', metavar='PROVIDERID', required=True, help='ProviderID (public ed25519 key)')

@@ -220,14 +220,14 @@ class ServiceMgmt(Service):
         
     def topUpAuthId(self, id, itns):
         if (authids.AUTHIDS.get(id)):
-            authids.AUTHIDS.get(id).topUp(int(itns), "MGMT")
+            authids.AUTHIDS.get(id).topUp(float(itns), "MGMT")
             self.mgmtWrite("TopUp (" + authids.AUTHIDS.get(id).toString() + ")\n")
         else:
             self.mgmtWrite("Bad authid?\n")
     
     def spendAuthId(self, id, itns):
         if (authids.AUTHIDS.get(id)):
-            authids.AUTHIDS.get(id).spend(int(itns), "MGMT")
+            authids.AUTHIDS.get(id).spend(float(itns), "MGMT")
             self.mgmtWrite("Spent (" + authids.AUTHIDS.get(id).toString() + ")\n")
         else:
             self.mgmtWrite("Bad authid?\n")

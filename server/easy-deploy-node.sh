@@ -55,6 +55,8 @@ fi
 sudo systemctl restart squid
 sudo systemctl enable itnsdispatcher
 sudo systemctl restart itnsdispatcher
+sudo systemctl disable haproxy
+sudo systemctl stop haproxy
 
 cat /opt/itns/etc/sdp.json
 ) 2>&1 | tee easy.log 

@@ -50,12 +50,76 @@ edit them before real usage. You can run configure script more times if
 you want to change parameters but you have to do *make clean* first.
 If you use *FORCE=1* during make install, it will overwrite your configs.
 Without this flag, all configs and keys are left untouched.
+
+### Wallet
+Dispatcher needs to have wallet configured before run and it needs to have
+wallet-vpn-rpc binary runing. Please note that there are two passwords. One
+for unlocking wallet and one for dispatcher RPC calls.
+You can download these binary from [here](https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/385/intensecoin-cli-linux-64bit-HEAD-44a4437.tar.bz2) (you need master intensecoin branch)
+```bash
+intense-wallet-vpn-rpc --vpn-rpc-bind-port 13660 --wallet-file itnsvpn --rpc-login
+dispatcher:<somepassword> --password <walletpassword>
+
+```
+
+### Basic install
+See ./configure.sh --help for more fine-tuned options
 ```bash
 pip3 install -r requirements.txt
-./configure.sh --with-capass 'SomePass' --with-cn 'someCommonName' --generate-ca --generate-dh --runas-user "$USER" --generate-sdp --install-service
+./configure.sh --easy [--with-wallet wallet_address]
 make install [FORCE=1]
+```
 
-``` 
+### Public configuration - sdp.json
+*/opt/itns/etc/sdp.json* describes local services for orchestration. It is uploaded to SDP server by --upload-sdp option. Note that uploading to SDP server is paid service. 
+After installation, you must generate SDP which is required to run.
+You can either answer question during wizard or you can use cmdline option to set defaults. See help.
+```bash
+/opt/itns/bin/itnsdispatcher --generate-sdp --wallet-address some_wallet_address [--sdp-service-name someName] ...
+
+```
+
+### Private configuration - dispatcher.ini
+*/opt/itns/etc/dispatcher.ini* contains local information needed to run dispatcher. It is local file containing private information. Do not upload it to any place.
+By default, *make install* will generate default file for you but you need to configure it to respect your needs.
+File format:
+```ini
+[global]
+;debug=DEBUG
+ca={ca}
+;provider-type=commercial
+provider-id={providerid}
+provider-key={providerkey}
+provider-name=Provider
+provider-terms=Some Terms
+;provider-terms=@from_file.txt
+
+;;; Wallet
+;wallet-address={wallet_address}
+;wallet-rpc-url=http://127.0.0.1:13660/json_rpc
+;wallet-username={wuser}
+;wallet-password={wpasword}
+
+;;; SDP
+;sdp-servers={sdpservers}
+
+; Service specific options. Each section [service-id] contains settings for service with given id (need to correspond with SDP)
+[service-1A]
+name=Proxy
+backend_proxy_server=localhost:3128
+crt={hacrt}
+key={hakey}
+crtkey={haboth}
+
+[service-1B]
+crt={vpncrt}
+key={vpnkey}
+crtkey={vpnboth}
+reneg=60
+
+```
+
+### Automated install
 For fully automated install, please use our easy deploy script. Please note that this script works only if system is clean and sudo is already configured for user which runs this.
 Never run this on configured system! It will overwrite config files!
 ```bash
@@ -87,13 +151,13 @@ usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-l LEVEL] [-A FILE]
                       [-U] [--sdp-service-crt FILE] [--sdp-service-type TYPE]
                       [--sdp-service-fqdn FQDN] [--sdp-service-port NUMBER]
                       [--sdp-service-name NAME] [--sdp-service-id NUMBER]
-                      [--sdp-service-cost ITNS] [--sdp-service-refunds NUMBER]
+                      [--sdp-service-cost ITNS] [--sdp-service-disable NUMBER]
+                      [--sdp-service-refunds NUMBER]
                       [--sdp-service-dlspeed Mbps]
                       [--sdp-service-ulspeed Mbps]
                       [--sdp-service-prepaid-mins TIME]
                       [--sdp-service-verifications NUMBER] --ca ca.crt
-                      --wallet-address ADDRESS [--wallet-host HOST]
-                      [--wallet-port PORT] [--wallet-username USER]
+                      [--wallet-rpc-uri URI] [--wallet-username USER]
                       [--wallet-password PW] [--sdp-uri URL [URL ...]]
                       --provider-id PROVIDERID --provider-key PROVIDERKEY
                       --provider-name NAME [--provider-type TYPE]
@@ -138,8 +202,7 @@ optional arguments:
                         Provider Proxy crt (for SDP edit/creation only)
                         (default: None)
   --sdp-service-type TYPE
-                        Provider VPN crt (for SDP edit/creation only)
-                        (default: None)
+                        Service type (proxy or vpn) (default: None)
   --sdp-service-fqdn FQDN
                         Service FQDN or IP (for SDP service edit/creation
                         only) (default: None)
@@ -155,9 +218,12 @@ optional arguments:
   --sdp-service-cost ITNS
                         Service cost (for SDP service edit/creation only)
                         (default: None)
+  --sdp-service-disable NUMBER
+                        Set to true to disable service; otherwise leave false.
+                        (default: False)
   --sdp-service-refunds NUMBER
                         Allow refunds for Service (for SDP service
-                        edit/creation only) (default: None)
+                        edit/creation only) (default: False)
   --sdp-service-dlspeed Mbps
                         Download speed for Service (for SDP service
                         edit/creation only) (default: None)
@@ -171,22 +237,19 @@ optional arguments:
                         Verifications needed for Service (for SDP service
                         edit/creation only) (default: None)
   --ca ca.crt           Set certificate authority file (default: None)
-  --wallet-address ADDRESS
-                        Wallet address (default: None)
-  --wallet-host HOST    Wallet host (default: localhost)
-  --wallet-port PORT    Wallet port (default: 45000)
+  --wallet-rpc-uri URI  Wallet URI (default: http://127.0.0.1:13660/json_rpc)
   --wallet-username USER
-                        Wallet username (default: None)
+                        Wallet username (default: dispatcher)
   --wallet-password PW  Wallet passwd (default: None)
   --sdp-uri URL [URL ...]
-                        SDP server(s) (default: https://l9d48ixadl.execute-
-                        api.us-east-1.amazonaws.com/intense/v1)
+                        SDP server(s) (default: https://jhx4eq5ijc.execute-
+                        api.us-east-1.amazonaws.com/dev/v1)
   --provider-id PROVIDERID
                         ProviderID (public ed25519 key) (default: None)
   --provider-key PROVIDERKEY
                         ProviderID (private ed25519 key) (default: None)
   --provider-name NAME  Provider Name (default: None)
-  --provider-type TYPE  Provider type (default: commercial)
+  --provider-type TYPE  Provider type (default: residential)
   --provider-terms TEXT
                         Provider terms (default: None)
 

@@ -213,6 +213,7 @@ while [[ $# -gt 0 ]]; do
     ;;
     --with-wallet)
         walet_address="$2"
+        cfg_wallet=1
         shift
         shift
     ;;
@@ -291,7 +292,7 @@ fi
 
 if [ -n "$generate_providerid" ]; then
     if ! [ -f build/etc/provider.public ]; then
-        "$PYTHON_BIN" server/dispatcher/itnsdispatcher.py --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
+        "$PYTHON_BIN" server/dispatcher/itnsdispatcher.py --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
     fi
 fi
 
@@ -308,6 +309,9 @@ if [ -n "$generate_ini" ]; then
         -e "s#{vpnboth}#${ITNS_PREFIX}/etc/ca/certs/vpn.both.pem#g" \
         -e "s#{wallet_address}#$wallet_address#g" \
       <conf/dispatcher.ini.tmpl >build/etc/dispatcher.ini 
+    if [ -n "$cfg_wallet" ]; then
+       sed -i -e "s#^;wallet-address#wallet-address#g" build/etc/dispatcher.ini 
+    fi
 fi
 
 if [ -n "$install_service" ]; then

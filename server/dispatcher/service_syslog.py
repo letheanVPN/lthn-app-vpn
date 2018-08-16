@@ -32,12 +32,12 @@ class ServiceSyslog(Service):
             if (message):
                 msg = message.message.decode("utf-8")
                 log.L.debug("syslog: " + repr(msg))
-                # '127.0.0.1:52784 [19/Jul/2018:16:51:19.461] cleartunnel preproxy/<NOSRV> 0/-1/-1/-1/+1 403 +188 - - PR-- 0/0/0/0/2 0/0 {authida1} "GET http://www.seznam.cz/ HTTP/1.1"\n'
+                # '1.2.3.4:46759 [16/Aug/2018:13:37:28.876] ssltunnel~ b-preproxy/s-proxy 0/0/0/1/+1 403 +351 - - ---- 3/3/3/3/0 0/0 {1A94893098405359} "CONNECT 172.19.4.2:5001 HTTP/1.1"\n'
                 p = re.search(
                     "(^\d*\.\d*\.\d*\.\d*):(\d*) " # Host and port
                     + "\[(.*)\] " # Date 
                     + "(\w*)~? " # Frontend
-                    + "(\w*)/(<?\w*>?) "  # Backend/Server
+                    + "(b-\w*)/(<?s-\w*>?) "  # Backend/Server
                     + "(.\d*/.\d*/.\d*/.\d*/.\d*) " # Times
                     + "(\d*) " # State
                     + ".*" # Not needed
@@ -55,6 +55,10 @@ class ServiceSyslog(Service):
                     authid = p.group(9)
                     action = p.group(10)
                     sessions.SESSIONS.add(authid, ip, port, action)
+                else:
+                    p =re.search("(^\d*\.\d*\.\d*\.\d*):(\d*) \[(.*)\] ssl",msg)
+                    if (p):
+                        log.L.warning("Cannot parse haproxy log: " + repr(msg))
             s = self.getLine()
         
     def getLine(self):

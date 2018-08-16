@@ -94,6 +94,12 @@ class ServiceMgmt(Service):
             self.spendAuthId(a, i)
             self.conn.close()
             return()
+        p = re.search("^startspend (.*)", msg)
+        if (p):
+            a = p.group(1)
+            self.startSpendAuthId(a)
+            self.conn.close()
+            return()
         p = re.search("^add authid (.*) (.*)", msg)
         if (p):
             a = p.group(1)
@@ -160,6 +166,7 @@ class ServiceMgmt(Service):
         self.mgmtWrite("kill session <sessionid>\n")
         self.mgmtWrite("topup <authid> <itns>\n")
         self.mgmtWrite("spend <authid> <itns>\n")
+        self.mgmtWrite("startspend <authid>\n")
         self.mgmtWrite("add authid <authid> <serviceid>\n")
         self.mgmtWrite("del authid <authid>\n")
         self.mgmtWrite("loglevel {DEBUG|INFO|WARNING|ERROR}\n")
@@ -229,6 +236,13 @@ class ServiceMgmt(Service):
         if (authids.AUTHIDS.get(id)):
             authids.AUTHIDS.get(id).spend(float(itns), "MGMT")
             self.mgmtWrite("Spent (" + authids.AUTHIDS.get(id).toString() + ")\n")
+        else:
+            self.mgmtWrite("Bad authid?\n")
+    
+    def startSpendAuthId(self, id):
+        if (authids.AUTHIDS.get(id)):
+            authids.AUTHIDS.get(id).startSpending()
+            self.mgmtWrite("Spending.\n")
         else:
             self.mgmtWrite("Bad authid?\n")
             

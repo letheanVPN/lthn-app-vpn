@@ -97,6 +97,10 @@ class ServiceOvpn(Service):
             l = self.mgmtRead()
             
     def stop(self):
+        self.mgmtWrite("signal SIGTERM\r\n")
+        l = self.mgmtRead()
+        while (l is not None):
+            l = self.mgmtRead()
         log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
         return()
     

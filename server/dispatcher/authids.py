@@ -38,6 +38,7 @@ class AuthId(object):
             self.topUp(balance)
         log.A.audit(log.A.AUTHID, log.A.ADD, authid, "init, balance=%s, verifications=%s" % (balance,verifications))
         self.discharged_count = 0
+        self.spending = None
         
     def getId(self):
         return(self.id)
@@ -50,6 +51,9 @@ class AuthId(object):
 
     def getServiceId(self):
         return(self.serviceid)
+    
+    def getTimeLeft(self):
+        return(self.balance / self.cost)
     
     def show(self):
         log.L.info("""PaymentId %s:
@@ -64,7 +68,7 @@ class AuthId(object):
             """ % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count))
     
     def toString(self):
-        str = "%s: serviceid=%s, created=%s,modified=%s, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
+        str = "%s: serviceid=%s, created=%s,modified=%s, spending=%b, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.spending, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
         return(str)
     
     def topUp(self, itns, msg="", verifications=None):
@@ -80,6 +84,16 @@ class AuthId(object):
             log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%s,balance=%s %s" % (itns, self.balance, msg))
         for s in services.SERVICES.getAll():
             services.SERVICES.get(s).addAuthIdIfTopup(self)
+            
+    def startSpending(self):
+        """ Start spending of authid """
+        if (not self.spending):
+            self.spending = True
+            log.L.debug("Authid %s: Start spending" % (self.getId()))
+        
+    def isSpending(self):
+        """ If authid had at least one session, it is spending until zero. """
+        return(self.spending)
     
     def spend(self, itns, msg=""):
         """ Spend authid. If balance is not enough for given service, remove it from its acl. """
@@ -100,7 +114,9 @@ class AuthId(object):
         return(self.balance)
     
     def checkAlive(self):
-        return(self.balance > 0)
+        return(
+            self.balance > 0
+            )
 
 class AuthIds(object):
     """Active AUTHIDS sessions container"""
@@ -140,13 +156,17 @@ class AuthIds(object):
             log.L.warning("Removing authid %s (balance=%s)" % (paymentid, self.get(paymentid).getBalance()))
             log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%s" % (self.get(paymentid).getBalance()))
             for s in services.SERVICES.getAll():
-                services.SERVICES.get(s).delAuthId(paymentid)
+                services.SERVICES.get(s).delAuthId(self.get(paymentid))
             self.authids.pop(paymentid)
         
     def toString(self):
         str = "%d ids, last updated %s\n" % (len(self.authids), timefmt(self.lastmodify))
         for id, paymentid in self.authids.items():
-            str = str + paymentid.getId() + "\n"
+            if paymentid.isSpending():
+                spending = "spending"
+            else:
+                spending = "not_spending"
+            str = str + "%s %s %.1f seconds left\n" % (paymentid.getId(), spending, paymentid.getTimeLeft() * 60)
         return(str)
         
     def show(self):

@@ -130,12 +130,17 @@ class Sessions(object):
                         killed = killed + 1
         # For all alive authids, spend time for last loop
         spent = 0
+        notspent = 0
         for authid in authids.AUTHIDS.getAll():
+            aid = authids.AUTHIDS.get(authid)
             if self.find(authid=authid):
-                authids.AUTHIDS.get(authid).spendTime(looptime)
+                aid.startSpending()
+                notspent = notspent + 1
+            if aid.isSpending():
+                aid.spendTime(looptime)
                 spent = spent + 1
                 
-        log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d spent authids" % (len(self.sessions), deleted, killed, spent))
+        log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d spent authids, %d notspent authids" % (len(self.sessions), deleted, killed, spent, notspent))
      
     def toString(self):
         str = "%d sessions\n" % (len(self.sessions))

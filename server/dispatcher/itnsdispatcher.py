@@ -201,7 +201,6 @@ def main(argv):
         services.SERVICES.orchestrate()
         
         if ((config.Config.T_SAVE > 0 and overaltime / config.Config.T_SAVE > savedcount) or config.Config.FORCE_SAVE):
-            authids.AUTHIDS.getFromWallet()
             authids.AUTHIDS.save()
             savedcount = savedcount + 1
             config.Config.FORCE_SAVE = None

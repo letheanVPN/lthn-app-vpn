@@ -205,4 +205,6 @@ class Service(object):
         
         if (authid.getBalance()<0):
             self.delAuthId(authid)
-            
+    
+    def getSessions(self):
+        return({})

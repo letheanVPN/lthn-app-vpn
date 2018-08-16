@@ -242,7 +242,7 @@ class AuthIds(object):
             
         if (len(txes) > 0):
             for tx in txes:
-                if ('height' in tx)
+                if ('height' in tx):
                     if (tx['height'] > cur_height):
                         log.L.warning("Wallet not in sync! Got a payment for a future block height")
                         break

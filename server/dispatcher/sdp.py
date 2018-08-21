@@ -665,7 +665,7 @@ class SDPService(object):
 
     def setPrepaidMinutes(self, mins=None):
         if (mins):
-            self.data['firstPrePaidMinutes'] = mins
+            self.data['firstPrePaidMinutes'] = int(mins)
             return True
         
         print('How many minutes of access are required to be prepaid for the first payment from a client? Minimum 1, maximum 5 minutes.')
@@ -678,7 +678,7 @@ class SDPService(object):
         if (choice):
             choice = int(choice)
             if (choice > 0 and choice <= 5):
-                self.data['firstPrePaidMinutes'] = choice
+                self.data['firstPrePaidMinutes'] = int(choice)
         else:
             if (not self.data['firstPrePaidMinutes']):
                 return False
@@ -695,7 +695,7 @@ class SDPService(object):
         if (choice):
             choice = int(choice)
             if (choice > 1 and choice <= 1440):
-                self.data['subsequentPrePaidMinutes'] = choice
+                self.data['subsequentPrePaidMinutes'] = int(choice)
                 return True
         else:
             if (self.data['subsequentPrePaidMinutes']):
@@ -705,7 +705,7 @@ class SDPService(object):
 
     def setVerificationsNeeded(self, verifications=None):
         if (verifications):
-            self.data['firstVerificationsNeeded'] = verifications
+            self.data['firstVerificationsNeeded'] = int(verifications)
             return True
         
         print('How many transaction confirmations are required for the first payment from a client? Minimum 0, maximum 2.')
@@ -718,7 +718,7 @@ class SDPService(object):
         if (choice):
             choice = int(choice)
             if (choice > 0 and choice <= 5):
-                self.data['firstVerificationsNeeded'] = choice
+                self.data['firstVerificationsNeeded'] = int(choice)
         else:
             if (not self.data['firstVerificationsNeeded']):
                 return False
@@ -753,7 +753,7 @@ class SDPService(object):
 
     def setDownloadSpeed(self, speed=None):
         if (speed):
-            self.data['downloadSpeed'] = speed
+            self.data['downloadSpeed'] = int(speed)
             return True
         
         # TODO automate collection of node download/upload speed - consider github.com/sivel/speedtest-cli
@@ -769,7 +769,7 @@ class SDPService(object):
         if (choice):
             choice = int(choice)
             if (choice > 0 and choice < 99999999999):
-                self.data['downloadSpeed'] = choice
+                self.data['downloadSpeed'] = int(choice)
                 return True
         else:
             if (self.data['downloadSpeed']):
@@ -779,7 +779,7 @@ class SDPService(object):
 
     def setUploadSpeed(self, speed=None):
         if (speed):
-            self.data['uploadSpeed'] = speed
+            self.data['uploadSpeed'] = int(speed)
             return True
         
         # TODO automate collection of node download/upload speed - consider github.com/sivel/speedtest-cli
@@ -793,7 +793,7 @@ class SDPService(object):
         if (choice):
             choice = int(choice)
             if (choice > 0 and choice < 99999999999):
-                self.data['uploadSpeed'] = choice
+                self.data['uploadSpeed'] = int(choice)
                 return True
         else:
             if (self.data['uploadSpeed']):
@@ -806,7 +806,7 @@ class SDPService(object):
         print('Enter service cost in Intense Coin (ITNS) per minute. You may use up to 8 decimal places. Minimum 0.00000001')
         if (self.data['cost']):
             if (cost):
-                choice = cost
+                choice = float(cost)
             else:
                 print('Existing cost: %.8f' % float(self.data['cost']))
                 choice = input('Enter new cost? [leave blank to keep existing] ')
@@ -862,7 +862,7 @@ class SDPService(object):
         # we use two hex digits to represent the service ID (range = 16 [0x10] to 255 since two digits must be used)
         # auto increment
         if (id):
-            self.data['id'] = id
+            self.data['id'] = id.upper()
         elif self.existingServiceIds and len(self.existingServiceIds) > 0:
             val = int(self.existingServiceIds[len(self.existingServiceIds) - 1], base=16)
             if (val <= 254):

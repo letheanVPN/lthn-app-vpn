@@ -21,12 +21,12 @@ class SDP(object):
     data = dict(
                 protocolVersion=1,                
                 provider=dict(
-                id='{providerid}',
-                name='',
-                nodeType='{nodetype}',
-                certificates={},
-                wallet='{walletaddress}',
-                terms='{providerterms}',
+                    id='{providerid}',
+                    name='',
+                    nodeType='{nodetype}',
+                    certificates={},
+                    wallet='{walletaddress}',
+                    terms='{providerterms}',
                 ),                                
                 services=[],
                 )
@@ -350,7 +350,7 @@ class SDPService(object):
                 name=None,
                 type=None,
                 allowRefunds=False,
-                cost='0.00000001',
+                cost=0.01,
                 downloadSpeed=None,
                 uploadSpeed=None,
                 firstPrePaidMinutes=2,
@@ -358,33 +358,33 @@ class SDPService(object):
                 firstVerificationsNeeded=1,
                 subsequentVerificationsNeeded=1,
                 proxy=dict(
-                certificates=[],
-                endpoints=[],
-                port='',
-                terms='',
-                policy=dict(
-                addresses=dict(
-                blocked=[]
-                )
-                )
+                    certificates=[],
+                    endpoints=[],
+                    port='',
+                    terms='',
+                    policy=dict(
+                        addresses=dict(
+                        blocked=[]
+                        )
+                    )
                 ),
                 vpn=dict(
-                certificates=[],
-                endpoints=[],
-                port='',
-                terms='',
-                policy=dict(
-                addresses=dict(
-                blocked=[]
-                )
-                ),
-                parameters=dict(
-                cyphers=[
-                "DESX-CBC",
-                "AES-256-CBC"
-                ],
-                mtuSize=1
-                )
+                    certificates=[],
+                    endpoints=[],
+                    port='',
+                    terms='',
+                    policy=dict(
+                        addresses=dict(
+                            blocked=[]
+                        )
+                    ),
+                    parameters=dict(
+                        cyphers=[
+                            "DESX-CBC",
+                            "AES-256-CBC"
+                        ],
+                        mtuSize=1
+                    )
                 )
                 )
     existingServiceIds = []
@@ -821,7 +821,7 @@ class SDPService(object):
             if (choice < 0.00000001):
                 log.L.error('Cost must be at least 0.00000001!')
                 return self.setCost()
-            self.data['cost'] = str(choice)
+            self.data['cost'] = choice
             return True
         else:
             if self.data['cost']:

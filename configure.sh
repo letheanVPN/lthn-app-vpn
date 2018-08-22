@@ -10,7 +10,7 @@ ITNS_PREFIX=/opt/itns/
 
 # General usage help
 usage() {
-   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet address] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--easy]"
+   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet-address address] [--with-wallet-rpc-pass pass] [--with-wallet-rpc-user user] [--with-wallet-rpc-uri uri] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--with-providerid id --with-providerkey key] [--easy]"
    echo
    exit
 }
@@ -57,9 +57,12 @@ defaults() {
     findcmd pip3 PIP_BIN optional
     findcmd sudo SUDO_BIN optional
 
-    [ -z "$ITNS_USER" ] && ITNS_USER=root
-    [ -z "$ITNS_GROUP" ] && ITNS_GROUP=root
+    [ -z "$ITNS_USER" ] && ITNS_USER=$USER
+    [ -z "$ITNS_GROUP" ] && ITNS_GROUP=$USER
     wallet_address="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    wallet_rpc_uri=http://127.0.0.1:14660/json_rpc
+    wallet_rpc_user=dispatcher
+    wallet_rpc_pass=somepassword
 }
 
 summary() {
@@ -211,9 +214,39 @@ while [[ $# -gt 0 ]]; do
         shift
         shift
     ;;
-    --with-wallet)
-        walet_address="$2"
+    --with-wallet-address)
+        wallet_address="$2"
         cfg_wallet=1
+        shift
+        shift
+    ;;
+    --with-wallet-rpc-uri)
+        wallet_rpc_uri="$2"
+        cfg_wallet=1
+        shift
+        shift
+    ;;
+    --with-wallet-rpc-user)
+        wallet_rpc_user="$2"
+        cfg_wallet=1
+        shift
+        shift
+    ;;
+    --with-wallet-rpc-pass)
+        wallet_rpc_pass="$2"
+        cfg_wallet=1
+        shift
+        shift
+    ;;
+    --with-providerid)
+        PROVIDERID="$2"
+        generate_ini=1
+        shift
+        shift
+    ;;
+    --with-providerkey)
+        PROVIDERKEY="$2"
+        generate_ini=1
         shift
         shift
     ;;
@@ -290,8 +323,11 @@ if [ -n "$generate_dh" ]; then
     fi
 fi
 
-if [ -n "$generate_providerid" ]; then
-    if ! [ -f build/etc/provider.public ]; then
+if [ -n "$PROVIDERID" ]; then
+    echo $PROVIDERID >build/etc/provider.public
+    echo $PROVIDERKEY >build/etc/provider.private
+else
+    if [ -n "$generate_providerid" ]; then
         "$PYTHON_BIN" server/dispatcher/itnsdispatcher.py --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
     fi
 fi
@@ -307,10 +343,16 @@ if [ -n "$generate_ini" ]; then
         -e "s#{vpnkey}#${ITNS_PREFIX}/etc/ca/private/ha.cert.pem#g" \
         -e "s#{haboth}#${ITNS_PREFIX}/etc/ca/certs/ha.both.pem#g" \
         -e "s#{vpnboth}#${ITNS_PREFIX}/etc/ca/certs/vpn.both.pem#g" \
+        -e "s#{wallet_rpc_user}#$wallet_rpc_user#g" \
+        -e "s#{wallet_rpc_pass}#$wallet_rpc_pass#g" \
         -e "s#{wallet_address}#$wallet_address#g" \
+        -e "s#{wallet_rpc_uri}#$wallet_rpc_uri#g" \
       <conf/dispatcher.ini.tmpl >build/etc/dispatcher.ini 
     if [ -n "$cfg_wallet" ]; then
        sed -i -e "s#^;wallet-address#wallet-address#g" build/etc/dispatcher.ini 
+       sed -i -e "s#^;wallet-rpc-uri#wallet-rpc-uri#g" build/etc/dispatcher.ini 
+       sed -i -e "s#^;wallet-username#wallet-username#g" build/etc/dispatcher.ini 
+       sed -i -e "s#^;wallet-password#wallet-password#g" build/etc/dispatcher.ini 
     fi
 fi
 

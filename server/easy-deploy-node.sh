@@ -12,7 +12,7 @@ fi
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$PROVIDERID" ] && PROVIDERID=""
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
-[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/431/intensecoin-cli-linux-64bit-HEAD-eab8225.tar.bz2"
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://monitor.intensecoin.com/itns/pack.tar.bz2"
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="monitor.intensecoin.com"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"
 [ -z "$CAPASS" ] && CAPASS=1234
@@ -27,7 +27,7 @@ export BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL DAEMON_BIN_URL DAE
 (
 sudo apt update
 sudo apt-get -y upgrade
-sudo apt-get install -y joe less mc git python3 python3-pip haproxy openvpn tmux squid net-tools
+sudo apt-get install -y joe less mc git python3 python3-pip haproxy openvpn tmux squid net-tools libboost-chrono1.62.0 libboost-program-options1.62.0 libboost-filesystem1.62.0 libboost-thread1.62.0 libboost-serialization1.62.0 libboost-date-time1.62.0 libboost-regex1.62.0
 
 install_wallet(){
   DAEMONBZ2=$(basename $DAEMON_BIN_URL)
@@ -35,9 +35,8 @@ install_wallet(){
   wget -nc -c $DAEMON_BIN_URL && \
   tar -xjvf $DAEMONBZ2 && \
   sudo cp $DAEMONDIR/* /usr/local/bin/ && \
-  /usr/local/bin/intense-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --command exit && \
-  /usr/local/bin/intense-wallet-rpc --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-bind-port 14660 --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" & \
-  echo @reboot /usr/local/bin/intense-wallet-rpc --rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" >wallet.crontab && \
+  /usr/local/bin/intense-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
+  echo @reboot /usr/local/bin/intense-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log >wallet.crontab && \
   crontab wallet.crontab 
 }
 
@@ -58,7 +57,7 @@ pip3 install -r requirements.txt
 if [ -n "$PROVIDERID" ]; then
   provideropts="--with-providerid $PROVIDERID --with-providerkey $PROVIDERKEY"
 fi
-./configure.sh --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass
+./configure.sh --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
 make install FORCE=1
 /opt/itns/bin/itnsdispatcher --generate-sdp \
      --provider-type $PROVTYPE \
@@ -69,7 +68,7 @@ make install FORCE=1
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 2 --sdp-service-verifications 0
 
-/opt/itns/bin/itnsdispatcher --upload-sdp
+/usr/local/bin/intense-wallet-vpn-rpc --wallet-file ~/vpn --daemon-host $DAEMON_HOST --vpn-rpc-bind-port 14660 --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log </dev/null >/dev/null 2>/dev/null &
 
 sudo systemctl daemon-reload
 sudo systemctl enable squid
@@ -88,6 +87,8 @@ sudo systemctl disable haproxy
 sudo systemctl stop haproxy
 
 cat /opt/itns/etc/sdp.json
+/opt/itns/bin/itnsdispatcher --upload-sdp
+
 ) 2>&1 | tee easy.log 
 
 if [ -n "$EMAIL" ]; then

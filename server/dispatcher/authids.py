@@ -199,7 +199,12 @@ class AuthIds(object):
         log.L.debug("Calling wallet RPC " + url)
         r = requests.post(url, data=json.dumps(d), auth=HTTPDigestAuth(config.CONFIG.CAP.walletUsername, config.CONFIG.CAP.walletPassword), headers={"Content-Type": "application/json"})
         if (r.status_code == 200):
-            return(r.text)
+            j = json.loads(r.text)
+            if ('result' in j):
+                return(r.text)
+            else:
+                log.L.error("Wallet RPC error %s!" % (r.text))
+                sys.exit(2)
         else:
             log.L.error("Wallet RPC error %s!" % (r.status_code))
             sys.exit(2)

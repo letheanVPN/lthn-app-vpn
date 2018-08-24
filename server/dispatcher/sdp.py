@@ -821,10 +821,11 @@ class SDPService(object):
             if (choice < 0.00000001):
                 log.L.error('Cost must be at least 0.00000001!')
                 return self.setCost()
-            self.data['cost'] = choice
+            self.data['cost'] ="{:1.8f}".format(choice)
             return True
         else:
             if self.data['cost']:
+                self.data['cost'] ="{:1.8f}".format(float(self.data['cost']))
                 return True
 
         return False

@@ -12,7 +12,7 @@ fi
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$PROVIDERID" ] && PROVIDERID=""
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
-[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://monitor.intensecoin.com/itns/pack.tar.bz2"
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/559/intensecoin-cli-linux-64bit-master-91edb13.tar.bz2"
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="monitor.intensecoin.com"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"
 [ -z "$CAPASS" ] && CAPASS=1234
@@ -27,14 +27,13 @@ export BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL DAEMON_BIN_URL DAE
 (
 sudo apt update
 sudo apt-get -y upgrade
-sudo apt-get install -y joe less mc git python3 python3-pip haproxy openvpn tmux squid net-tools libboost-chrono1.62.0 libboost-program-options1.62.0 libboost-filesystem1.62.0 libboost-thread1.62.0 libboost-serialization1.62.0 libboost-date-time1.62.0 libboost-regex1.62.0
+sudo apt-get install -y joe less mc git python3 python3-pip haproxy openvpn tmux squid net-tools
 
 install_wallet(){
   DAEMONBZ2=$(basename $DAEMON_BIN_URL)
   DAEMONDIR=$(basename $DAEMON_BIN_URL .tar.bz2)
   wget -nc -c $DAEMON_BIN_URL && \
-  tar -xjvf $DAEMONBZ2 && \
-  sudo cp $DAEMONDIR/* /usr/local/bin/ && \
+  sudo tar --strip-components 1 -C /usr/local/bin/ -xjvf $DAEMONBZ2 && \
   /usr/local/bin/intense-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
   echo @reboot /usr/local/bin/intense-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log >wallet.crontab && \
   crontab wallet.crontab 
@@ -46,7 +45,7 @@ fi
 WALLET=$(cat ~/vpn.address.txt)
 
 if ! [ -d intense-vpn  ]; then
-  git clone https://github.com/valiant1x/intense-vpn.git
+  git clone https://github.com/LetheanMovement/intense-vpn.git
   cd intense-vpn
 else
   cd intense-vpn

@@ -1,13 +1,14 @@
 #!/bin/sh
 
 ## Run as:
-#wget -O- https://raw.githubusercontent.com/valiant1x/intense-vpn/master/server/easy-deploy-aws.sh | sudo -i -u ubuntu
+#wget -O- https://raw.githubusercontent.com/LetheanMovement/intense-vpn/master/server/easy-deploy-aws.sh | sudo -i -u ubuntu
 
-DAEMONURL=https://github.com/valiant1x/intensecoin/releases/download/v2.0.2.1/intensecoin-cli-linux-64bit-v2.0.2.1.tar.bz2
+[ -z "$DAEMONURL" ] && DAEMONURL=https://github.com/valiant1x/intensecoin/releases/download/v2.0.2.1/intensecoin-cli-linux-64bit-v2.0.2.1.tar.bz2
+[ -z "$EMAIL" ] && EMAIL=lukas@intensecoin.com
+[ -z "$BRANCH" ] && BRANCH=master
 DAEMONBZ2=$(basename $DAEMONURL)
 DAEMONDIR=$(basename $DAEMONURL .tar.bz2)
-EMAIL=lukas@intensecoin.com 
-export EMAIL DAEMONBZ2 DAEMONDIR DAEMONURL
+export EMAIL DAEMONBZ2 DAEMONDIR DAEMONURL BRANCH
 
 install_daemon(){
   wget -nc -c $DAEMONURL && \
@@ -38,7 +39,7 @@ install_packages(){
 }
 
 install_dispatcher(){
-  wget https://raw.githubusercontent.com/valiant1x/intense-vpn/master/server/easy-deploy-node.sh
+  wget https://raw.githubusercontent.com/LetheanMovement/intense-vpn/${BRANCH}/server/easy-deploy-node.sh
   chmod +x easy-deploy-node.sh
   EMAIL="$EMAIL" ./easy-deploy-node.sh
   sudo systemctl daemon-reload

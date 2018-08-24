@@ -44,6 +44,7 @@ def main(argv):
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
     p.add('-C', '--generate-client-config',  dest='C', metavar='SERVICEID', required=None, help='Generate client config for specified service on stdout and exit')
     p.add('-D',  '--generate-sdp',           dest='D', action='store_const', const='generate-sdp', required=None, help='Generate SDP by wizzard')
+    p.add('-E',  '--edit-sdp',               dest='E', action='store_const', const='edit-sdp', required=None, help='Edit existing SDP config')
     p.add('-U',  '--upload-sdp',             dest='U', action='store_const', const='upload-sdp', required=None, help='Upload SDP')
     p.add(       '--sdp-service-crt',        dest='serviceCrt', metavar='FILE', required=None, help='Provider Proxy crt (for SDP edit/creation only)')
     p.add(       '--sdp-service-type',       dest='serviceType', metavar='TYPE', required=None, help='Service type (proxy or vpn)')
@@ -141,6 +142,20 @@ def main(argv):
         if (not s.upload(config.CONFIG)):
             log.L.error("Error uploading SDP!")
             sys.exit(2)
+        sys.exit()
+
+    if (cfg.E):
+        log.L.warning("Editing SDP config %s" % (config.CONFIG.SDPFILE))
+        s=sdp.SDP()
+        s.load(config.CONFIG.SDPFILE)
+        if (not s.editService(config.CONFIG)):
+            log.L.error("Error editing config!")
+            sys.exit(2)
+        else:
+            print('YOUR CHANGES TO THE SDP CONFIG file ARE UNSAVED!')
+            choice = input('Save the file? This will overwrite your existing config file! [y/N] ').strip().lower()[:1]
+            if (choice == 'y'):
+                s.save(config.CONFIG)
         sys.exit()
         
     if (cfg.S):

@@ -61,14 +61,13 @@ class SDP(object):
             ret = self.isConfigured(cap)
 
         if (not self.data['services'] or len(self.data['services']) == 0):
-            addService(cap, services)
+            addService(cap)
             return
 
-        print('Select a service to edit (enter the number only): ')
         count = 1
 
         for i in self.data['services']:
-            print('%d: %s [%s] [cost %.8f] (ID %s)' % (count, i['name'], i['type'], i['cost'], i['id']))
+            print('%d: %s [%s] [cost %s] (ID %s)' % (count, i['name'], i['type'], i['cost'], i['id']))
             count += 1
 
         choice = input('Select a service to edit (enter the number only): ')
@@ -81,10 +80,11 @@ class SDP(object):
                 s = SDPService(self.getUsedServiceIds(), encoded, self.certsDir)
                 ret = False
                 while not ret:
-                    ret = s.checkConfig(cap, services)
+                    ret = s.checkConfig(cap.CAP)
 
                 if ret:
                     self.data['services'][choice] = s.data
+                    return True
             else:
                 log.L.error('Invalid selection')
         else:
@@ -717,7 +717,7 @@ class SDPService(object):
 
         if (choice):
             choice = int(choice)
-            if (choice > 0 and choice <= 5):
+            if (choice >= 0 and choice <= 5):
                 self.data['firstVerificationsNeeded'] = int(choice)
         else:
             if (not self.data['firstVerificationsNeeded']):
@@ -725,12 +725,12 @@ class SDPService(object):
 
         # TODO limitations on things like number of prepaid minutes should come from a template at SDP server, or be 
         # hardcoded with much more lenient restrictions to allow for expansion of accepted values on the SDP later
-        print('How many transaction confirmations are required for subsequent payments (after the first payment) from a client? Minimum 0, maximum 1 minutes.')
+        print('How many transaction confirmations are required for subsequent payments (after the first payment) from a client? Minimum 0, maximum 1.')
         if (self.data['subsequentVerificationsNeeded'] and int(self.data['subsequentVerificationsNeeded']) >= 0 and int(self.data['subsequentVerificationsNeeded']) <= 1):
             print('Existing value: %d' % self.data['subsequentVerificationsNeeded'])
-            choice = input('Enter new number of confirmations required [leave blank to keep existing] ').strip()
+            choice = input('Enter new number of subsequent confirmations required [leave blank to keep existing] ').strip()
         else:
-            choice = input('Enter number of confirmations required ').strip()
+            choice = input('Enter number of subsequent confirmations required ').strip()
 
         if (choice):
             choice = int(choice)

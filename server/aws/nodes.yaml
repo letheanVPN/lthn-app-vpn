@@ -75,6 +75,7 @@ Mappings:
       AMI: ami-759bc50a # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server
     us-east-2:
       AMI: ami-5e8bb23b
+      BlockchainEbsSnapshot: snap-08d93b2e70aca8241
     us-west-1:
       AMI: ami-4aa04129
     us-west-2:
@@ -85,7 +86,7 @@ Mappings:
       AMI: ami-de8fb135
     eu-west-2:
       AMI: ami-6b3fd60c
-      BlockchainEbsSnapshot: snap-0d5164d659335b1b6
+      BlockchainEbsSnapshot: snap-04c24ae9b23c883b3
     ap-northeast-1:
       AMI: ami-98cfaa75
     ap-southeast-1:
@@ -182,7 +183,8 @@ Resources:
       RoleName: !Join ['', [
         cf-,  # Instance role names must begin with cf-
         s3readonly-,
-        !Ref 'AWS::StackName'
+        !Ref 'AWS::StackName',
+        !Ref 'AWS::Region'
       ]]
       AssumeRolePolicyDocument: {
         "Version" : "2012-10-17",

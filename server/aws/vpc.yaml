@@ -27,6 +27,10 @@ Metadata:
 
 Mappings:
   RegionMap:
+    us-east-2:
+      AZs:
+      - us-east-2a
+      - us-east-2b
     eu-west-2:
       AZs:
       - eu-west-2a

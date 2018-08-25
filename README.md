@@ -1,29 +1,29 @@
 # intense-vpn
-This repository contains code needed to setup and run Intense Coin Virtual Private Network (VPN).
+This repository contains code needed to setup and run the Lethean Virtual Private Network (VPN).
 
 ## Design
-ITNS VPN dispatcher is tool which make all orchestration of other packages. It does not provide any VPN functionality by itself.
-It uses system packages whenever it is possible but it runs all instances manually after invoking.
+ITNS (aka LTHN) VPN dispatcher is a tool that orchestrates all other modules (proxy, VPN, config, etc.). It does not provide any VPN functionality by itself.
+The dispatcher uses system packages whenever possible but it runs all instances manually after invoking.
 
 ### sudo
-By default, all scripts have lowest permissions as possible. We do not recommend to run anything as root. It is better to configure sudo access for
-your user and use it. Just install sudo and configure VPN user to run all sudo commands without password.
-sudoers file snippet:
+By default, all scripts are executed with the lowest permissions possible. We do not recommend running anything as root. Instead, it is better to install sudo and configure sudo access for a new user (eg. `useradd -m vpnuser`). We recommend permitting the `vpnuser` to run all sudo commands without password, as in the following sudoers file snippet:
 ```
 vpnuser  ALL=(ALL:ALL) NOPASSWD:ALL
 ```
 
-### Proxy mode (mandatory)
-In proxy mode, it runs preconfigured haproxy which acts as frontend for clients (authenticated by ITNS payments) and use other HTTP proxy as backend.
-Easiest way is to use with squid but it can be any kind of HTTP proxy.
+### Modes
+The dispatcher has two distinct modes of operation: proxy and VPN.
 
-### VPN mode
-If you decide to run ITNS VPN dispatcher in VPN mode, it starts OpenVpn server authenticated by ITNS payments. 
+### Proxy mode (mandatory)
+In proxy mode, it runs a preconfigured instance of haproxy which acts as frontend for clients (authenticated by ITNS payments), and uses another HTTP proxy as the backend.
+Squid is the simplest HTTP proxy to use as a backend, but any other HTTP proxy would work fine as well. Easy-deploy scripts autoconfigure squid as the backend.
+
+### VPN mode (optional)
+If you decide to run ITNS VPN dispatcher in VPN mode, it starts an OpenVPN server authenticated by ITNS payments.
 
 ### Session management
-Dispatcher orchestrates all proxy and VPN instances and take care of authentication and session creation. 
-In huge sites, this could generate big load. Session management can be turned off. In such cases, sessions which are alive after payment is spent,
-will not be terminated automatically.
+The dispatcher orchestrates all proxy and VPN instances by managing authentication and session creation. 
+In huge sites, this could generate significant load. Session management can be turned off. In such cases, sessions which are alive after a client's payment is spent will not be terminated automatically.
 
 ## Requirements
  * python3
@@ -33,55 +33,62 @@ will not be terminated automatically.
  * openvpn (optional)
  * sudo installed and configured
 
-There are more required python classes but they will be installed
-automatically during install.
+There are more required python classes but they will be installed automatically during install.
 
 On debian, use standard packager:
 ```bash
-apt-get install python3 python3-pip haproxy sudo
+sudo apt-get install python3 python3-pip haproxy
 
 ```
 
 ## Configure and install
-Project is configured by standard configure script. You can change basic parameters of service via this script.
-It will ask you for all parameters and generate sdp.json and dispatcher.ini. 
-Please note that config files will be generic and it is good to review and
-edit them before real usage. You can run configure script more times if
-you want to change parameters but you have to do *make clean* first.
-If you use *FORCE=1* during make install, it will overwrite your configs.
-Without this flag, all configs and keys are left untouched.
+The dispatcher is configured by a standard configure script. You can change basic parameters of proxy or VPN services via this script. It will ask you for all parameters and generate sdp.json and dispatcher.ini. Please note that config files will be generic and it is good to review and edit them before real usage. You can run the configure script again if you want to change parameters but you have to run *make clean* first.
+
+If you use *FORCE=1* during `make install`, it will overwrite your configs and certificates/keys. Without this flag, all configs and keys are left untouched.
 
 ### Wallet
-Dispatcher needs to have wallet configured before run and it needs to have
-wallet-vpn-rpc binary runing. Please note that there are two passwords. One
-for unlocking wallet and one for dispatcher RPC calls.
-You can download these binary from [here](https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/385/intensecoin-cli-linux-64bit-HEAD-44a4437.tar.bz2) (you need master intensecoin branch)
+The dispatcher requires having a valid Lethean wallet configured before running, it requires having the wallet-vpn-rpc binary runing. Please note that there are two passwords passed to initialize the wallet-vpn-rpc binary; one for unlocking the wallet and one for dispatcher RPC calls.
+You can download these binaries from [here](http://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/559/intensecoin-cli-linux-64bit-master-91edb13.tar.bz2), or build from source using [intensecoin master](https://github.com/valiant1x/intensecoin/tree/master).
+wallet-vpn-rpc initialization:
 ```bash
 intense-wallet-vpn-rpc --vpn-rpc-bind-port 13660 --wallet-file itnsvpn --rpc-login
 dispatcher:<somepassword> --password <walletpassword>
 
 ```
 
+Note that using the `intense-wallet-vpn-rpc` binary as described also requires having the `intensecoind` daemon running, or using a remote daemon. If you would prefer to use a remote daemon instead of running a daemon locally, we recommend using the Lethean team hosted node at **sync.lethean.io**
+```bash
+intense-wallet-vpn-rpc --daemon-host sync.lethean.io
+```
+
 ### Basic install
 See ./configure.sh --help for more fine-tuned options
 ```bash
+git clone https://github.com/LetheanMovement/intense-vpn.git
+cd intense-vpn
 pip3 install -r requirements.txt
-./configure.sh --easy [--with-wallet wallet_address]
+./configure.sh --easy [--with-wallet-address <wallet_address>]
 make install [FORCE=1]
 ```
 
 ### Public configuration - sdp.json
-*/opt/itns/etc/sdp.json* describes local services for orchestration. It is uploaded to SDP server by --upload-sdp option. Note that uploading to SDP server is paid service. 
-After installation, you must generate SDP which is required to run.
-You can either answer question during wizard or you can use cmdline option to set defaults. See help.
+*/opt/itns/etc/sdp.json* describes local services for orchestration. It is uploaded to SDP server by --upload-sdp option. Note that uploading to SDP server is paid service. <!--  **TODO add SDP server integration instructions** --> 
+After installation, you will be instructed to generate the sdp.json file, which is required to run the dispatcher.
+You can either answer questions using the wizard (*--generate-sdp*) or you can use cmdline params to set defaults. See help.
 ```bash
 /opt/itns/bin/itnsdispatcher --generate-sdp --wallet-address some_wallet_address [--sdp-service-name someName] ...
 
 ```
 
+You may need to invoke itnsdispatcher using `python3` if you receive dependency errors. If you opted to use the `--runas-user` and `--runas-group` setup params, you will also need to `su -` to that user or use `sudo` when using the dispatcher.
+```bash
+[su - vpnuser]
+python3 /opt/itns/bin/itnsdispatcher ...
+```
+
 ### Private configuration - dispatcher.ini
-*/opt/itns/etc/dispatcher.ini* contains local information needed to run dispatcher. It is local file containing private information. Do not upload it to any place.
-By default, *make install* will generate default file for you but you need to configure it to respect your needs.
+*/opt/itns/etc/dispatcher.ini* is a local file containing private information needed to run the  dispatcher. Do not upload it anywhere or share it with anyone as it contains private keys. You should also create a backup of this file.
+By default, *make install* will generate a default file for you but you need to configure it to suit your needs.
 File format:
 ```ini
 [global]
@@ -121,9 +128,9 @@ reneg=60
 
 ### Automated install
 For fully automated install, please use our easy deploy script. Please note that this script works only if system is clean and sudo is already configured for user which runs this.
-Never run this on configured system! It will overwrite config files!
+Never run this on a system already configured for itnsdispatcher! It will overwrite config files!
 ```bash
-wget https://raw.githubusercontent.com/valiant1x/intense-vpn/master/server/easy-deploy-node.sh
+wget https://raw.githubusercontent.com/LetheanMovement/intense-vpn/master/server/easy-deploy-node.sh
 chmod +x easy-deploy-node.sh
 BRANCH=master ./easy-deploy-node.sh
 
@@ -136,7 +143,7 @@ You can use more env variables to tune parameters. See script header for availab
 [ -z "$CACN" ] && CACN=ITNSFakeNode
 [ -z "$ENDPOINT" ] && ENDPOINT="1.2.3.4"
 [ -z "$PORT" ] && PORT="8080"
-[ -z "$PROVTYPE" ] && PROVTYPE="residental"
+[ -z "$PROVTYPE" ] && PROVTYPE="residential"
 [ -z "$WALLET" ] && WALLET="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 [ -z "$EMAIL" ] && EMAIL=""
 
@@ -196,7 +203,8 @@ optional arguments:
   -C SERVICEID, --generate-client-config SERVICEID
                         Generate client config for specified service on stdout
                         and exit (default: None)
-  -D, --generate-sdp    Generate SDP by wizzard (default: None)
+  -D, --generate-sdp    Generate SDP by wizard (default: None)
+  -E, --edit-sdp        Edit existing SDP config
   -U, --upload-sdp      Upload SDP (default: None)
   --sdp-service-crt FILE
                         Provider Proxy crt (for SDP edit/creation only)
@@ -259,8 +267,8 @@ Happy flying with better privacy!
 ```
 
 ## Management interface
-Dispatcher has management interface available by default in /opt/itns/var/run/mgmt.
-You can manually add or remove authids and see its status.
+The dispatcher has a management interface available by default in */opt/itns/var/run/mgmt*.
+You can manually add or remove authids and query its status.
 ```
 echo "help" | socat stdio /opt/itns/var/run/mgmt
 show authid [authid]
@@ -276,14 +284,14 @@ cleanup
 
 ```
 
-Example1: Add static authid:
+Example 1: Add static authid:
 ```
 echo "add authid authid2 1a" | socat stdio /opt/itns/var/run/mgmt
 Added (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:07 2018, balance=100000.000000, perminute=0.001000, minsleft=100000000.000000, charged_count=1, discharged_count=0
 
 ```
 
-Example2: Topup authid:
+Example 2: Topup authid:
 ```
  echo "topup authid2 1" | socat stdio /opt/itns/var/run/mgmt
 TopUp (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:47 2018, balance=100001.000000, perminute=0.001000, minsleft=100001000.000000, charged_count=2, discharged_count=0

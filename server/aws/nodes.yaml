@@ -1,0 +1,430 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates an autoscaling group of itns nodes
+
+Parameters:
+  DesiredNumberOfNodes:
+    Type: Number
+    Default: 1
+    Description: >
+      The desired number of nodes to start.
+    AllowedValues:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+
+  DeploymentType:
+    Type: String
+    Default: dev
+    Description: The type of deployment
+    AllowedValues:
+      - prod
+      - dev
+      - test
+
+  InitialDNSWeight:
+    Type: Number
+    Default: 0
+    Description: The initial weight of the DNS record
+    AllowedValues:
+      - 0
+      - 1
+      - 5
+      - 10
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t3.micro
+      - t3.small
+      - t3.medium
+
+  Branch:
+    Type: String
+    Default: master
+    Description: Git branch to deploy from https://github.com/LetheanMovement/intense-vpn
+    AllowedPattern: .+
+
+  VPCStack:
+    Type: String
+    Default: VPC
+    Description: >
+      The name of the VPC stack.
+
+  SeedBlockchain:
+    Type: String
+    Default: fromSnapshot
+    Description: >
+      Mount snapshot with historic blocks.
+    AllowedValues:
+      - doNotSeed
+      - fromSnapshot
+
+
+Mappings:
+  RegionMap:
+    Global:
+      Key: admin
+      DataDir: .intensecoin
+    us-east-1:
+      AMI: ami-759bc50a # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server
+    us-east-2:
+      AMI: ami-5e8bb23b
+      BlockchainEbsSnapshot: snap-08d93b2e70aca8241
+    us-west-1:
+      AMI: ami-4aa04129
+    us-west-2:
+      AMI: ami-ba602bc2
+    eu-west-1:
+      AMI: ami-4aa04129
+    eu-central-1:
+      AMI: ami-de8fb135
+    eu-west-2:
+      AMI: ami-6b3fd60c
+      BlockchainEbsSnapshot: snap-04c24ae9b23c883b3
+    ap-northeast-1:
+      AMI: ami-98cfaa75
+    ap-southeast-1:
+      AMI: ami-1c106cf6
+    sa-east-1:
+      AMI: ami-8eecc9e2
+
+  DeploymentMap:
+    prod:
+      S3Bucket: prod.cloud.lethean.io
+      AttachToTempSecurityGroup: false
+      HostedZone: cloud.lethean.io
+
+    dev:
+      S3Bucket: dev.cloud.lethean.io
+      AttachToTempSecurityGroup: true
+      HostedZone: dev.cloud.lethean.io
+
+    test:
+      S3Bucket: test.cloud.lethean.io
+      AttachToTempSecurityGroup: true
+      HostedZone: test.cloud.lethean.io
+
+  InstanceMap:
+    t2.micro:
+      BlkDevice: /dev/xvdf
+    t2.small:
+      BlkDevice: /dev/xvdf
+    t2.medium:
+      BlkDevice: /dev/xvdf
+    t3.micro:
+      BlkDevice: /dev/nvme1n1
+    t3.small:
+      BlkDevice: /dev/nvme1n1
+    t3.medium:
+      BlkDevice: /dev/nvme1n1
+
+
+Conditions:
+  SeedBlockchainFromSnapshot: !Equals [!Ref 'SeedBlockchain', fromSnapshot]
+  AttachToTempSecurityGroup: !Equals [!FindInMap [DeploymentMap, !Ref 'DeploymentType', AttachToTempSecurityGroup], true]
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Deployment Parameters
+        Parameters:
+          - DesiredNumberOfNodes
+          - DeploymentType
+      - Label:
+          default: Advanced Parameters
+        Parameters:
+          - InitialDNSWeight
+          - InstanceType
+          - VPCStack
+          - SeedBlockchain
+          - Branch
+
+
+Resources:
+  NodeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Security group for ITNS nodes'
+      SecurityGroupIngress:
+        - Description: 'HAProxy incoming'
+          IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - Description: 'ITNS daemon P2P bind port'
+          IpProtocol: tcp
+          FromPort: 48772
+          ToPort: 48772
+          CidrIp: 0.0.0.0/0
+        - Description: 'ITNS daemon RPC bind port'
+          IpProtocol: tcp
+          FromPort: 48782
+          ToPort: 48782
+          CidrIp: 0.0.0.0/0
+      VpcId: !ImportValue {'Fn::Sub': '${VPCStack}-VpcId'}
+
+  S3ReadOnlyAccessInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+      - !Ref 'S3ReadOnlyAccessRole'
+
+  S3ReadOnlyAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['', [
+        cf-,  # Instance role names must begin with cf-
+        s3readonly-,
+        !Ref 'AWS::StackName',
+        !Ref 'AWS::Region'
+      ]]
+      AssumeRolePolicyDocument: {
+        "Version" : "2012-10-17",
+        "Statement" : [
+          {
+            "Effect" : "Allow",
+            "Principal" : {
+              "Service" : ["ec2.amazonaws.com"]
+            },
+            "Action" : [
+              "sts:AssumeRole"
+            ]
+          }
+        ]
+      }
+      ManagedPolicyArns:
+       - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: network
+      Name: !Join ['-', [
+        !Ref 'AWS::StackName',
+        !Select ['0', !Split ['-', !Select ['2', !Split [/, !Ref 'AWS::StackId']]]],
+        RPC
+      ]]
+      Scheme: internet-facing
+      Subnets:
+        - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet0'}
+        - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet1'}
+
+  DNS:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Join [., [!FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone], '']]
+      Name: !Join [., [
+        nodes,
+        !Ref 'AWS::Region',
+        !FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone]
+      ]]
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt 'LoadBalancer.CanonicalHostedZoneID'
+        DNSName: !GetAtt 'LoadBalancer.DNSName'
+      Weight: !Ref 'InitialDNSWeight'
+      SetIdentifier: !Ref 'AWS::StackName'
+
+  RPCListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref 'RPCTargetGroup'
+          Type: forward
+      LoadBalancerArn: !Ref 'LoadBalancer'
+      Port: 48782
+      Protocol: TCP
+
+
+  RPCTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 6
+      UnhealthyThresholdCount: 3
+      HealthyThresholdCount: 3
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 100
+      Port: 48782
+      Protocol: TCP
+      VpcId: !ImportValue {'Fn::Sub': '${VPCStack}-VpcId'}
+      HealthCheckPath: /json_rpc
+      Name: !Join ['-', [
+        !Ref 'AWS::StackName',
+        !Select ['0', !Split ['-', !Select ['2', !Split [/, !Ref 'AWS::StackId']]]],
+        RPC
+      ]]
+
+  LaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Metadata:
+      AWS::CloudFormation::Authentication:
+        S3AccessCreds:
+          type: S3
+          roleName: !Ref 'S3ReadOnlyAccessInstanceProfile'
+          buckets:
+            - !FindInMap [DeploymentMap, !Ref 'DeploymentType', S3Bucket]
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - InstanceSetup
+            - Deploy
+
+        InstanceSetup:
+          packages:
+            apt:
+              htop: []
+              multitail: []
+              supervisor: []
+            python:
+              awscli: []
+          files:
+            /home/ubuntu/boot-log.sh:
+              content: |
+                #!/bin/bash
+                if hash multitail 2>/dev/null
+                then
+                   multitail -Mb 10MB --follow-all \
+                           -n 1000 /var/log/cloud-init-output.log \
+                           -n 1000 /var/log/cfn-init.log \
+                           -n 1000 /var/log/cfn-init-cmd.log
+                else
+                   tail    -f /var/log/cloud-init-output.log \
+                           -f /var/log/cfn-init.log \
+                           -f /var/log/cfn-init-cmd.log
+                fi
+              mode: '000755'
+              owner: ubuntu
+              group: ubuntu
+          commands:
+            00_installSSHKeys:
+              env:
+                BUCKET: !FindInMap [DeploymentMap, !Ref 'DeploymentType', S3Bucket]
+                PREFIX: keys/
+              command: >
+                aws s3 cp --recursive s3://${BUCKET}/${PREFIX} /tmp/keys &&
+                cat /tmp/keys/* >> /home/ubuntu/.ssh/authorized_keys &&
+                rm -rf /tmp/keys
+            02_mountBlockchainVolume:
+              test: !If [SeedBlockchainFromSnapshot, true, false]
+              env:
+                DATA_DIR: !FindInMap [RegionMap, Global, DataDir]
+                BLK_DEVICE: !FindInMap [InstanceMap, !Ref 'InstanceType', BlkDevice]
+              command: >
+                mkdir -p /home/ubuntu/${DATA_DIR}/lmdb &&
+                echo "${BLK_DEVICE} /home/ubuntu/${DATA_DIR}/lmdb ext4 defaults,nofail 0 2" >> /etc/fstab &&
+                mount /home/ubuntu/${DATA_DIR}/lmdb &&
+                chown -R ubuntu: /home/ubuntu/${DATA_DIR}
+            03_enableSupervisorWeb:
+              command: >
+                /bin/echo -e '[inet_http_server]\nport = *:8081\n' >> /etc/supervisor/supervisord.conf &&
+                service supervisor stop
+
+        Deploy:
+          commands:
+            00_deploy:
+              env:
+                BRANCH: !Ref 'Branch'
+              command: >
+                wget -O- https://raw.githubusercontent.com/LetheanMovement/intense-vpn/${BRANCH}/server/easy-deploy-aws.sh |
+                sudo
+                ENDPOINT="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
+                BRANCH="${BRANCH}"
+                -i -u ubuntu
+
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
+      InstanceType: !Ref 'InstanceType'
+      KeyName: !FindInMap [RegionMap, Global, Key]
+      IamInstanceProfile: !Ref 'S3ReadOnlyAccessInstanceProfile'
+      SecurityGroups: !If [
+        AttachToTempSecurityGroup,
+        [
+          !GetAtt 'NodeSecurityGroup.GroupId',
+          !ImportValue {'Fn::Sub': '${VPCStack}-TempSecurityGroup'}
+        ],
+        [
+          !GetAtt 'NodeSecurityGroup.GroupId'
+        ]
+      ]
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdf
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp2
+            SnapshotId: !If [
+              SeedBlockchainFromSnapshot,
+              !FindInMap [RegionMap, !Ref 'AWS::Region', BlockchainEbsSnapshot],
+              !Ref 'AWS::NoValue'
+            ]
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+          - |
+            #!/bin/bash -xe
+            export PATH=${!PATH}:/usr/local/bin &&
+            apt-get -y update &&
+            DEBIAN_FRONTEND=noninteractive apt-get -y upgrade &&
+            apt-get -y install python-pip &&
+            pip install --upgrade setuptools &&
+            easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+
+            #############################
+            # Helper function
+            #############################
+            function error_exit
+            {
+              error=$1
+              if [[ -z $error ]]; then error=1; fi
+              cfn-signal -e $error --resource ${SignalResourceName} --stack ${AWS::StackName} --region ${AWS::Region}
+              exit $error
+            }
+            #############################
+            # Run cfn-init
+            #############################
+            cfn-init -v --resource ${ResourceName} --stack ${AWS::StackName} --region ${AWS::Region} || error_exit $?
+            #############################
+            # Trigger complete signal
+            #############################
+            cfn-signal -e 0 --resource ${SignalResourceName} --stack ${AWS::StackName} --region ${AWS::Region}
+          - ResourceName: LaunchConfig
+            SignalResourceName: AutoScalingGroup
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones:
+        - !ImportValue {'Fn::Sub': '${VPCStack}-AZ0'}
+        - !ImportValue {'Fn::Sub': '${VPCStack}-AZ1'}
+      LaunchConfigurationName: !Ref 'LaunchConfig'
+      VPCZoneIdentifier:
+        - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet0'}
+        - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet1'}
+      Tags:
+        - PropagateAtLaunch: 'true'
+          Key: Name
+          Value: itns-node
+      DesiredCapacity: !Ref 'DesiredNumberOfNodes'
+      MinSize: 0
+      MaxSize: 5
+      TargetGroupARNs:
+       - !Ref 'RPCTargetGroup'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+
+Outputs:
+  RPCLoadBalancerURL:
+    Description: The URL of the website (ELB)
+    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', ':48782/json_rpc']]

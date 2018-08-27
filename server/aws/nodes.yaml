@@ -71,6 +71,7 @@ Mappings:
   RegionMap:
     Global:
       Key: admin
+      DataDir: .intensecoin
     us-east-1:
       AMI: ami-759bc50a # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server
     us-east-2:
@@ -318,12 +319,13 @@ Resources:
             02_mountBlockchainVolume:
               test: !If [SeedBlockchainFromSnapshot, true, false]
               env:
+                DATA_DIR: !FindInMap [RegionMap, Global, DataDir]
                 BLK_DEVICE: !FindInMap [InstanceMap, !Ref 'InstanceType', BlkDevice]
               command: >
-                mkdir -p /home/ubuntu/.intensecoin/lmdb &&
-                echo "${BLK_DEVICE} /home/ubuntu/.intensecoin/lmdb ext4 defaults,nofail 0 2" >> /etc/fstab &&
-                mount /home/ubuntu/.intensecoin/lmdb &&
-                chown -R ubuntu: /home/ubuntu/.intensecoin
+                mkdir -p /home/ubuntu/${DATA_DIR}/lmdb &&
+                echo "${BLK_DEVICE} /home/ubuntu/${DATA_DIR}/lmdb ext4 defaults,nofail 0 2" >> /etc/fstab &&
+                mount /home/ubuntu/${DATA_DIR}/lmdb &&
+                chown -R ubuntu: /home/ubuntu/${DATA_DIR}
             03_enableSupervisorWeb:
               command: >
                 /bin/echo -e '[inet_http_server]\nport = *:8081\n' >> /etc/supervisor/supervisord.conf &&

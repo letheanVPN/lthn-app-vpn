@@ -252,10 +252,11 @@ class AuthIds(object):
                         log.L.warning("Wallet not in sync! Got a payment for a future block height")
                         break
 
-                    if (tx['height'] > self.lastheight):
+                    confirmations = cur_height - tx['height'] + 1
+
+                    if (confirmations >= 3 and tx['height'] > self.lastheight):
                         self.lastheight = tx['height']
                         
-                    confirmations = cur_height - tx['height'] + 1
                 else:
                     confirmations = 0
                         

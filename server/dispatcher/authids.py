@@ -234,7 +234,7 @@ class AuthIds(object):
             "in": True,
             "pool": True,
             "filter_by_height": True,
-            "min_height": self.lastheight,
+            "min_height": self.lastheight + 1,
             "max_height": 99999999
         }
         res = json.loads(self.walletJSONCall("get_vpn_transfers", params))
@@ -271,7 +271,6 @@ class AuthIds(object):
                     # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
                     # Internal logic is automatically applied to activate or not in corresponding services
                     self.update(s1)
-            self.lastheight += 1
             log.L.info("All payments from wallet processed")  
         else:
             log.L.info("No new payments in wallet")

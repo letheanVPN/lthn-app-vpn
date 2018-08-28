@@ -232,7 +232,7 @@ class AuthIds(object):
             
         params = {
             "in": True,
-            "pending": True,
+            "pool": True,
             "filter_by_height": True,
             "min_height": self.lastheight,
             "max_height": 99999999
@@ -242,8 +242,8 @@ class AuthIds(object):
         txes = []
         if ('in' in res['result']):
             txes.extend(res['result']['in'])
-        if ('pending' in res['result']):
-            txes.extend(res['result']['pending'])
+        if ('pool' in res['result']):
+            txes.extend(res['result']['pool'])
             
         if (len(txes) > 0):
             for tx in txes:

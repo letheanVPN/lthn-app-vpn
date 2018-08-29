@@ -20,24 +20,24 @@ class AuthId(object):
     All payments for given authid are in one session.
     """
     
-    def __init__(self, authid, serviceid, balance, verifications, msg=""):
-        self.id = authid
-        self.balance = 0
-        self.serviceid = serviceid
-        self.verifications = verifications
+    def __init__(self, authid, serviceid, balance, confirmations, height=0, txid=None, msg=""):
+        self.id = authid.upper()
+        self.balance = float(0)
+        self.txid = txid
+        self.serviceid = serviceid.upper()
+        self.confirmations = int(confirmations)
+        self.height = int(height)
         self.created = time.time()
-        self.charged_count = 0
+        self.charged_count = int(0)
         self.lastmodify = time.time()
-        if (services.SERVICES.get(serviceid)):
-            self.cost = services.SERVICES.get(serviceid).getCost()
+        if (services.SERVICES.get(self.serviceid)):
+            self.cost = services.SERVICES.get(self.serviceid).getCost()
         else:
-            log.L.error("Dropping authid %s (serviceid %s does not exists)" % (authid, serviceid))
-            #log.A.audit(log.A.AUTHID, log.A.DEL, authid, "Serviceid %s does not exists" % (serviceid))
+            log.L.error("Dropping authid %s (serviceid %s does not exists)" % (self.authid, self.serviceid))
             return(None)
-        if (balance > 0):
-            self.topUp(balance)
-        log.A.audit(log.A.AUTHID, log.A.ADD, authid, "init, balance=%s, verifications=%s" % (balance,verifications))
-        self.discharged_count = 0
+        if (float(balance) > 0):
+            self.topUp(float(balance))
+        self.discharged_count = int(0)
         self.spending = None
         
     def getId(self):
@@ -46,8 +46,14 @@ class AuthId(object):
     def getBalance(self):
         return(self.balance)
     
-    def getVerifications(self):
-        return(self.verifications)
+    def getConfirmations(self):
+        return(self.confirmations)
+    
+    def getHeight(self):
+        return(self.height)
+    
+    def getTxId(self):
+        return(self.txid)
 
     def getServiceId(self):
         return(self.serviceid)
@@ -56,25 +62,24 @@ class AuthId(object):
         return(self.balance / self.cost)
     
     def show(self):
-        log.L.info("""PaymentId %s:
-            serviceid %s,
-            created at %s
-            modified at %s
-            balance %f
-            cost per minute %f
-            minutes left %f
-            charged_count %d
-            discharged_count %d
-            """ % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count))
+        log.L.info(self.toString())
     
     def toString(self):
-        str = "%s: serviceid=%s, created=%s,modified=%s, spending=%b, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), self.spending, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
+        if self.isSpending():
+            spending = "spending"
+        else:
+            spending = "not_spending"
+        str = "%s: serviceid=%s, created=%s,modified=%s, spending=%s, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
         return(str)
     
-    def topUp(self, itns, msg="", verifications=None):
-        """ TopUp authid. If itns is zero, only update internal acls of services. If verifications is set, it is updated. """
-        if verifications:
-            self.verifications = verifications
+    def topUp(self, itns, msg="", confirmations=None):
+        """ TopUp authid. If itns is zero, only update internal acls of services. If confirmations is set, it is updated. If it is same payment but more confirmations, ignore."""
+        if confirmations:
+            if (int(confirmations) >= self.confirmations):
+                log.L.debug("Authid %s: Verified %s times." % (self.getId(), self.confirmations))
+                self.confirmations = int(confirmations)
+                return
+                
         if (itns > 0):
             self.balance += itns
             self.lastmodify = time.time()
@@ -128,16 +133,22 @@ class AuthIds(object):
         
     def add(self, paymentid):
         log.L.warning("New authid %s" % (paymentid.getId()))
+        log.A.audit(log.A.AUTHID, log.A.ADD, paymentid.getId(), "init, balance=%s, confirmations=%s" % (paymentid.getBalance(), paymentid.getConfirmations()))
         self.authids[paymentid.getId()] = paymentid
         
     def update(self, paymentid):
-        if paymentid.getId() in self.authids.keys():
-            self.topUp(paymentid.getId(), paymentid.getBalance(), paymentid.getVerifications())
+        pid = paymentid.getId()
+        txid = paymentid.getTxId()
+        if pid in self.authids.keys():
+            if (txid != self.authids[pid].getTxId()):
+                self.topUp(paymentid)
+            else:
+                log.L.debug("Authid %s confirmed %s times" % (pid, paymentid.getConfirmations()))
         else:
             self.add(paymentid)
     
-    def topUp(self, paymentid, balance, verifications, msg=""):
-        self.authids[paymentid].topUp(balance, msg)
+    def topUp(self, paymentid):
+        self.authids[paymentid.getId()].topUp(paymentid.getBalance())
 
     def spend(self, paymentid, balance, msg=""):
         self.authids[paymentid].spend(balance, msg)
@@ -260,13 +271,13 @@ class AuthIds(object):
                 else:
                     confirmations = 0
                         
-                service_id = tx['payment_id'][0:2].lower()
+                service_id = tx['payment_id'][0:2]
                 auth_id = tx['payment_id'].upper()
                 amount = tx['amount'] / 100000000
-                log.L.info("Got payment for service %s, auth=%s, amount=%s, confirmations=%s" % (service_id, auth_id, amount, confirmations))
+                log.L.info("Got payment for service %s, auth=%s, amount=%s, confirmations=%s, height=%s, txid=%s" % (service_id, auth_id, amount, confirmations, tx['height'], tx['txid']))
 
                 # Create authid object from wallet
-                s1 = AuthId(auth_id, service_id, float(amount), int(confirmations), "")
+                s1 = AuthId(auth_id, service_id, float(amount), int(confirmations), tx['height'], tx['txid'])
                 # If serviceid is not alive, false will be returned and it will be automatically logged
                 if (s1):
                     # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.

@@ -97,6 +97,8 @@ class Sessions(object):
     def refresh(self, looptime):
         deleted=0
         killed=0
+        spent = 0
+        notspent = 0
         # Get all services
         for srv in services.SERVICES.getAll():
             # For eaach service, list sessions from its internal
@@ -107,18 +109,25 @@ class Sessions(object):
             aids = {}
             for sid in list(self.sessions):
                 sess = self.get(sid)
-                aids[sess.getAuthId()] = sid.upper()
-                if (sess.getServiceId().upper() == srv.upper()) and ((sess.ip + ':' + sess.port) not in service_sessions):
+                authid = sess.getAuthId()
+                aids[authid] = sid
+                tobedeleted = None
+                if (sess.getServiceId() == srv) and ((sess.ip + ':' + sess.port) not in service_sessions):
                     # Session in our db is stale
                     deleted = deleted + 1
-                    self.remove(sid, 'Session not active in service')
+                    tobedeleted = 'Session not active in service'
                 elif not sess.isAlive():
                     # If session should not be alive (spent authid), delete it from db and kill session from service
-                    self.remove(sid, 'Session is not alive (spent authid)')
+                    tobedeleted = 'Session is not alive (spent authid)'
                     if (sess.ip + ':' + sess.port) in service_sessions:
                         service.killSession(service_sessions[sess.ip + ':' + sess.port], 'Spent: ' + sess.conninfo)
                         killed = killed + 1
                         deleted = deleted + 1
+                aid = authids.AUTHIDS.get(authid)
+                if self.find(authid=authid):
+                    aid.startSpending()
+                if tobedeleted:
+                    self.remove(sid, tobedeleted)
             # List all active sessions in our db per service
             for sid in service_sessions.keys():
                 ss = service_sessions[sid]
@@ -128,18 +137,13 @@ class Sessions(object):
                         # Session does not exists in our db - kill it.
                         service.killSession(ss['id'],'Inactive session')
                         killed = killed + 1
-        # For all alive authids, spend time for last loop
-        spent = 0
-        notspent = 0
         for authid in authids.AUTHIDS.getAll():
             aid = authids.AUTHIDS.get(authid)
-            if self.find(authid=authid):
-                aid.startSpending()
-                notspent = notspent + 1
             if aid.isSpending():
                 aid.spendTime(looptime)
                 spent = spent + 1
-                
+            else:
+                notspent = notspent + 1
         log.L.info("Sessions refresh: %d fresh, %d deleted, %d killed, %d spent authids, %d notspent authids" % (len(self.sessions), deleted, killed, spent, notspent))
      
     def toString(self):

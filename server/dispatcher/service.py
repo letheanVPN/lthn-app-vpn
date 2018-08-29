@@ -197,9 +197,14 @@ class Service(object):
     def addAuthIdIfTopup(self, authid):
         """ Should be probably more sophisticated. """
         
-        if (authid.getBalance()>int(self.json["firstPrePaidMinutes"])*float(self.cost)):
-            self.addAuthId(authid)
-        
+        if (authid.getBalance()<int(self.json["firstPrePaidMinutes"])*float(self.cost)):
+            log.L.info("Not enough credit for authid %s and service %s (firstPrePaidMinutes=%s, balance=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstPrePaidMinutes"]), authid.getBalance(), int(self.json["firstPrePaidMinutes"]) * float(self.cost)))
+            return
+        if (authid.getConfirmations()<int(self.json["firstVerificationsNeeded"])):    
+            log.L.info("Not enough confirmations for authid %s and service %s (firstVerificationsNeeded=%s, verifications=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstVerificationsNeeded"]), authid.getConfirmations(), int(self.json["firstVerificationsNeeded"])))
+            return
+        self.addAuthId(authid)
+            
     def delAuthIdIfSpent(self, authid):
         """ Should be probably more sophisticated. """
         

@@ -131,24 +131,23 @@ class AuthIds(object):
         self.lastmodify = time.time()
         self.lastheight = 0
         
-    def add(self, paymentid):
-        log.L.warning("New authid %s" % (paymentid.getId()))
-        log.A.audit(log.A.AUTHID, log.A.ADD, paymentid.getId(), "init, balance=%s, confirmations=%s" % (paymentid.getBalance(), paymentid.getConfirmations()))
-        self.authids[paymentid.getId()] = paymentid
+    def add(self, payment):
+        log.L.warning("New authid %s" % (payment.getId()))
+        log.A.audit(log.A.AUTHID, log.A.ADD, payment.getId(), "init, balance=%s, confirmations=%s" % (payment.getBalance(), payment.getConfirmations()))
+        self.authids[payment.getId()] = payment
         
-    def update(self, paymentid):
-        pid = paymentid.getId()
-        txid = paymentid.getTxId()
-        if pid in self.authids.keys():
-            if (txid != self.authids[pid].getTxId()):
-                self.topUp(paymentid)
+    def update(self, auth_id, service_id, amount, confirmations, height=0, txid=None):
+        if auth_id in self.authids.keys():
+            if (txid != self.authids[auth_id].getTxId()):
+                self.topUp(auth_id, amount)
             else:
-                log.L.debug("Authid %s confirmed %s times" % (pid, paymentid.getConfirmations()))
+                log.L.debug("Authid %s confirmed %s times" % (auth_id, confirmations))
         else:
-            self.add(paymentid)
+            payment = AuthId(auth_id, service_id, amount, confirmations, height, txid)
+            self.add(payment)
     
-    def topUp(self, paymentid):
-        self.authids[paymentid.getId()].topUp(paymentid.getBalance())
+    def topUp(self, paymentid, amount):
+        self.authids[paymentid].topUp(amount)
 
     def spend(self, paymentid, balance, msg=""):
         self.authids[paymentid].spend(balance, msg)
@@ -276,13 +275,9 @@ class AuthIds(object):
                 amount = tx['amount'] / 100000000
                 log.L.info("Got payment for service %s, auth=%s, amount=%s, confirmations=%s, height=%s, txid=%s" % (service_id, auth_id, amount, confirmations, tx['height'], tx['txid']))
 
-                # Create authid object from wallet
-                s1 = AuthId(auth_id, service_id, float(amount), int(confirmations), tx['height'], tx['txid'])
-                # If serviceid is not alive, false will be returned and it will be automatically logged
-                if (s1):
-                    # This function will update authids db. Either it will add new if it does not exists or it will toupu existing.
-                    # Internal logic is automatically applied to activate or not in corresponding services
-                    self.update(s1)
+                # Try to update internal authid db with this payment
+                self.update(auth_id, service_id, float(amount), int(confirmations), tx['height'], tx['txid'])
+                
             log.L.info("All payments from wallet processed")  
         else:
             log.L.info("No new payments in wallet")

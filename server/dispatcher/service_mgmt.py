@@ -69,10 +69,7 @@ class ServiceMgmt(Service):
         p = re.search("^show authid (.*)", msg)
         if (p):
             a = p.group(1)
-            if (authids.AUTHIDS.get(a)):
-                self.showAuthId(a)
-            else:
-                self.mgmtWrite("Bad authid.")
+            self.showAuthId(a)
             self.conn.close()
             return()
         p = re.search("^show authid$", msg)
@@ -206,6 +203,8 @@ class ServiceMgmt(Service):
     def showAuthId(self,id):
         if authids.AUTHIDS.get(id):
             self.mgmtWrite(authids.AUTHIDS.get(id).toString())
+        else:
+            self.mgmtWrite("Bad Authid.\n")
         
     def addAuthId(self, id, sid):
         if (authids.AUTHIDS.get(id)):

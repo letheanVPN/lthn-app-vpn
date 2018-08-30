@@ -344,7 +344,6 @@ Resources:
               env:
                 BRANCH: !Ref 'Branch'
                 DAEMONOPTS: !Join [' ', [
-                  '--no-igd',
                   '--hide-my-port',
                   '--limit-rate-up', !Ref 'TXRateLimitKBs'
                 ]]

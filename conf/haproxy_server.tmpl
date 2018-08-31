@@ -24,16 +24,18 @@ frontend ssltunnel
         maxconn         {maxconn}
         timeout client  {timeout}
 
-	capture request header {header} len 64
+	capture request header {payment_header} len 64
         stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
+        acl allowed_payments    hdr({payment_header}) -u 20 -M
 
-	acl allowed_payments    hdr({header}) -u 20 -M
-        acl is_mgmt url_dom _{ctrldomain}_
+	acl is_mgmt_host url_dom {ctrldomain}
+        acl is_mgmt_path path_beg {ctrlpath}
+        acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
+        use_backend b-status-ok if is_mgmt_host is_mgmt_path is_mgmt_id allowed_payments
+	use_backend b-status-nopayment if is_mgmt_host is_mgmt_path is_mgmt_id
+	use_backend b-status-badid if is_mgmt_host is_mgmt_path
+        http-request deny if !allowed_payments !is_mgmt_host !is_mgmt_path !is_mgmt_id
 
-	use_backend b-status-ok if is_mgmt allowed_payments
-        use_backend b-status-noauth if is_mgmt !allowed_payments
-        http-request deny if !allowed_payments !is_mgmt
-        
         # Default is to proxy connection
         default_backend b-preproxy
 
@@ -45,11 +47,10 @@ backend b-preproxy
         option          httplog
 
         stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
-        stick on hdr({header}) table b-preproxy
+        stick on hdr({payment_header}) table b-preproxy
 
-        tcp-request content track-sc2 hdr({header})
+        tcp-request content track-sc2 hdr({payment_header})
         acl valid_method        method  GET POST OPTIONS PUT CONNECT
-
 	acl allowed_src_ips src -u 10 -f {f_allow_src_ips}        
         acl deny_src_ips src -u 11 -f {f_deny_src_ips}
         http-request deny if deny_src_ips
@@ -66,30 +67,20 @@ backend b-status-ok
         timeout client  {timeout}
         timeout server  {timeout}
         timeout connect {ctimeout}
-        
-        http-response add-header X-ITNS-Status OK
-        server s-http 127.0.0.1:{s_port}
-        #errorfile 503 {f_status}
+        http-request set-uri /authid/%[hdr({payment_header})]
+        server Local {disp_http_host}:{disp_http_port}
+        errorfile 503 {f_status}
 
-backend b-status-noauth
+backend b-status-nopayment
         mode            http
         timeout client  {timeout}
         timeout server  {timeout}
         timeout connect {ctimeout}
-        
-        http-response add-header X-ITNS-Status NoAuth
-        server s-http 127.0.0.1:{s_port}
-        #errorfile 503 {f_status}
+        errorfile 503 {f_err_nopayment}
 
-
-listen s-http
-        bind 127.0.0.1:{s_port}
+backend b-status-badid
+        mode            http
         timeout client  {timeout}
-        mode http
-
-        acl is_mgmt url_dom _{ctrldomain}_
-
-        http-request deny if !is_mgmt
-
-        errorfile 503 {f_status}
- 
+        timeout server  {timeout}
+        timeout connect {ctimeout}
+        errorfile 503 {f_err_badid}

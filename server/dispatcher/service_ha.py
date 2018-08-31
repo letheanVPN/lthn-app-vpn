@@ -23,7 +23,8 @@ class ServiceHa(Service):
         bind_addr = '0.0.0.0',
         crt = None, key = None, crtkey = None,
         max_connections = 2000, timeout = '30s', connect_timeout = '5s',
-        paymentid = 'authid1', uniqueid = 'abcd1234'
+        paymentid = 'authid1', uniqueid = 'abcd1234', 
+        dispatcher_http_host = '127.0.0.1', dispatcher_http_port = 8188
     )
     OPTS_HELP = dict(
         client_bind = 'Client bind address'
@@ -163,15 +164,22 @@ class ServiceHa(Service):
                           f_sock=self.mgmtfile,
                           s_port=self.cfg['status_port'],
                           forward_proxy=self.cfg['backend_proxy_server'],
-                          header='X-ITNS-PaymentID',
-                          ctrldomain=config.Config.CAP.providerid,
+                          payment_header='X-ITNS-PaymentID',
+                          mgmt_header='X-ITNS-MgmtID',
+                          mgmtid=config.Config.CAP.providerid,
+                          ctrldomain='_remote_',
+                          ctrlpath='/status',
+                          disp_http_host=self.cfg['dispatcher_http_host'],
+                          disp_http_port=self.cfg['dispatcher_http_port'],
+                          providerid=config.Config.CAP.providerid,
                           f_dh=config.Config.PREFIX + '/etc/dhparam.pem',
                           cabase=config.Config.PREFIX + '/etc/ca/certs',
                           crtbase=config.Config.PREFIX + '/etc/ca/certs',
-                          f_err=config.Config.PREFIX + '/etc/ha_err.http',
-                          f_site_pem=self.cfg['crtkey'],
-                          f_credit=self.dir + 'ha_credit.http',
                           f_status=config.Config.PREFIX + '/etc/ha_info.http',
+                          f_err_connect=config.Config.PREFIX + '/etc/ha_err_connect.http',
+                          f_err_badid=config.Config.PREFIX + '/etc/ha_err_badid.http',
+                          f_err_nopayment=config.Config.PREFIX + '/etc/ha_err_nopayment.http',
+                          f_site_pem=self.cfg['crtkey'],
                           f_allow_src_ips=config.Config.PREFIX + '/etc/src_allow.ips',
                           f_deny_src_ips=config.Config.PREFIX + '/etc/src_deny.ips',
                           f_deny_dst_ips=config.Config.PREFIX + '/etc/dst_deny.ips',
@@ -194,6 +202,9 @@ class ServiceHa(Service):
             sys.exit(1)
         with open (config.Config.CAP.providerCa, "r") as f_ca:
             f_ca = "".join(f_ca.readlines())
+        shutil.copy(config.Config.PREFIX + '/etc/ha_err_connect.http', '.')
+        shutil.copy(config.Config.PREFIX + '/etc/ha_err_badid.http', '.')
+        shutil.copy(config.Config.PREFIX + '/etc/ha_info.http', '.')
         port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
                           server=self.json['proxy'][0]['endpoint'],
@@ -201,15 +212,20 @@ class ServiceHa(Service):
                           timeout=self.cfg['timeout'],
                           ctimeout=self.cfg['connect_timeout'],
                           port=port,
+                          sport=8181,
                           f_ca=f_ca,
-                          ctrldomain=self.cfg['uniqueid'],
+                          ctrldomain='_local_',
+                          ctrlpath='/status',
+                          mgmtid=self.cfg['uniqueid'],
                           ca=config.Config.CAP.providerCa,
-                          header='X-ITNS-PaymentID',
+                          payment_header='X-ITNS-PaymentID',
+                          mgmt_header='X-ITNS-MgmtID',
                           proxyport=self.cfg['client_port'],
                           bindaddr=self.cfg['client_bind'],
                           s_port=self.cfg['status_port'],
-                          f_status=config.Config.PREFIX + '/etc/ha_info.http',
-                          f_err=config.Config.PREFIX + '/etc/ha_err.http',
+                          f_status='ha_info.http',
+                          f_err_connect='ha_err_connect.http',
+                          f_err_badid='ha_err_badid.http',
                           paymentid=self.cfg['paymentid'])
         try:
             print(out)

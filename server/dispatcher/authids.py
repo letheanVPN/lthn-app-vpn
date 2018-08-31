@@ -72,6 +72,14 @@ class AuthId(object):
         str = "%s: serviceid=%s, created=%s,modified=%s, spending=%s, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
         return(str)
     
+    def toJson(self):
+        if self.isSpending():
+            spending = "spending"
+        else:
+            spending = "not_spending"
+        str = '{"status": "OK", "balance": "%s", "created":"%s", minutes_left": "%d", "spending": "%s", "charged": "%d", "spent": "%d"}' % (self.getBalance(), timefmt(self.created), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
+        return(str)
+    
     def topUp(self, itns, msg="", confirmations=None):
         """ TopUp authid. If itns is zero, only update internal acls of services. If confirmations is set, it is updated. If it is same payment but more confirmations, ignore."""
         if confirmations:

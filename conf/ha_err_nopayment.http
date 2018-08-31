@@ -1,7 +1,7 @@
-HTTP/1.0 200 OK
+HTTP/1.0 403 Forbidden
 Cache-Control: no-cache
 Connection: close
 Content-Type: text/html
-X-ITNS-Status: OK
+X-ITNS-Status: NO_PAYMENT
 
-OK
+NO_PAYMENT

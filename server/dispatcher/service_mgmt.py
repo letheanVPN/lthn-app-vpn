@@ -211,9 +211,8 @@ class ServiceMgmt(Service):
             self.mgmtWrite("This authid already exists!\n")
         else:
             if (services.SERVICES.get(sid)):
-                authid = authids.AuthId(id, sid, 100000)
-                authids.AUTHIDS.update(authid)
-                self.mgmtWrite("Added (" + authid.toString() + ")\n")
+                authids.AUTHIDS.update(id, sid, 10000, 0)
+                self.mgmtWrite("Added (" + authids.AUTHIDS.get(id).toString() + ")\n")
             else:
                 self.mgmtWrite("Bad serviceid?\n")
                 

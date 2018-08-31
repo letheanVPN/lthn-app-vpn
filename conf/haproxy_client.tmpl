@@ -3,59 +3,67 @@ global
         daemon
         ssl-default-bind-ciphers ECDH+AESGCM
         ssl-default-bind-options force-tlsv12
+        no log
 
 frontend icproxy
         bind            {bindaddr}:{proxyport}
         mode            http
         log             global
-        option          httplog
         option          dontlognull
         option          nolinger
         option          http_proxy
         option          contstats
         maxconn         8000
         timeout client  {timeout}
-        timeout server  {timeout}
-        timeout connect {ctimeout}
 
-        acl is_mgmt url_dom _{ctrldomain}_
-        use_backend b-status if is_mgmt
+        acl is_mgmt_host url_dom {ctrldomain}
+        acl is_mgmt_path path_beg {ctrlpath}
+        acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
+        use_backend b-status if is_mgmt_host is_mgmt_path is_mgmt_id
+        use_backend b-err if is_mgmt_host is_mgmt_path
 
         default_backend http-proxy
 
 # Backend for proxying requests to another proxy
 backend http-proxy
         mode            http
-        timeout client  {timeout}
         timeout server  {timeout}
         timeout connect {ctimeout}
         retries         2
         option          nolinger
         option          httplog
         
-        http-request add-header {header} {paymentid}
+        http-request add-header {payment_header} {paymentid}
 
         server hatls {server}:{port} force-tlsv12 ssl ca-file {ca}
-        #server hatls {server}:{port} force-tlsv12 ssl ca-file {ca} check inter 10000
-        #server s-error 127.0.0.1:{s_port} backup
+        errorfile 503 {f_err_connect}
+
+backend b-err
+        mode            http
+        timeout server  {timeout}
+        timeout connect {ctimeout}
+        errorfile 503 {f_err_badid}
 
 backend b-status
         mode            http
-        timeout client  {timeout}
         timeout server  {timeout}
         timeout connect {ctimeout}
-
-        http-response add-header X-ITNS-Status OK
-        http-response add-header X-ITNS-Id {ctrldomain}
-        server s-error 127.0.0.1:{s_port}
-
-listen s-http
-        bind            127.0.0.1:{s_port}
-        mode            http
-        timeout client  {timeout}
-        timeout server  {timeout}
-        timeout connect {ctimeout}
-
-        acl is_mgmt url_dom _{ctrldomain}_
-        http-request deny if !is_mgmt
         errorfile 503 {f_status}
+
+backend b-stats
+        mode            http
+        timeout server  {timeout}
+        timeout connect {ctimeout}
+        server Local 127.0.0.1:{sport}
+
+listen  stats
+        timeout client  {timeout}
+        timeout server  {timeout}
+        timeout connect {ctimeout}
+        bind 127.0.0.1:{sport}
+        mode http
+        stats enable
+        stats hide-version
+        stats refresh 30s
+        stats show-node
+        stats uri  /stats

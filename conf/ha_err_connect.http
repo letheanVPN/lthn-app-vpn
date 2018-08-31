@@ -1,0 +1,7 @@
+HTTP/1.0 503 CONNECTION_ERROR
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html
+X-ITNS-Status: CONNECTION_ERROR
+
+CONNECTION_ERROR

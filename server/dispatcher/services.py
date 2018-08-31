@@ -8,6 +8,7 @@ from service_mgmt import ServiceMgmt
 from service_ha import ServiceHa
 from service_syslog import ServiceSyslog
 from service_ovpn import ServiceOvpn
+from service_http import ServiceHttp
 
 SERVICES = None
 
@@ -20,7 +21,6 @@ class Services(object):
         sdp.load(config.Config.SDPFILE)
         for id_ in sdp.listServices():
             s = sdp.getService(id_)
-            print('Found service %s' % s)
             if (s["type"]):
                 if (s["type"] == "vpn"):
                     so = ServiceOvpn(id_, s)
@@ -32,11 +32,13 @@ class Services(object):
             self.services[id_.upper()] = so
         self.syslog = ServiceSyslog(config.Config.PREFIX + "/var/run/log")
         self.mgmt = ServiceMgmt(config.Config.PREFIX + "/var/run/mgmt")
+        self.http = ServiceHttp()
  
     def run(self):
         for id in self.services:
             s = self.services[id]
             s.run()
+        self.http.run()
         atexit.register(self.stop)
     
     def createConfigs(self):
@@ -47,6 +49,7 @@ class Services(object):
     def orchestrate(self):
         self.syslog.orchestrate()
         self.mgmt.orchestrate()
+        self.http.orchestrate()
         for id in self.services:
             if (not self.services[id].orchestrate()):
                 log.L.error("Service %s died! Exiting!" % (self.services[id].id))

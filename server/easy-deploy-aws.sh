@@ -6,9 +6,10 @@
 [ -z "$DAEMONURL" ] && DAEMONURL=https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/640/lethean-cli-linux-64bit-letheanize-617a36c.tar.bz2
 [ -z "$EMAIL" ] && EMAIL=lukas@intensecoin.com
 [ -z "$BRANCH" ] && BRANCH=master
+[ -z "$DAEMONOPTS" ] && DAEMONOPTS=""
 DAEMONBZ2=$(basename $DAEMONURL)
 DAEMONDIR=$(basename $DAEMONURL .tar.bz2)
-export EMAIL DAEMONBZ2 DAEMONDIR DAEMONURL BRANCH
+export EMAIL DAEMONBZ2 DAEMONDIR DAEMONURL DAEMONOPTS BRANCH
 
 install_daemon(){
   wget -nc -c $DAEMONURL && \
@@ -16,7 +17,8 @@ install_daemon(){
   sudo cp $DAEMONDIR/* /usr/local/bin/ && \
   echo @reboot /usr/local/bin/intensecoind --restricted-rpc --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach >intensecoind.crontab && \
   crontab intensecoind.crontab && \
-  /usr/local/bin/intensecoind --restricted-rpc --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach
+  DEFAULTOPTS="--restricted-rpc --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach"
+  /usr/local/bin/intensecoind ${DEFAULTOPTS} ${DAEMONOPTS}
 }
 
 install_zabbix(){

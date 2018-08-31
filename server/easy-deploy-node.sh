@@ -12,8 +12,8 @@ fi
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$PROVIDERID" ] && PROVIDERID=""
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
-[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/559/intensecoin-cli-linux-64bit-master-91edb13.tar.bz2"
-[ -z "$DAEMON_HOST" ] && DAEMON_HOST="monitor.intensecoin.com"
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/640/lethean-cli-linux-64bit-letheanize-617a36c.tar.bz2"
+[ -z "$DAEMON_HOST" ] && DAEMON_HOST="sync.lethean.io"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"
 [ -z "$CAPASS" ] && CAPASS=1234
 [ -z "$CACN" ] && CACN=ITNSFakeNode

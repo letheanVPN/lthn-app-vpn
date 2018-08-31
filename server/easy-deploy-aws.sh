@@ -3,7 +3,7 @@
 ## Run as:
 #wget -O- https://raw.githubusercontent.com/LetheanMovement/intense-vpn/master/server/easy-deploy-aws.sh | sudo -i -u ubuntu
 
-[ -z "$DAEMONURL" ] && DAEMONURL=https://github.com/valiant1x/intensecoin/releases/download/v2.0.2.1/intensecoin-cli-linux-64bit-v2.0.2.1.tar.bz2
+[ -z "$DAEMONURL" ] && DAEMONURL=https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/640/lethean-cli-linux-64bit-letheanize-617a36c.tar.bz2
 [ -z "$EMAIL" ] && EMAIL=lukas@intensecoin.com
 [ -z "$BRANCH" ] && BRANCH=master
 DAEMONBZ2=$(basename $DAEMONURL)

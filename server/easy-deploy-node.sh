@@ -34,8 +34,8 @@ install_wallet(){
   DAEMONDIR=$(basename $DAEMON_BIN_URL .tar.bz2)
   wget -nc -c $DAEMON_BIN_URL && \
   sudo tar --strip-components 1 -C /usr/local/bin/ -xjvf $DAEMONBZ2 && \
-  /usr/local/bin/intense-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
-  echo @reboot /usr/local/bin/intense-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log >wallet.crontab && \
+  /usr/local/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
+  echo @reboot /usr/local/bin/lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log >wallet.crontab && \
   crontab wallet.crontab 
 }
 
@@ -44,11 +44,11 @@ if ! [ -f ~/vpn.address.txt ]; then
 fi
 WALLET=$(cat ~/vpn.address.txt)
 
-if ! [ -d intense-vpn  ]; then
-  git clone https://github.com/LetheanMovement/intense-vpn.git
-  cd intense-vpn
+if ! [ -d lethean-vpn  ]; then
+  git clone https://github.com/LetheanMovement/lethean-vpn.git
+  cd lethean-vpn
 else
-  cd intense-vpn
+  cd lethean-vpn
   git pull
 fi
 git checkout $BRANCH
@@ -67,7 +67,7 @@ make install FORCE=1
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 2 --sdp-service-verifications 0
 
-/usr/local/bin/intense-wallet-vpn-rpc --wallet-file ~/vpn --daemon-host $DAEMON_HOST --vpn-rpc-bind-port 14660 --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log </dev/null >/dev/null 2>/dev/null &
+/usr/local/bin/lethean-wallet-vpn-rpc --wallet-file ~/vpn --daemon-host $DAEMON_HOST --vpn-rpc-bind-port 14660 --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log </dev/null >/dev/null 2>/dev/null &
 
 sudo systemctl daemon-reload
 sudo systemctl enable squid

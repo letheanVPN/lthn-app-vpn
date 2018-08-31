@@ -48,7 +48,7 @@ Parameters:
   Branch:
     Type: String
     Default: master
-    Description: Git branch to deploy from https://github.com/LetheanMovement/intense-vpn
+    Description: Git branch to deploy from https://github.com/LetheanMovement/lethean-vpn
     AllowedPattern: .+
 
   VPCStack:
@@ -348,7 +348,7 @@ Resources:
                   '--limit-rate-up', !Ref 'TXRateLimitKBs'
                 ]]
               command: >
-                wget -O- https://raw.githubusercontent.com/LetheanMovement/intense-vpn/${BRANCH}/server/easy-deploy-aws.sh |
+                wget -O- https://raw.githubusercontent.com/LetheanMovement/lethean-vpn/${BRANCH}/server/easy-deploy-aws.sh |
                 sudo
                 ENDPOINT="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
                 BRANCH="${BRANCH}"

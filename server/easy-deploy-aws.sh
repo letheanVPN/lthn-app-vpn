@@ -1,10 +1,10 @@
 #!/bin/sh
 
 ## Run as:
-#wget -O- https://raw.githubusercontent.com/LetheanMovement/intense-vpn/master/server/easy-deploy-aws.sh | sudo -i -u ubuntu
+#wget -O- https://raw.githubusercontent.com/LetheanMovement/lethean-vpn/master/server/easy-deploy-aws.sh | sudo -i -u ubuntu
 
 [ -z "$DAEMONURL" ] && DAEMONURL=https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/640/lethean-cli-linux-64bit-letheanize-617a36c.tar.bz2
-[ -z "$EMAIL" ] && EMAIL=lukas@intensecoin.com
+[ -z "$EMAIL" ] && EMAIL=lukas@lethean.io
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$DAEMONOPTS" ] && DAEMONOPTS=""
 DAEMONBZ2=$(basename $DAEMONURL)
@@ -15,10 +15,10 @@ install_daemon(){
   wget -nc -c $DAEMONURL && \
   tar -xjvf $DAEMONBZ2 && \
   sudo cp $DAEMONDIR/* /usr/local/bin/ && \
-  echo @reboot /usr/local/bin/intensecoind --restricted-rpc --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach >intensecoind.crontab && \
-  crontab intensecoind.crontab && \
+  echo @reboot /usr/local/bin/letheand --restricted-rpc --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach >letheand.crontab && \
+  crontab letheand.crontab && \
   DEFAULTOPTS="--restricted-rpc --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach"
-  /usr/local/bin/intensecoind ${DEFAULTOPTS} ${DAEMONOPTS}
+  /usr/local/bin/letheand ${DEFAULTOPTS} ${DAEMONOPTS}
 }
 
 install_zabbix(){
@@ -41,7 +41,7 @@ install_packages(){
 }
 
 install_dispatcher(){
-  wget https://raw.githubusercontent.com/LetheanMovement/intense-vpn/${BRANCH}/server/easy-deploy-node.sh
+  wget https://raw.githubusercontent.com/LetheanMovement/lethean-vpn/${BRANCH}/server/easy-deploy-node.sh
   chmod +x easy-deploy-node.sh
   EMAIL="$EMAIL" ./easy-deploy-node.sh
   sudo systemctl daemon-reload

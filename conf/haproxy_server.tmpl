@@ -31,7 +31,8 @@ frontend ssltunnel
         acl is_mgmt_path path_beg {ctrlpath}
         acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
 	
-	http-request deny if !allowed_payments !is_mgmt_host !is_mgmt_path !is_mgmt_id
+        http-request deny if !allowed_payments !is_mgmt_host
+        http-request deny if !allowed_payments is_mgmt_host !is_mgmt_path
 
         use_backend b-status-ok if is_mgmt_host is_mgmt_path is_mgmt_id allowed_payments
 	use_backend b-status-nopayment if is_mgmt_host is_mgmt_path is_mgmt_id
@@ -50,7 +51,6 @@ backend b-preproxy
 	stick-table type string len 256 size 10k nopurge
         stick on hdr({payment_header}) table b-preproxy
 
-        tcp-request content track-sc2 hdr({payment_header})
         acl valid_method        method  GET POST OPTIONS PUT CONNECT
 	acl allowed_src_ips src -u 10 -f {f_allow_src_ips}        
         acl deny_src_ips src -u 11 -f {f_deny_src_ips}

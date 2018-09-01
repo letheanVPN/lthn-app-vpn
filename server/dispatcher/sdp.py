@@ -278,12 +278,12 @@ class SDP(object):
         """
         Upload JSON to SDP
         """
-        json = self.getJson()
-        if not json:
+        jsonConfig = self.getJson()
+        if not jsonConfig:
             log.L.error('Failed to load config for uploading! Make sure the SDP config path is correct.')
             return False
 
-        payload = base64.urlsafe_b64encode(json.encode('utf-8'))
+        payload = base64.urlsafe_b64encode(jsonConfig.encode('utf-8'))
 
         # begin ed25519 signing
         header = base64.urlsafe_b64encode(b'{"alg":"EdDSA"}')
@@ -312,22 +312,50 @@ class SDP(object):
 
         sdpAddServiceEndpoint = cfg.CAP.sdpUri + '/services/add/'
 
-        request = Request(sdpAddServiceEndpoint, json.encode())
+        log.L.info('Using SDP endpoint %s' % sdpAddServiceEndpoint)
+
+        request = Request(sdpAddServiceEndpoint, jsonConfig.encode())
         request.add_header('JWS', signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
         request.add_header('Content-Type', 'application/json')
 
         try:
             response = urlopen(request).read()
-            print('SDP server response: %s' % response)
+            jsonResp = json.loads(response.decode('utf-8'))
+            if jsonResp and jsonResp['status'] == '0':
+                print('SDP upload succeeded!')
+            else:
+                print('SDP upload server response: %s' % response)
             return True
         except HTTPError as err:
             error_message = err.read()
-            log.L.error('Request headers %s' % request.headers)
-            log.L.error('Request data %s' % request.data)
-            log.L.error('Error %s sending data to SDP server: %s\n\n%s\n%s' % (error_message, err.code, err.reason, err.headers))
+            if error_message:
+                try:
+                    jsonErr = json.loads(error_message.decode('utf-8'))
+                except json.decoder.JSONDecodeError:
+                    log.L.error('Failed to parse JSON from SDP.')
+            if not jsonErr or not self.handleSdpError(jsonErr):
+               	log.L.error('Request headers %s' % request.headers)
+               	log.L.error('Request data %s' % request.data)
+               	log.L.error('Error %s sending data to SDP server: %s\n\n%s\n%s' % (error_message, err.code, err.reason, err.headers))
 
         return False
     
+    def handleSdpError(self, jsonErr):
+        if jsonErr and jsonErr['status']:
+            log.L.error('Failed to upload service/provider config to SDP server!')
+            if jsonErr['status'] == '1000' and 'Payment_id' in jsonErr['message']:
+                log.L.error('You must send payment to the SDP before your service(s) will be uploaded! See documentation.')
+            elif jsonErr['status'] == '1000':
+                log.L.error('%s' % jsonErr['message'])
+            elif jsonErr['status'] == '2000':
+                log.L.error('Error validating your service config: %s' % jsonErr['message'])
+            elif jsonErr['status'] == '5000':
+                log.L.error('Error in protocol version. Sdp.jsonErr format may be incorrect or your dispatcher is out of date.')
+            
+            return True
+        else:
+            return False
+
     def listServices(self):
         ret = []
         for item in self.data["services"]:

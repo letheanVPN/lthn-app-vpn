@@ -25,17 +25,18 @@ frontend ssltunnel
         timeout client  {timeout}
 
 	capture request header {payment_header} len 64
-        stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
-        acl allowed_payments    hdr({payment_header}) -u 20 -M
 
+        acl allowed_payments hdr({payment_header}) -u 20 -M
 	acl is_mgmt_host url_dom {ctrldomain}
         acl is_mgmt_path path_beg {ctrlpath}
         acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
+	
+	http-request deny if !allowed_payments !is_mgmt_host !is_mgmt_path !is_mgmt_id
+
         use_backend b-status-ok if is_mgmt_host is_mgmt_path is_mgmt_id allowed_payments
 	use_backend b-status-nopayment if is_mgmt_host is_mgmt_path is_mgmt_id
 	use_backend b-status-badid if is_mgmt_host is_mgmt_path
-        http-request deny if !allowed_payments !is_mgmt_host !is_mgmt_path !is_mgmt_id
-
+        
         # Default is to proxy connection
         default_backend b-preproxy
 
@@ -46,7 +47,7 @@ backend b-preproxy
         retries         2
         option          httplog
 
-        stick-table type string len 256 size 10k nopurge store conn_rate(60s),bytes_out_rate(60s),bytes_in_rate(60s)
+	stick-table type string len 256 size 10k nopurge
         stick on hdr({payment_header}) table b-preproxy
 
         tcp-request content track-sc2 hdr({payment_header})
@@ -64,23 +65,38 @@ backend b-preproxy
 
 backend b-status-ok
         mode            http
-        timeout client  {timeout}
         timeout server  {timeout}
         timeout connect {ctimeout}
+	timeout tarpit 1s
+
         http-request set-uri /authid/%[hdr({payment_header})]
+	http-request tarpit
         server Local {disp_http_host}:{disp_http_port}
-        errorfile 503 {f_status}
+        errorfile 500 {f_status}
 
 backend b-status-nopayment
         mode            http
-        timeout client  {timeout}
         timeout server  {timeout}
         timeout connect {ctimeout}
-        errorfile 503 {f_err_nopayment}
+	timeout tarpit 1s
+
+	http-request tarpit
+        errorfile 500 {f_err_nopayment}
 
 backend b-status-badid
         mode            http
-        timeout client  {timeout}
         timeout server  {timeout}
         timeout connect {ctimeout}
-        errorfile 503 {f_err_badid}
+	timeout tarpit 1s
+
+	http-request tarpit
+        errorfile 500 {f_err_badid}
+
+backend b-overlimit
+	mode http
+	timeout tarpit 2s
+	timeout server  {timeout}
+        timeout connect {ctimeout}
+
+	http-request tarpit
+	errorfile 503 {f_err_overlimit}

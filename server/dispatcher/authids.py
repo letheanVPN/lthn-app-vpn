@@ -234,9 +234,9 @@ class AuthIds(object):
         We should connect to wallet or daemon and get actual height
         Whe we loaded authids from disk, we will use last height processed but if we have clean db, we need to start here.
         """
-        json = self.walletJSONCall("getheight", {})
-        if (json):
-            res = json.loads(json)
+        str = self.walletJSONCall("getheight", {})
+        if (str):
+            res = str.loads(str)
             return res['result']['height']
         else:
             return(None)
@@ -260,9 +260,9 @@ class AuthIds(object):
             "min_height": self.lastheight + 1,
             "max_height": 99999999
         }
-        json = self.walletJSONCall("get_vpn_transfers", params)
-        if (json):
-            res = json.loads(json)
+        str = self.walletJSONCall("get_vpn_transfers", params)
+        if (str):
+            res = json.loads(str)
         else:
             return
 

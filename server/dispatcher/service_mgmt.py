@@ -49,7 +49,8 @@ class ServiceMgmt(Service):
             pass
         if (line != ""):
             log.L.debug("%s[%s]-mgmt-in: %s" % (self.type, self.id, repr(line)))
-            self.mgmtEvent(line)
+            if (config.CONFIG.CAP.trackSessions):
+                self.mgmtEvent(line)
             return(line)
         else:
             return(None)

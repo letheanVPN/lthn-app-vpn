@@ -127,6 +127,8 @@ class AuthId(object):
         return(self.balance)
     
     def checkAlive(self):
+        if (time.time()-self.created > config.CONFIG.CAP.maxToSpend):
+            self.startSpending()
         return(
             self.balance > 0
             )
@@ -221,11 +223,10 @@ class AuthIds(object):
             if ('result' in j):
                 return(r.text)
             else:
-                log.L.error("Wallet RPC error %s!" % (r.text))
-                sys.exit(2)
+                log.L.error("Wallet RPC error %s! Will not receive payments!" % (r.text))
+                return(None)
         else:
-            log.L.error("Wallet RPC error %s!" % (r.status_code))
-            sys.exit(2)
+            log.L.error("Wallet RPC error %s! Will not receive payments!" % (r.status_code))
             return(None)
 
     def getHeighFromWallet(self):
@@ -233,8 +234,12 @@ class AuthIds(object):
         We should connect to wallet or daemon and get actual height
         Whe we loaded authids from disk, we will use last height processed but if we have clean db, we need to start here.
         """
-        res = json.loads(self.walletJSONCall("getheight", {}))
-        return res['result']['height']
+        json = self.walletJSONCall("getheight", {})
+        if (json):
+            res = json.loads(json)
+            return res['result']['height']
+        else:
+            return(None)
 
 
     def getFromWallet(self):
@@ -243,7 +248,7 @@ class AuthIds(object):
         """
         cur_height = self.getHeighFromWallet()
         if (self.lastheight==0):
-            if (config.CONFIG.CAP.initHeight==-1):
+            if (config.CONFIG.CAP.initHeight==-1 and cur_height):
                 self.lastheight = cur_height
             else:
                 self.lastheight = config.CONFIG.CAP.initHeight
@@ -255,7 +260,11 @@ class AuthIds(object):
             "min_height": self.lastheight + 1,
             "max_height": 99999999
         }
-        res = json.loads(self.walletJSONCall("get_vpn_transfers", params))
+        json = self.walletJSONCall("get_vpn_transfers", params)
+        if (json):
+            res = json.loads(json)
+        else:
+            return
 
         txes = []
         if ('in' in res['result']):

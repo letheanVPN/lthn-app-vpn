@@ -35,9 +35,10 @@ class Services(object):
         self.http = ServiceHttp()
  
     def run(self):
-        for id in self.services:
-            s = self.services[id]
-            s.run()
+        if (config.CONFIG.CAP.runServices):
+            for id in self.services:
+                s = self.services[id]
+                s.run()
         self.http.run()
         atexit.register(self.stop)
     

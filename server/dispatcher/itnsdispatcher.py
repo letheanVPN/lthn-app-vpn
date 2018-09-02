@@ -38,9 +38,12 @@ def main(argv):
     p.add('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
     p.add(      '--refresh-time',            dest='ct', metavar='SEC', help='Refresh frequency. Set to 0 for disable autorefresh.', default=config.CONFIG.T_CLEANUP, type=int)
     p.add(      '--save-time',               dest='st', metavar='SEC', help='Save authid frequency. Use 0 to not save authid regularly.', default=config.CONFIG.T_SAVE, type=int)
+    p.add(      '--max-wait-to-spend',       dest='maxToSpend', metavar='SEC', help='When payment arrive, we will wait max this number of seconds for first session before spending credit.', default=1800, type=int)
     p.add('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
     p.add('-v', '--verbose',                 metavar='VERBOSITY', action='store_const', dest='v', const='v', help='Be more verbose on output')
     p.add('-G', '--generate-providerid',     dest='G', metavar='PREFIX', required=None, help='Generate providerid files')
+    p.add(      '--run-services',            dest='runServices', default=True, type=bool, required=None, help='Run services from dispatcher or externally. Default to run by itnsdispatcher.')
+    p.add(      '--track-sessions',          dest='trackSessions', default=True, type=bool, required=None, help='If true, dispatcher will track sessions. If not, existing sessions will not be terminated after payment is spent.')
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
     p.add('-C', '--generate-client-config',  dest='C', metavar='SERVICEID', required=None, help='Generate client config for specified service on stdout and exit')
     p.add('-D',  '--generate-sdp',           dest='D', action='store_const', const='generate-sdp', required=None, help='Generate SDP by wizzard')
@@ -193,11 +196,12 @@ def main(argv):
     authids.AUTHIDS = authids.AuthIds()
     
     # Wait for all services to settle
-    i = 1
-    while i < 20:
-        services.SERVICES.orchestrate()
-        time.sleep(0.1)
-        i = i + 1
+    if (config.CONFIG.CAP.runServices):
+        i = 1
+        while i < 20:
+            services.SERVICES.orchestrate()
+            time.sleep(0.1)
+            i = i + 1
     
     # Load authids from file
     tmpauthids=authids.AUTHIDS.load()

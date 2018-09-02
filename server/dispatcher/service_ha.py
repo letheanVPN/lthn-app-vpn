@@ -24,7 +24,8 @@ class ServiceHa(Service):
         crt = None, key = None, crtkey = None,
         max_connections = 2000, timeout = '30s', connect_timeout = '5s',
         paymentid = 'authid1', uniqueid = 'abcd1234', 
-        dispatcher_http_host = '127.0.0.1', dispatcher_http_port = 8188
+        dispatcher_http_host = '127.0.0.1', dispatcher_http_port = 8188,
+        track_sessions = True
     )
     OPTS_HELP = dict(
         client_bind = 'Client bind address'

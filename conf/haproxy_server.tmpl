@@ -55,9 +55,9 @@ backend b-preproxy
 	acl allowed_src_ips src -u 10 -f {f_allow_src_ips}        
         acl deny_src_ips src -u 11 -f {f_deny_src_ips}
         http-request deny if deny_src_ips
-        acl deny_dst_ips url_ip -u 12 -f {f_deny_dst_ips}
+        acl deny_dst_ips dst -u 12 -f {f_deny_dst_ips}
         http-request deny if deny_dst_ips
-        acl deny_dst_doms url_dom -u 14 -f {f_deny_dst_doms}
+        acl deny_dst_doms url_reg -u 14 -f {f_deny_dst_doms}
         http-request deny if deny_dst_doms
         http-request deny if !valid_method
 

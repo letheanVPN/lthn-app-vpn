@@ -18,11 +18,26 @@ frontend icproxy
 
         acl is_mgmt_host url_dom {ctrldomain}
         acl is_mgmt_path path_beg {ctrlpath}
+        acl is_stats_path path_beg /stats
         acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
-        use_backend b-status if is_mgmt_host is_mgmt_path is_mgmt_id
-        use_backend b-err if is_mgmt_host is_mgmt_path
+	acl is_proxy_request url_reg '.*://.*'
+	acl is_options method OPTIONS
 
-        default_backend http-proxy
+	# If this is local request with right authid /stats, forward to stats backend
+	use_backend b-stats if !is_options !is_proxy_request is_stats_path is_mgmt_id
+	#  If this is local request with authid /status, forward to status backend
+	use_backend b-status if !is_proxy_request is_mgmt_path is_mgmt_id
+	# If this is proxy request with right id
+        use_backend b-status if is_mgmt_host is_mgmt_path is_mgmt_id
+	# If this is proxy request with right id
+	use_backend b-stats if is_mgmt_host is_stats_path is_mgmt_id
+	# Wrong mgmtid
+        use_backend b-err if is_mgmt_host is_mgmt_path !is_mgmt_id
+	# Forward OPTIONS to status
+	use_backend b-status if is_options !is_proxy_request is_mgmt_path is_mgmt_id
+	use_backend b-status if is_options !is_proxy_request is_stats_path
+
+        use_backend http-proxy if is_proxy_request
 
 # Backend for proxying requests to another proxy
 backend http-proxy
@@ -34,6 +49,9 @@ backend http-proxy
         option          httplog
         
         http-request add-header {payment_header} {paymentid}
+	# Do not allow local requests to proxy
+	acl is_proxy_request url_reg '.*://.*'
+	http-request deny if !is_proxy_request
 
         server hatls {server}:{port} force-tlsv12 ssl ca-file {ca}
         errorfile 503 {f_err_connect}
@@ -54,6 +72,7 @@ backend b-stats
         mode            http
         timeout server  {timeout}
         timeout connect {ctimeout}
+	http-request set-uri /stats
         server Local 127.0.0.1:{sport}
 
 listen  stats
@@ -67,3 +86,4 @@ listen  stats
         stats refresh 30s
         stats show-node
         stats uri  /stats
+

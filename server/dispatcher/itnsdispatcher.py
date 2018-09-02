@@ -195,6 +195,15 @@ def main(argv):
     # Preinitialise authids
     authids.AUTHIDS = authids.AuthIds()
     
+    # Load authids from file
+    tmpauthids=authids.AUTHIDS.load()
+    if (tmpauthids):
+        authids.AUTHIDS=tmpauthids
+    
+    if not authids.AUTHIDS.getFromWallet():
+        log.L.error("No connection to wallet. Exiting")
+        sys.exit(2)
+        
     # Wait for all services to settle
     if (config.CONFIG.CAP.runServices):
         i = 1
@@ -202,13 +211,6 @@ def main(argv):
             services.SERVICES.orchestrate()
             time.sleep(0.1)
             i = i + 1
-    
-    # Load authids from file
-    tmpauthids=authids.AUTHIDS.load()
-    if (tmpauthids):
-        authids.AUTHIDS=tmpauthids
-    
-    authids.AUTHIDS.getFromWallet()
     
     overaltime = 0
     savedcount = 0

@@ -217,16 +217,19 @@ class AuthIds(object):
         }
         url = config.CONFIG.CAP.walletUri
         log.L.debug("Calling wallet RPC " + url)
-        r = requests.post(url, data=json.dumps(d), auth=HTTPDigestAuth(config.CONFIG.CAP.walletUsername, config.CONFIG.CAP.walletPassword), headers={"Content-Type": "application/json"})
-        if (r.status_code == 200):
-            j = json.loads(r.text)
-            if ('result' in j):
-                return(r.text)
+        try:
+            r = requests.post(url, data=json.dumps(d), auth=HTTPDigestAuth(config.CONFIG.CAP.walletUsername, config.CONFIG.CAP.walletPassword), headers={"Content-Type": "application/json"})
+            if (r.status_code == 200):
+                j = json.loads(r.text)
+                if ('result' in j):
+                    return(r.text)
+                else:
+                    log.L.error("Wallet RPC error %s! Will not receive payments!" % (r.text))
+                    return(None)
             else:
-                log.L.error("Wallet RPC error %s! Will not receive payments!" % (r.text))
+                log.L.error("Wallet RPC error %s! Will not receive payments!" % (r.status_code))
                 return(None)
-        else:
-            log.L.error("Wallet RPC error %s! Will not receive payments!" % (r.status_code))
+        except IOError:
             return(None)
 
     def getHeighFromWallet(self):
@@ -236,7 +239,7 @@ class AuthIds(object):
         """
         str = self.walletJSONCall("getheight", {})
         if (str):
-            res = str.loads(str)
+            res = json.loads(str)
             return res['result']['height']
         else:
             return(None)
@@ -264,7 +267,7 @@ class AuthIds(object):
         if (str):
             res = json.loads(str)
         else:
-            return
+            return(None)
 
         txes = []
         if ('in' in res['result']):
@@ -298,6 +301,7 @@ class AuthIds(object):
             log.L.info("All payments from wallet processed")  
         else:
             log.L.info("No new payments in wallet")
+        return(True)
         
     def load(self):
         if (config.Config.AUTHIDSFILE != ""):

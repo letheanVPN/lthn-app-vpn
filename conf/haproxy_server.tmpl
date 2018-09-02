@@ -70,7 +70,7 @@ backend b-status-ok
 	timeout tarpit 1s
 
         http-request set-uri /authid/%[hdr({payment_header})]
-	http-request tarpit
+	#http-request tarpit
         server Local {disp_http_host}:{disp_http_port}
         errorfile 500 {f_status}
 

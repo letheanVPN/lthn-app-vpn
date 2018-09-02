@@ -6,11 +6,18 @@ import log
 import socket
 import authids
 import re
+import time
+import os
+import sys
+import signal
+import atexit
+import services
 
-class HttpStatusServer(http.server.BaseHTTPRequestHandler):
+class HttpStatusRequest(http.server.BaseHTTPRequestHandler):
     
     def do_GET(self):
         log.L.debug("HTTP server GET %s" % (self.path))
+        time.sleep(1)
         p = re.search("^/authid/(.*)$", self.path)
         if (p):
             authid = p.group(1).upper()
@@ -21,12 +28,17 @@ class HttpStatusServer(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 content = payment.toJson()+"\n"
                 self.wfile.write(content.encode("utf-8"))
-                return
+                return        
         self.send_response(500)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
         self.wfile.write(b'{status: "ERROR"}')
 
+class HttpStatusServer(http.server.HTTPServer):
+    
+    def handle_timeout(self):
+        return
+    
 class ServiceHttp(Service):
     """
     HTTP status service class
@@ -50,13 +62,42 @@ class ServiceHttp(Service):
         self.mgmtfile = None
         self.process = None
         self.pidfile = None
+        self.pid = -1
             
     def run(self):
-        server_class = http.server.HTTPServer
-        server_address = ('', 8188)
-        self.httpd = server_class(server_address, HttpStatusServer)
+        self.httpd = HttpStatusServer((self.cfg['bind_addr'],int(self.cfg['port'])), HttpStatusRequest)
         self.httpd.timeout = self.SOCKET_TIMEOUT
+        atexit.register(self.stop)
+        
+    def stop(self):
+        if (self.pid > 0):
+            os.kill(self.pid, signal.SIGTERM)
+            os.wait()
+        super().stop()
         
     def orchestrate(self):
-        self.httpd.handle_request()
+        needfork = None
+        if (self.pid != 0):
+            try:
+                if (self.pid == -1):
+                    needfork = True
+                else:
+                    os.kill(self.pid, 0)
+            except OSError:
+                needfork = True
+        if needfork:
+            self.pid = os.fork()
+            if (self.pid != 0):
+                log.L.debug("Spawning new http process with pid %s" % (self.pid))    
+            else:
+                atexit.unregister(services.SERVICES.stop)
+                atexit.unregister(self.stop)
+                now = time.time()
+                while (time.time()-now<10):
+                   self.httpd.handle_request()
+                sys.exit();
+        else:
+            os.waitpid(self.pid, os.WNOHANG)
+
+        
         

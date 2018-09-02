@@ -25,12 +25,18 @@ class HttpStatusRequest(http.server.BaseHTTPRequestHandler):
             if (payment):
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
+                self.send_header('Cache-Control', 'no-cache')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET')
                 self.end_headers()
                 content = payment.toJson()+"\n"
                 self.wfile.write(content.encode("utf-8"))
                 return        
         self.send_response(500)
         self.send_header('Content-type', 'application/json')
+        self.send_header('Cache-Control', 'no-cache')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET')
         self.end_headers()
         self.wfile.write(b'{status: "ERROR"}')
 

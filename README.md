@@ -1,5 +1,7 @@
 # intense-vpn
-This repository contains code needed to setup and run the Lethean Virtual Private Network (VPN).
+This repository contains code needed to setup and run an exit node on the Lethean Virtual Private Network (VPN).
+
+**The exit node is currently only supported on Linux.**
 
 ## Design
 ITNS (aka LTHN) VPN dispatcher is a tool that orchestrates all other modules (proxy, VPN, config, etc.). It does not provide any VPN functionality by itself.

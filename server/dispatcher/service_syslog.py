@@ -32,7 +32,7 @@ class ServiceSyslog(Service):
             if (message):
                 msg = message.message.decode("utf-8")
                 log.L.debug("syslog: " + repr(msg))
-                # '1.2.3.4:46759 [16/Aug/2018:13:37:28.876] ssltunnel~ b-preproxy/s-proxy 0/0/0/1/+1 403 +351 - - ---- 3/3/3/3/0 0/0 {1A94893098405359} "CONNECT 172.19.4.2:5001 HTTP/1.1"\n'
+                # 127.0.0.1:45940 [04/Sep/2018:18:40:06.448] ssltunnel~ b-preproxy/s-proxy 1/0/0/12/+12 200 +37 - - ---- 2/2/1/1/0 0/0 {1ACCCCC|TO_PROXY_CONNECT|} "CONNECT www.idnes.cz:443 HTTP/1.1"
                 p = re.search(
                     "(^\d*\.\d*\.\d*\.\d*):(\d*) " # Host and port
                     + "\[(.*)\] " # Date 
@@ -41,7 +41,7 @@ class ServiceSyslog(Service):
                     + "(.\d*/.\d*/.\d*/.\d*/.\d*) " # Times
                     + "(\d*) " # State
                     + ".*" # Not needed
-                    + "{(.*)} " # authid
+                    + "{(.*)\|(.*)\|(.*)} " # authid, reason, overlimit
                     + '"(.*)"'
                     , msg)
                 if (p):
@@ -53,10 +53,13 @@ class ServiceSyslog(Service):
                     server = p.group(6)
                     code = p.group(8)
                     authid = p.group(9)
-                    action = p.group(10)
-                    sessions.SESSIONS.add(authid, ip, port, action)
+                    reason = p.group(10)
+                    overlimit = p.group(11)
+                    action = p.group(12)
+                    if (server=="s-proxy"):
+                        sessions.SESSIONS.add(authid, ip, port, action)
                 else:
-                    p =re.search("(^\d*\.\d*\.\d*\.\d*):(\d*) \[(.*)\] ssl",msg)
+                    p = re.search("(^\d*\.\d*\.\d*\.\d*):(\d*) \[(.*)\] ",msg)
                     if (p):
                         log.L.warning("Cannot parse haproxy log: " + repr(msg))
             s = self.getLine()

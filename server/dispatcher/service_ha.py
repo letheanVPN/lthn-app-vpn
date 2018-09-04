@@ -8,6 +8,7 @@ import select
 import signal
 import re
 import shutil
+import random
 from subprocess import Popen
 from subprocess import PIPE
 ON_POSIX = 'posix' in sys.builtin_module_names
@@ -25,10 +26,16 @@ class ServiceHa(Service):
         max_connections = 2000, timeout = '30s', connect_timeout = '5s',
         paymentid = 'authid1', uniqueid = 'abcd1234', 
         dispatcher_http_host = '127.0.0.1', dispatcher_http_port = 8188,
-        track_sessions = True
+        track_sessions = True,
+        max_conns_per_ip = 100, max_conns_per_period = 100, max_requests_per_period = 100,
+        conns_period = "10s"
     )
     OPTS_HELP = dict(
-        client_bind = 'Client bind address'
+        client_bind = 'Client bind address',
+        max_conns_per_ip = 'Maximum number of simultanous connections per IP',
+        max_conns_per_period = 'Maximum number of tcp connections per IP for period',
+        max_requests_per_period = 'Maximum number of HTTP requests per IP for period',
+        conns_period = 'Measuring period'
     )
     OPTS_REQUIRED = (
          'backend_proxy_server', 
@@ -154,6 +161,7 @@ class ServiceHa(Service):
         except (IOError, OSError):
             log.L.error("Cannot open haproxy template file %s" % (tfile))
         shutil.copy(config.Config.PREFIX + '/etc/ha_credit.http', self.dir + '/ha_credit.http')
+        proxy_host, proxy_port = self.cfg['backend_proxy_server'].split(":")
         port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
                           bind_addr=self.cfg['bind_addr'],
@@ -161,10 +169,17 @@ class ServiceHa(Service):
                           maxconn=self.cfg['max_connections'],
                           timeout=self.cfg['timeout'],
                           ctimeout=self.cfg['connect_timeout'],
+                          ttimeout=random.randint(500,2000),
                           f_logsocket=config.Config.PREFIX + '/var/run/log local0',
                           f_sock=self.mgmtfile,
                           s_port=self.cfg['status_port'],
-                          forward_proxy=self.cfg['backend_proxy_server'],
+                          max_conns_per_ip = int(self.cfg['max_conns_per_ip']),
+                          max_conns_per_period = int(self.cfg['max_conns_per_period']),
+                          max_requests_per_period = int(self.cfg['max_requests_per_period']),
+                          conns_period = self.cfg['conns_period'],
+                          forward_proxy=proxy_host+":"+proxy_port,
+                          forward_proxy_host=proxy_host,
+                          forward_proxy_port=proxy_port,
                           payment_header='X-ITNS-PaymentID',
                           mgmt_header='X-ITNS-MgmtID',
                           mgmtid=config.Config.CAP.providerid,
@@ -182,6 +197,7 @@ class ServiceHa(Service):
                           f_err_badid=config.Config.PREFIX + '/etc/ha_err_badid.http',
                           f_err_nopayment=config.Config.PREFIX + '/etc/ha_err_nopayment.http',
                           f_err_overlimit=config.Config.PREFIX + '/etc/ha_err_overlimit.http',
+                          f_err_generic=config.Config.PREFIX + '/etc/ha_err_generic.http',
                           f_site_pem=self.cfg['crtkey'],
                           f_allow_src_ips=config.Config.PREFIX + '/etc/src_allow.ips',
                           f_deny_src_ips=config.Config.PREFIX + '/etc/src_deny.ips',

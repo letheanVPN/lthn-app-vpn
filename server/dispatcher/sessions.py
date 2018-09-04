@@ -20,6 +20,7 @@ class Session(object):
         self.ip = ip
         self.port = port
         self.conninfo = conninfo
+        #log.L.debug("Adding session: authid=%s,%s:%s %s" % (authid, ip, port, conninfo))
         log.A.audit(log.A.SESSION, log.A.ADD, self.id, "service=%s,ip=%s,port=%s,info='%s'" % (srvid, ip, port, conninfo))
         self.started = time.time()
     
@@ -84,6 +85,8 @@ class Sessions(object):
             sid = aid.getServiceId()
             session = Session(authid, sid, ip, port, conninfo, id)
             self.sessions[session.getId()] = session
+        else:
+            log.L.warning("Ignoring session with unknown authid %s!" % (authid))
                 
     def remove(self, id, msg=''):
         s = self.get(id)

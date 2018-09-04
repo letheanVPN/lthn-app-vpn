@@ -21,6 +21,7 @@ frontend icproxy
         acl is_stats_path path_beg /stats
         acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
 	acl is_proxy_request url_reg '.*://.*'
+        acl is_connect method CONNECT
 	acl is_options method OPTIONS
 
 	# If this is local request with right authid /stats, forward to stats backend
@@ -37,7 +38,7 @@ frontend icproxy
 	use_backend b-status if is_options !is_proxy_request is_mgmt_path is_mgmt_id
 	use_backend b-status if is_options !is_proxy_request is_stats_path
 
-        use_backend http-proxy if is_proxy_request
+        use_backend http-proxy if is_proxy_request || is_connect
 
 # Backend for proxying requests to another proxy
 backend http-proxy
@@ -49,9 +50,6 @@ backend http-proxy
         option          httplog
         
         http-request add-header {payment_header} {paymentid}
-	# Do not allow local requests to proxy
-	acl is_proxy_request url_reg '.*://.*'
-	http-request deny if !is_proxy_request
 
         server hatls {server}:{port} force-tlsv12 ssl ca-file {ca}
         errorfile 503 {f_err_connect}

@@ -351,7 +351,12 @@ class SDP(object):
                 log.L.error('Error validating your service config: %s' % jsonErr['message'])
             elif jsonErr['status'] == '5000':
                 log.L.error('Error in protocol version. Sdp.jsonErr format may be incorrect or your dispatcher is out of date.')
-            
+            else:
+                if jsonErr['message']:
+                    log.L.error('Error in SDP config: %s' % jsonErr['message'])
+                else:
+                    log.L.error('Error in SDP config: %s' % jsonErr)
+
             return True
         else:
             return False

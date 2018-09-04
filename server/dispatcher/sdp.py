@@ -696,8 +696,8 @@ class SDPService(object):
             self.data['firstPrePaidMinutes'] = int(mins)
             return True
         
-        print('How many minutes of access are required to be prepaid for the first payment from a client? Minimum 1, maximum 5 minutes.')
-        if (self.data['firstPrePaidMinutes'] and int(self.data['firstPrePaidMinutes']) > 0 and int(self.data['firstPrePaidMinutes']) <= 5):
+        print('How many minutes of access are required to be prepaid for the first payment from a client? Minimum 10, maximum 1440 minutes.')
+        if (self.data['firstPrePaidMinutes'] and int(self.data['firstPrePaidMinutes']) >= 10 and int(self.data['firstPrePaidMinutes']) <= 1440):
             print('Existing value: %d' % self.data['firstPrePaidMinutes'])
             choice = input('Enter new number of minutes [leave blank to keep existing] ').strip()
         else:
@@ -705,7 +705,7 @@ class SDPService(object):
 
         if (choice):
             choice = int(choice)
-            if (choice > 0 and choice <= 5):
+            if (choice >= 10 and choice <= 1440):
                 self.data['firstPrePaidMinutes'] = int(choice)
         else:
             if (not self.data['firstPrePaidMinutes']):

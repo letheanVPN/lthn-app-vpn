@@ -901,7 +901,7 @@ class SDPService(object):
                 log.L.critical('Only 240 services are supported! If you encountered this error, please contact the team to add code to support more services!')
                 sys.exit(1)
         else:
-            self.data['id'] = "10"
+            self.data['id'] = "1A"
 
     def setType(self, type):
         if self.data['type']:

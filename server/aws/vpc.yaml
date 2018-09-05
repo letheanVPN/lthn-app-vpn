@@ -174,6 +174,22 @@ Resources:
           Value: !Join ['-', [!Ref 'AWS::StackName', temp]]
       VpcId: !Ref 'VPC'
 
+  DDBVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref 'VPC'
+      RouteTableIds:
+        - !Ref 'RouteTable'
+      ServiceName: com.amazonaws.us-east-1.dynamodb
+
+  S3VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref 'VPC'
+      RouteTableIds:
+        - !Ref 'RouteTable'
+      ServiceName: com.amazonaws.us-east-1.s3
+
 
 Outputs:
   StackName:

@@ -154,23 +154,26 @@ You can use more env variables to tune parameters. See script header for availab
 ## Usage 
 ```bash
  /opt/itns/bin/itnsdispatcher -h
-usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-l LEVEL] [-A FILE]
-                      [-a FILE] [--refresh-time SEC] [--save-time SEC]
-                      [-lc FILE] [-v] [-G PREFIX] [-S] [-C SERVICEID] [-D]
-                      [-U] [--sdp-service-crt FILE] [--sdp-service-type TYPE]
-                      [--sdp-service-fqdn FQDN] [--sdp-service-port NUMBER]
-                      [--sdp-service-name NAME] [--sdp-service-id NUMBER]
-                      [--sdp-service-cost ITNS] [--sdp-service-disable NUMBER]
+usage: itnsdispatcher [-f CONFIGFILE] [-h] [-s SDPFILE] [-p PIDFILE]
+                      [-l LEVEL] [-A FILE] [-a FILE] [--refresh-time SEC]
+                      [--save-time SEC] [--max-wait-to-spend SEC] [-lc FILE]
+                      [-v] [-G PREFIX] [--run-services RUNSERVICES]
+                      [--track-sessions TRACKSESSIONS] [-S] [-C SERVICEID]
+                      [-D] [-E] [-U] [--sdp-service-crt FILE]
+                      [--sdp-service-type TYPE] [--sdp-service-fqdn FQDN]
+                      [--sdp-service-port NUMBER] [--sdp-service-name NAME]
+                      [--sdp-service-id NUMBER] [--sdp-service-cost ITNS]
+                      [--sdp-service-disable NUMBER]
                       [--sdp-service-refunds NUMBER]
                       [--sdp-service-dlspeed Mbps]
                       [--sdp-service-ulspeed Mbps]
                       [--sdp-service-prepaid-mins TIME]
                       [--sdp-service-verifications NUMBER] --ca ca.crt
-                      [--wallet-rpc-uri URI] [--wallet-username USER]
-                      [--wallet-password PW] [--sdp-uri URL [URL ...]]
-                      --provider-id PROVIDERID --provider-key PROVIDERKEY
-                      --provider-name NAME [--provider-type TYPE]
-                      [--provider-terms TEXT]
+                      --wallet-address ADDRESS [--wallet-rpc-uri URI]
+                      [--wallet-username USER] [-H HEIGHT]
+                      [--wallet-password PW] [--sdp-uri URL] --provider-id
+                      PROVIDERID --provider-key PROVIDERKEY --provider-name
+                      NAME [--provider-type TYPE] [--provider-terms TEXT]
 
 Args that start with '--' (eg. -h) can also be set in a config file (specified
 via -f). Config file syntax allows: key=value, flag=true, stuff=[a,b,c] (for
@@ -184,6 +187,9 @@ optional arguments:
   -h, --help            Help (default: None)
   -s SDPFILE, --sdp SDPFILE
                         SDP file (default: /opt/itns//etc/sdp.json)
+  -p PIDFILE, --pid PIDFILE
+                        PID file (default:
+                        /opt/itns//var/run/itnsdispatcher.pid)
   -l LEVEL, --log-level LEVEL
                         Log level (default: WARNING)
   -A FILE, --authids FILE
@@ -195,18 +201,29 @@ optional arguments:
                         (default: 30)
   --save-time SEC       Save authid frequency. Use 0 to not save authid
                         regularly. (default: 10)
+  --max-wait-to-spend SEC
+                        When payment arrive, we will wait max this number of
+                        seconds for first session before spending credit.
+                        (default: 1800)
   -lc FILE, --logging-conf FILE
                         Logging config file (default: None)
   -v, --verbose         Be more verbose on output (default: None)
   -G PREFIX, --generate-providerid PREFIX
                         Generate providerid files (default: None)
+  --run-services RUNSERVICES
+                        Run services from dispatcher or externally. Default to
+                        run by itnsdispatcher. (default: True)
+  --track-sessions TRACKSESSIONS
+                        If true, dispatcher will track sessions. If not,
+                        existing sessions will not be terminated after payment
+                        is spent. (default: True)
   -S, --generate-server-configs
                         Generate configs for services and exit (default: None)
   -C SERVICEID, --generate-client-config SERVICEID
                         Generate client config for specified service on stdout
                         and exit (default: None)
-  -D, --generate-sdp    Generate SDP by wizard (default: None)
-  -E, --edit-sdp        Edit existing SDP config
+  -D, --generate-sdp    Generate SDP by wizzard (default: None)
+  -E, --edit-sdp        Edit existing SDP config (default: None)
   -U, --upload-sdp      Upload SDP (default: None)
   --sdp-service-crt FILE
                         Provider Proxy crt (for SDP edit/creation only)
@@ -247,13 +264,17 @@ optional arguments:
                         Verifications needed for Service (for SDP service
                         edit/creation only) (default: None)
   --ca ca.crt           Set certificate authority file (default: None)
+  --wallet-address ADDRESS
+                        Wallet address (default: None)
   --wallet-rpc-uri URI  Wallet URI (default: http://127.0.0.1:13660/json_rpc)
   --wallet-username USER
                         Wallet username (default: dispatcher)
+  -H HEIGHT, --from-height HEIGHT
+                        Initial height to start scan payments. Default is
+                        actual height. (default: -1)
   --wallet-password PW  Wallet passwd (default: None)
-  --sdp-uri URL [URL ...]
-                        SDP server(s) (default: https://jhx4eq5ijc.execute-
-                        api.us-east-1.amazonaws.com/dev/v1)
+  --sdp-uri URL         SDP server(s) (default: https://slsf2fy3eb.execute-
+                        api.us-east-1.amazonaws.com/qa/v1)
   --provider-id PROVIDERID
                         ProviderID (public ed25519 key) (default: None)
   --provider-key PROVIDERKEY

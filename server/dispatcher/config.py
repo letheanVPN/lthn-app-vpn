@@ -41,6 +41,7 @@ class Config(object):
         type(self).LOGLEVEL = logging.WARNING
         type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"
         type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
+        type(self).PIDFILE = type(self).PREFIX + "/var/run/itnsdispatcher.pid"
         type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
         
         s = SDP()

@@ -25,6 +25,13 @@ import log
 import configargparse
 from service_ha import ServiceHa
 from service_ovpn import ServiceOvpn
+import atexit
+
+def remove_pidfile():
+    pf = open(config.CONFIG.PIDFILE,"r")
+    pid = int(pf.read())
+    if (os.getpid() == pid):
+        os.remove(config.CONFIG.PIDFILE)
 
 # Starting here
 def main(argv):
@@ -33,6 +40,7 @@ def main(argv):
     p.add('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=config.Config.CONFIGFILE, help='Config file')
     p.add('-h', '--help',                    metavar='HELP', required=None, action='store_const', dest='h', const='h', help='Help')
     p.add('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
+    p.add('-p', '--pid',                     dest='p', metavar='PIDFILE', required=None, default=config.Config.PIDFILE, help='PID file')
     p.add('-l', '--log-level',               dest='d', metavar='LEVEL', help='Log level', default='WARNING')
     p.add('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file. Use "none" to disable.', default=config.Config.AUTHIDSFILE)
     p.add('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
@@ -98,6 +106,7 @@ def main(argv):
     config.Config.T_CLEANUP = cfg.ct
     config.Config.AUTHIDSFILE = cfg.A
     config.Config.SDPURI = cfg.sdpUri
+    config.CONFIG.PIDFILE = cfg.p
     if (config.Config.AUTHIDSFILE == "none"):
         config.Config.T_SAVE = 0
         config.Config.AUTHIDSFILE = ''
@@ -182,6 +191,15 @@ def main(argv):
         sys.exit()
         
     log.A.audit(log.A.START, log.A.SERVICE, "itnsdispatcher")
+    pid = os.getpid()
+    if os.path.exists(config.CONFIG.PIDFILE):
+        log.L.error("PID file %s exists! Is another dispatcher running?" % (config.CONFIG.PIDFILE))
+        sys.exit(2)
+    else:
+        pf = open(config.CONFIG.PIDFILE,"w")
+        pf.write("%s" % (pid))
+        pf.close()
+        atexit.register(remove_pidfile)
     
     services.SERVICES.load()
         

@@ -321,6 +321,16 @@ TopUp (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 
 
 ```
 
+## Updating the dispatcher
+
+To update the dispatcher, run the following commands from the directory that the lethean-vpn repo was initialized in:
+```
+git pull
+make install
+sudo systemctl daemon-reload
+sudo systemctl restart itnsdispatcher
+```
+
 ## Directories
 
 ### client

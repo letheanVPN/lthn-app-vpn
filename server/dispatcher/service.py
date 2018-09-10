@@ -170,9 +170,11 @@ class Service(object):
         pass
     
     def addAuthId(self, authid):
+        log.A.audit(log.A.AUTHID, log.A.MOD, authid, 'activated in service %s' % (self.id))
         return(True)
         
     def delAuthId(self, authid):
+        log.A.audit(log.A.AUTHID, log.A.MOD, authid, 'deactivated in service %s' % (self.id))
         return(True)
 
     def isAlive(self):

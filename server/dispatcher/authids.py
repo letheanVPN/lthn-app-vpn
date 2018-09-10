@@ -93,8 +93,8 @@ class AuthId(object):
             self.lastmodify = time.time()
             self.lastcharge = time.time()
             self.charged_count += 1
-            log.L.debug("Authid %s: Topup %f, new balance %f" % (self.getId(), itns, self.balance))
-            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%s,balance=%s %s" % (itns, self.balance, msg))
+            log.L.debug("Authid %s: Topup %.3f, new balance %.3f" % (self.getId(), itns, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%.3f,balance=%.3f %s" % (itns, self.balance, msg))
         for s in services.SERVICES.getAll():
             services.SERVICES.get(s).addAuthIdIfTopup(self)
             
@@ -143,7 +143,7 @@ class AuthIds(object):
         
     def add(self, payment):
         log.L.warning("New authid %s" % (payment.getId()))
-        log.A.audit(log.A.AUTHID, log.A.ADD, payment.getId(), "init, balance=%s, confirmations=%s" % (payment.getBalance(), payment.getConfirmations()))
+        log.A.audit(log.A.AUTHID, log.A.ADD, payment.getId(), "init, balance=%.3f, confirmations=%s" % (payment.getBalance(), payment.getConfirmations()))
         self.authids[payment.getId()] = payment
         
     def update(self, auth_id, service_id, amount, confirmations, height=0, txid=None):
@@ -173,8 +173,8 @@ class AuthIds(object):
 
     def remove(self, paymentid):
         if (self.get(paymentid)):
-            log.L.warning("Removing authid %s (balance=%s)" % (paymentid, self.get(paymentid).getBalance()))
-            log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%s" % (self.get(paymentid).getBalance()))
+            log.L.warning("Removing authid %s (balance=%.3f)" % (paymentid, self.get(paymentid).getBalance()))
+            log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%.3f" % (self.get(paymentid).getBalance()))
             for s in services.SERVICES.getAll():
                 services.SERVICES.get(s).delAuthId(self.get(paymentid))
             self.authids.pop(paymentid)

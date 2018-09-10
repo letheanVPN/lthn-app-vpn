@@ -80,7 +80,7 @@ class SDP(object):
                 s = SDPService(self.getUsedServiceIds(), encoded, self.certsDir)
                 ret = False
                 while not ret:
-                    ret = s.checkConfig(cap.CAP)
+                    ret = s.checkConfig(cap.CAP, self.data['services'][choice]['id'])
 
                 if ret:
                     self.data['services'][choice] = s.data
@@ -438,8 +438,11 @@ class SDPService(object):
         else:
             print('Creating new SDP service...')
 
-    def checkConfig(self, cap):
-        self.setId(cap.serviceId)
+    def checkConfig(self, cap, id=None):
+        if not id:
+            self.setId(cap.serviceId)
+        else:
+            self.setId(id)
         ret = False
         
         while not ret:

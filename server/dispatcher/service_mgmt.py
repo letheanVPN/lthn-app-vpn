@@ -98,13 +98,6 @@ class ServiceMgmt(Service):
             self.startSpendAuthId(a)
             self.conn.close()
             return()
-        p = re.search("^add authid (.*) (.*)", msg)
-        if (p):
-            a = p.group(1).upper()
-            s = p.group(2).upper()
-            self.addAuthId(a, s)
-            self.conn.close()
-            return()
         p = re.search("^del authid (.*)", msg)
         if (p):
             a = p.group(1).upper()
@@ -165,7 +158,6 @@ class ServiceMgmt(Service):
         self.mgmtWrite("topup <authid> <itns>\n")
         self.mgmtWrite("spend <authid> <itns>\n")
         self.mgmtWrite("startspend <authid>\n")
-        self.mgmtWrite("add authid <authid> <serviceid>\n")
         self.mgmtWrite("del authid <authid>\n")
         self.mgmtWrite("loglevel {DEBUG|INFO|WARNING|ERROR}\n")
         self.mgmtWrite("refresh\n")
@@ -206,16 +198,6 @@ class ServiceMgmt(Service):
             self.mgmtWrite(authids.AUTHIDS.get(id).toString())
         else:
             self.mgmtWrite("Bad Authid.\n")
-        
-    def addAuthId(self, id, sid):
-        if (authids.AUTHIDS.get(id)):
-            self.mgmtWrite("This authid already exists!\n")
-        else:
-            if (services.SERVICES.get(sid)):
-                authids.AUTHIDS.update(id, sid, 10000, 0)
-                self.mgmtWrite("Added (" + authids.AUTHIDS.get(id).toString() + ")\n")
-            else:
-                self.mgmtWrite("Bad serviceid?\n")
                 
     def delAuthId(self, id):
         if (authids.AUTHIDS.get(id)):
@@ -225,11 +207,10 @@ class ServiceMgmt(Service):
             self.mgmtWrite("Bad authid?\n")
         
     def topUpAuthId(self, id, itns):
-        if (authids.AUTHIDS.get(id)):
-            authids.AUTHIDS.get(id).topUp(float(itns), "MGMT")
-            self.mgmtWrite("TopUp (" + authids.AUTHIDS.get(id).toString() + ")\n")
-        else:
-            self.mgmtWrite("Bad authid?\n")
+        authid = id.upper()
+        sid = id[0:2]
+        log.L.info("Got payment from MGMT for service %s, auth=%s, amount=%s" % (sid, authid, itns))
+        authids.AUTHIDS.update(authid, sid, float(itns), 1)
     
     def spendAuthId(self, id, itns):
         if (authids.AUTHIDS.get(id)):

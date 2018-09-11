@@ -45,54 +45,22 @@ frontend ssltunnel
         tcp-request content track-sc0 hdr_ip(CF-Connecting-IP,-1) if HTTP has_cf
         tcp-request content track-sc0 hdr_ip(X-Forwarded-For,-1) if HTTP !has_cf has_ff
         tcp-request content track-sc0 src if HTTP !has_cf !has_ff
+        tcp-request inspect-delay 1s
  
         stick-table type ip size 500k expire 60s store conn_cur,conn_rate({conns_period}),http_req_rate({conns_period}),http_err_rate({conns_period})
 
-        # Deny source IP
         http-request set-header X-ITNS-Reason DENY_SRC_IP if deny_src_ips
-        use_backend b-error if deny_src_ips
-
-        # Deny dst IP in url
         http-request set-header X-ITNS-Reason DENY_DST_URLIP if deny_dst_urlips !is_connect
-        use_backend b-error if deny_dst_urlips !is_connect
-
-        # Deny bad method
         http-request set-header X-ITNS-Reason DENY_METHOD if !valid_method
-        use_backend b-error if !valid_method
-
-        # Deny bad domain
         http-request set-header X-ITNS-Reason DENY_DOMAIN if deny_dst_doms
-        use_backend b-error if deny_dst_doms
-
-        # TARPIT the new connection if the client already has {max_conns_per_ip} opened
         http-request set-header X-ITNS-Overlimit CONNECTIONS if {{ src_conn_cur ge {max_conns_per_ip} }}
-        use_backend b-overlimit if {{ src_conn_cur ge {max_conns_per_ip} }}
-
-        # TARPIT the new connection if the client has opened more than {max_conns_per_period} connections in {conns_period}
         http-request set-header X-ITNS-Overlimit CONNRATE if {{ src_conn_rate ge {max_conns_per_period} }}
-        use_backend b-overlimit if {{ src_conn_rate ge {max_conns_per_period} }}
-
-        # TARPIT the connection if the client has passed the HTTP request rate connections in {conns_period}
         http-request set-header X-ITNS-Overlimit REQRATE if {{ sc0_http_req_rate() gt {max_requests_per_period} }}
-        use_backend b-overlimit if {{ sc0_http_req_rate() gt {max_requests_per_period} }}
-
-        #http://_remote_/status with right header and payment
         http-request set-header X-ITNS-Reason MGMT_OK if is_mgmt_host is_mgmt_path is_mgmt_id allowed_payments
-        use_backend b-status-ok if is_mgmt_host is_mgmt_path is_mgmt_id allowed_payments
-
-        #http://_remote_/status with right header without payment
         http-request set-header X-ITNS-Reason MGMT_NO_PAYMENT if is_mgmt_host is_mgmt_path is_mgmt_id !allowed_payments
-	use_backend b-status-nopayment if is_mgmt_host is_mgmt_path is_mgmt_id !allowed_payments
-
-        #http://_remote_/status with bad header
         http-request set-header X-ITNS-Reason MGMT_BAD_ID if is_mgmt_host is_mgmt_path !is_mgmt_id
-	use_backend b-status-badid if is_mgmt_host is_mgmt_path !is_mgmt_id
-        
-        # Default is to proxy connection if there is proxy request and allowed payment
         http-request set-header X-ITNS-Reason TO_PROXY if allowed_payments is_proxy_request !is_mgmt_host !deny_src_ips !deny_dst_urlips valid_method !deny_dst_doms
-        use_backend b-preproxy if allowed_payments is_proxy_request !is_mgmt_host !deny_src_ips !deny_dst_urlips valid_method !deny_dst_doms
         http-request set-header X-ITNS-Reason TO_PROXY_CONNECT if allowed_payments is_connect !is_mgmt_host !deny_src_ips !deny_dst_doms
-        use_backend b-preproxy if allowed_payments is_connect !is_mgmt_host !deny_src_ips !deny_dst_doms
 
         # If we have no payment, just return 403
         http-request set-header X-ITNS-Reason NO_PAYMENT if !allowed_payments is_proxy_request !is_mgmt_host
@@ -103,6 +71,41 @@ frontend ssltunnel
         # capture reason
         http-request capture hdr(X-ITNS-Reason) len 16
         http-request capture hdr(X-ITNS-Overlimit) len 16
+
+        # Deny source IP
+        use_backend b-error if deny_src_ips
+
+        # Deny dst IP in url
+        use_backend b-error if deny_dst_urlips !is_connect
+
+        # Deny bad method
+        use_backend b-error if !valid_method
+
+        # Deny bad domain
+        use_backend b-error if deny_dst_doms
+
+        # TARPIT the new connection if the client already has {max_conns_per_ip} opened
+        use_backend b-overlimit if {{ src_conn_cur ge {max_conns_per_ip} }}
+
+        # TARPIT the new connection if the client has opened more than {max_conns_per_period} connections in {conns_period}
+        use_backend b-overlimit if {{ src_conn_rate ge {max_conns_per_period} }}
+
+        # TARPIT the connection if the client has passed the HTTP request rate connections in {conns_period}
+        use_backend b-overlimit if {{ sc0_http_req_rate() gt {max_requests_per_period} }}
+
+        #http://_remote_/status with right header and payment
+        use_backend b-status-ok if is_mgmt_host is_mgmt_path is_mgmt_id allowed_payments
+
+        #http://_remote_/status with right header without payment
+	use_backend b-status-nopayment if is_mgmt_host is_mgmt_path is_mgmt_id !allowed_payments
+
+        #http://_remote_/status with bad header
+	use_backend b-status-badid if is_mgmt_host is_mgmt_path !is_mgmt_id
+        
+        # Default is to proxy connection if there is proxy request and allowed payment
+        use_backend b-preproxy if allowed_payments is_proxy_request !is_mgmt_host !deny_src_ips !deny_dst_urlips valid_method !deny_dst_doms
+        use_backend b-preproxy if allowed_payments is_connect !is_mgmt_host !deny_src_ips !deny_dst_doms
+
         
         # Use backend error as last resort
         default_backend b-error 

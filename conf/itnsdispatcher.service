@@ -6,6 +6,7 @@ After=syslog.target
 [Service]
 Type=simple
 ExecStart=/opt/itns/bin/itnsdispatcher
+ExecStopPost=rm -f /opt/itns/var/run/itnsdispatcher.pid
 User=root
 Restart=always
 StandardOutput=syslog

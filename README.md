@@ -1,4 +1,4 @@
-# intense-vpn
+# lethean-vpn
 This repository contains code needed to setup and run an exit node on the Lethean Virtual Private Network (VPN).
 
 **The exit node is currently only supported on Linux.**
@@ -50,24 +50,24 @@ If you use *FORCE=1* during `make install`, it will overwrite your configs and c
 
 ### Wallet
 The dispatcher requires having a valid Lethean wallet configured before running, it requires having the wallet-vpn-rpc binary runing. Please note that there are two passwords passed to initialize the wallet-vpn-rpc binary; one for unlocking the wallet and one for dispatcher RPC calls.
-You can download these binaries from [here](http://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/559/intensecoin-cli-linux-64bit-master-91edb13.tar.bz2), or build from source using [intensecoin master](https://github.com/valiant1x/intensecoin/tree/master).
+You can download these binaries from [here](https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/697/lethean-cli-linux-64bit-letheanize-e45d13b.tar.bz2), or build from source using [lethean master](https://github.com/LetheanMovement/lethean/tree/master).
 wallet-vpn-rpc initialization:
 ```bash
-intense-wallet-vpn-rpc --vpn-rpc-bind-port 13660 --wallet-file itnsvpn --rpc-login
+lethean-wallet-vpn-rpc --vpn-rpc-bind-port 13660 --wallet-file itnsvpn --rpc-login
 dispatcher:<somepassword> --password <walletpassword>
 
 ```
 
-Note that using the `intense-wallet-vpn-rpc` binary as described also requires having the `intensecoind` daemon running, or using a remote daemon. If you would prefer to use a remote daemon instead of running a daemon locally, we recommend using the Lethean team hosted node at **sync.lethean.io**
+Note that using the `lethean-wallet-vpn-rpc` binary as described also requires having the `letheand` daemon running, or using a remote daemon. If you would prefer to use a remote daemon instead of running a daemon locally, we recommend using the Lethean team hosted node at **sync.lethean.io**
 ```bash
-intense-wallet-vpn-rpc --daemon-host sync.lethean.io
+lethean-wallet-vpn-rpc --daemon-host sync.lethean.io
 ```
 
 ### Basic install
 See ./configure.sh --help for more fine-tuned options
 ```bash
-git clone https://github.com/LetheanMovement/intense-vpn.git
-cd intense-vpn
+git clone https://github.com/LetheanMovement/lethean-vpn.git
+cd lethean-vpn
 pip3 install -r requirements.txt
 ./configure.sh --easy [--with-wallet-address <wallet_address>]
 make install [FORCE=1]
@@ -132,7 +132,7 @@ reneg=60
 For fully automated install, please use our easy deploy script. Please note that this script works only if system is clean and sudo is already configured for user which runs this.
 Never run this on a system already configured for itnsdispatcher! It will overwrite config files!
 ```bash
-wget https://raw.githubusercontent.com/LetheanMovement/intense-vpn/master/server/easy-deploy-node.sh
+wget https://raw.githubusercontent.com/LetheanMovement/lethean-vpn/master/server/easy-deploy-node.sh
 chmod +x easy-deploy-node.sh
 BRANCH=master ./easy-deploy-node.sh
 

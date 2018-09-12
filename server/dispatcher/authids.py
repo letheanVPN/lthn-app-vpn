@@ -28,6 +28,7 @@ class AuthId(object):
         self.confirmations = int(confirmations)
         self.height = int(height)
         self.created = time.time()
+        self.overalltime = 0
         self.charged_count = int(0)
         self.lastmodify = time.time()
         self.activated = None
@@ -73,6 +74,9 @@ class AuthId(object):
     
     def getTimeLeft(self):
         return(self.balance / self.cost)
+    
+    def getTimeSpent(self):
+        return(self.firstbalance / self.cost)
     
     def show(self):
         log.L.info(self.toString())
@@ -133,6 +137,7 @@ class AuthId(object):
         if (itns > 0):
             self.balance -= itns
             self.lastmodify = time.time()
+            self.overalltime += itns/self.cost
             self.lastdisCharge = time.time()
             self.discharged_count += 1
             log.L.debug("Authid %s: Spent %f, new balance %f" % (self.getId(), itns, self.balance))

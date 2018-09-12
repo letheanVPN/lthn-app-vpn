@@ -213,22 +213,23 @@ class Service(object):
         """ Should be probably more sophisticated. """
         
         if authid.isActivated():
-            if (authid.getTimeLeft()<int(self.json["subsequentPrePaidMinutes"])):
-                log.L.info("Not enough credit for authid %s and service %s (subsequentPrePaidMinutes=%s, balance=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstPrePaidMinutes"]), authid.getBalance(), int(self.json["subsequentPrePaidMinutes"]) * float(self.cost)))
-                self.delAuthId(authid, "Not enough subsequent credit")
-                authid.deActivate()
-                return
-            if (authid.getConfirmations()<int(self.json["subsequentVerificationsNeeded"])):
-                log.L.info("Not enough confirmations for authid %s and service %s (subsequentVerificationsNeeded=%s, verifications=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstVerificationsNeeded"]), authid.getConfirmations(), int(self.json["subsequentVerificationsNeeded"])))
-                self.delAuthId(authid, "Not enough subsequent confirmations")
-                authid.deActivate()
-                return
-            if (authid.getBalance()<0):
-                self.delAuthId(authid, "Zero balance")
-                authid.deActivate()
-            else:
-                # We should never get here.. 
-                self.delAuthId(authid)
-    
+            if authid.getOverallTime()>int(self.json["firstPrePaidMinutes"]):
+                if (authid.getTimeLeft()<int(self.json["subsequentPrePaidMinutes"])):
+                    log.L.info("Not enough credit for authid %s and service %s (subsequentPrePaidMinutes=%s, balance=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstPrePaidMinutes"]), authid.getBalance(), int(self.json["subsequentPrePaidMinutes"]) * float(self.cost)))
+                    self.delAuthId(authid, "Not enough subsequent credit")
+                    authid.deActivate()
+                    return
+                if (authid.getConfirmations()<int(self.json["subsequentVerificationsNeeded"])):
+                    log.L.info("Not enough confirmations for authid %s and service %s (subsequentVerificationsNeeded=%s, verifications=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstVerificationsNeeded"]), authid.getConfirmations(), int(self.json["subsequentVerificationsNeeded"])))
+                    self.delAuthId(authid, "Not enough subsequent confirmations")
+                    authid.deActivate()
+                    return
+        else:
+            # We should never get here.. 
+            self.delAuthId(authid)
+        if (authid.getBalance()<0):
+            self.delAuthId(authid, "Zero balance")
+            authid.deActivate()
+
     def getSessions(self):
         return({})

@@ -307,17 +307,17 @@ cleanup
 
 ```
 
-Example 1: Add static authid:
+Example 1: Show sessions:
 ```
-echo "add authid authid2 1a" | socat stdio /opt/itns/var/run/mgmt
+echo "show session" | socat stdio /opt/itns/var/run/mgmt
 Added (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:07 2018, balance=100000.000000, perminute=0.001000, minsleft=100000000.000000, charged_count=1, discharged_count=0
 
 ```
 
 Example 2: Topup authid:
 ```
- echo "topup authid2 1" | socat stdio /opt/itns/var/run/mgmt
-TopUp (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:47 2018, balance=100001.000000, perminute=0.001000, minsleft=100001000.000000, charged_count=2, discharged_count=0
+ echo "topup 1abbcc 1" | socat stdio /opt/itns/var/run/mgmt
+TopUp (1abbcc: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:47 2018, balance=100001.000000, perminute=0.001000, minsleft=100001000.000000, charged_count=2, discharged_count=0
 
 ```
 
@@ -326,7 +326,9 @@ TopUp (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 
 To update the dispatcher, run the following commands from the directory that the lethean-vpn repo was initialized in:
 ```
 git pull
+./configure.sh --easy
 make install
+rm -f /opt/itns/var/authids.db
 sudo systemctl daemon-reload
 sudo systemctl restart itnsdispatcher
 ```

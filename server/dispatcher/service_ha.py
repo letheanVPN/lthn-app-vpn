@@ -106,19 +106,19 @@ class ServiceHa(Service):
         self.mgmtClose()
         return(self.isAlive())
     
-    def addAuthId(self, authid):
+    def addAuthId(self, authid, msg=""):
         """ Add authid to internal acl on haproxy """
         self.mgmtConnect()
         self.mgmtWrite("add acl #20 " + authid.getId() + "\n")
         self.mgmtClose()
-        super().addAuthId(authid)
+        super().addAuthId(authid, msg)
         
-    def delAuthId(self, authid):
+    def delAuthId(self, authid, msg=""):
         """ Remove authid from internal acl on haproxy """
         self.mgmtConnect()
         self.mgmtWrite("del acl #20 " + authid.getId() + "\n")
         self.mgmtClose()
-        super().delAuthId(authid)
+        super().delAuthId(authid, msg)
     
     def killSession(self, id, info=''):
         self.mgmtConnect()
@@ -184,7 +184,7 @@ class ServiceHa(Service):
                           payment_header='X-ITNS-PaymentID',
                           mgmt_header='X-ITNS-MgmtID',
                           mgmtid=config.Config.CAP.providerid,
-                          ctrldomain='_remote_',
+                          ctrldomain='remote.lethean.',
                           ctrlpath='/status',
                           disp_http_host=self.cfg['dispatcher_http_host'],
                           disp_http_port=self.cfg['dispatcher_http_port'],
@@ -234,7 +234,7 @@ class ServiceHa(Service):
                           port=port,
                           sport=8181,
                           f_ca=f_ca,
-                          ctrldomain='_local_',
+                          ctrldomain='local.lethean.',
                           ctrlpath='/status',
                           mgmtid=self.cfg['uniqueid'],
                           ca=config.Config.CAP.providerCa,

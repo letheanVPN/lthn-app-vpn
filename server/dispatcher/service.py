@@ -168,14 +168,6 @@ class Service(object):
 
     def mgmtEvent(self, msg):
         pass
-    
-    def addAuthId(self, authid, msg=""):
-        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'activated in service %s %s' % (self.id, msg))
-        return(True)
-        
-    def delAuthId(self, authid, msg=""):
-        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'deactivated in service %s %s' % (self.id, msg))
-        return(True)
 
     def isAlive(self):
         self.process.poll()
@@ -195,7 +187,15 @@ class Service(object):
     
     def show(self):
         log.L.info("Service %s (%s), id %s" % (self.getName(), self.getType(), self.getId()))
+    
+    def addAuthId(self, authid, msg=""):
+        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'activated in service %s %s' % (self.id, msg))
+        return(True)
         
+    def delAuthId(self, authid, msg=""):
+        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'deactivated in service %s %s' % (self.id, msg))
+        return(True)
+    
     def addAuthIdIfTopup(self, authid):
         """ Should be probably more sophisticated. """
         if not authid.isActivated():
@@ -223,6 +223,9 @@ class Service(object):
                 self.delAuthId(authid, "Not enough subsequent confirmations")
                 authid.deActivate()
                 return
+            if (authid.getBalance()<0):
+                self.delAuthId(authid, "Zero balance")
+                authid.deActivate()
             else:
                 # We should never get here.. 
                 self.delAuthId(authid)

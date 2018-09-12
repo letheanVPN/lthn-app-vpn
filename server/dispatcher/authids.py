@@ -66,10 +66,10 @@ class AuthId(object):
     
     def toString(self):
         if self.isSpending():
-            spending = "spending"
+            spending = "yes"
         else:
-            spending = "not_spending"
-        str = "%s: serviceid=%s, created=%s,modified=%s, spending=%s, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
+            spending = "no"
+        str = "%s: serviceid=%s, created=%s,modified=%s, spending=%s, balance=%f, perminute=%.3f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
         return(str)
     
     def toJson(self):
@@ -77,7 +77,7 @@ class AuthId(object):
             spending = "spending"
         else:
             spending = "not_spending"
-        str = '{"status": "OK", "balance": "%s", "created":"%s", minutes_left": "%d", "spending": "%s", "charged": "%d", "spent": "%d"}' % (self.getBalance(), timefmt(self.created), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
+        str = '{"status": "OK", "balance": "%.3f", "created":"%s", minutes_left": "%d", "spending": "%s", "charged_count": "%d", "spent_count": "%d"}' % (self.getBalance(), timefmt(self.created), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
         return(str)
     
     def topUp(self, itns, msg="", confirmations=None):
@@ -183,9 +183,9 @@ class AuthIds(object):
         str = "%d ids, last updated %s\n" % (len(self.authids), timefmt(self.lastmodify))
         for id, paymentid in self.authids.items():
             if paymentid.isSpending():
-                spending = "spending"
+                spending = "yes"
             else:
-                spending = "not_spending"
+                spending = "no"
             str = str + "%s %s %.1f seconds left\n" % (paymentid.getId(), spending, paymentid.getTimeLeft() * 60)
         return(str)
         

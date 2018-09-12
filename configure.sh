@@ -287,8 +287,8 @@ ca_dir=${ITNS_PREFIX}/etc/ca/
 data_dir=${ITNS_PREFIX}/var/
 tmp_dir=${ITNS_PREFIX}/tmp/
 
-if ! $HAPROXY_BIN -v | grep -qE "version 1.7|version 1.6"; then
-    echo "Incompatible version of haproxy! You need 1.6.x or 1.7.x version for now."
+if ! $HAPROXY_BIN -v | grep -qE "version 1.7|version 1.6|version 1.8"; then
+    echo "Incompatible version of haproxy! You need 1.6.x, 1.7.x or 1.8.x version for now."
     $HAPROXY_BIN -v
     exit 1
 fi

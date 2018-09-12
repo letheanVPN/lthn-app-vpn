@@ -30,6 +30,7 @@ class AuthId(object):
         self.created = time.time()
         self.charged_count = int(0)
         self.lastmodify = time.time()
+        self.activated = None
         if (services.SERVICES.get(self.serviceid)):
             self.cost = services.SERVICES.get(self.serviceid).getCost()
         else:
@@ -42,6 +43,15 @@ class AuthId(object):
         
     def getId(self):
         return(self.id)
+    
+    def activate(self):
+        self.activated = True
+
+    def deActivate(self):
+        self.activated = None
+        
+    def isActivated(self):
+        return(self.activated)
     
     def getBalance(self):
         return(self.balance)
@@ -69,15 +79,23 @@ class AuthId(object):
             spending = "yes"
         else:
             spending = "no"
-        str = "%s: serviceid=%s, created=%s,modified=%s, spending=%s, balance=%f, perminute=%.3f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
+        if self.isActivated():
+            activated = "yes"
+        else:
+            activated = "no"
+        str = "%s: serviceid=%s, created=%s, modified=%s, spending=%s, activated=%s, balance=%f, perminute=%.3f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, activated, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
         return(str)
     
     def toJson(self):
         if self.isSpending():
-            spending = "spending"
+            spending = "yes"
         else:
-            spending = "not_spending"
-        str = '{"status": "OK", "balance": "%.3f", "created":"%s", minutes_left": "%d", "spending": "%s", "charged_count": "%d", "spent_count": "%d"}' % (self.getBalance(), timefmt(self.created), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
+            spending = "no"
+        if self.isActivated():
+            activated = "yes"
+        else:
+            activated= "no"
+        str = '{"status": "OK", "activated": "%s", balance": "%.3f", "created":"%s", minutes_left": "%d", "spending": "%s", "charged_count": "%d", "spent_count": "%d"}' % (activated, self.getBalance(), timefmt(self.created), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
         return(str)
     
     def topUp(self, itns, msg="", confirmations=None):
@@ -180,13 +198,17 @@ class AuthIds(object):
             self.authids.pop(paymentid)
         
     def toString(self):
-        str = "%d ids, last updated %s\n" % (len(self.authids), timefmt(self.lastmodify))
+        str = "%d ids, last updated %s\npayment spending activated minutes_left\n" % (len(self.authids), timefmt(self.lastmodify))
         for id, paymentid in self.authids.items():
             if paymentid.isSpending():
                 spending = "yes"
             else:
                 spending = "no"
-            str = str + "%s %s %.1f seconds left\n" % (paymentid.getId(), spending, paymentid.getTimeLeft() * 60)
+            if authid.isActivated():
+                activated = "yes"
+            else:
+                activated = "no"
+            str = str + "%s %s %s %.1f\n" % (paymentid.getId(), spending, activated, paymentid.getTimeLeft())
         return(str)
         
     def show(self):

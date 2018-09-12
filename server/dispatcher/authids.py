@@ -209,7 +209,7 @@ class AuthIds(object):
                 spending = "yes"
             else:
                 spending = "no"
-            if authid.isActivated():
+            if paymentid.isActivated():
                 activated = "yes"
             else:
                 activated = "no"

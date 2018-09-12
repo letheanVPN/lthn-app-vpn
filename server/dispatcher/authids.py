@@ -53,6 +53,9 @@ class AuthId(object):
     def isActivated(self):
         return(self.activated)
     
+    def confirm(self):
+        self.confirmations = self.confirmations + 1
+    
     def getBalance(self):
         return(self.balance)
     
@@ -104,7 +107,6 @@ class AuthId(object):
             if (int(confirmations) >= self.confirmations):
                 log.L.debug("Authid %s: Verified %s times." % (self.getId(), self.confirmations))
                 self.confirmations = int(confirmations)
-                return
                 
         if (itns > 0):
             self.balance += itns
@@ -166,16 +168,19 @@ class AuthIds(object):
         
     def update(self, auth_id, service_id, amount, confirmations, height=0, txid=None):
         if auth_id in self.authids.keys():
+            # New payment for existing authid
             if (txid != self.authids[auth_id].getTxId()):
-                self.topUp(auth_id, amount)
+                self.topUp(auth_id, amount, txid, confirmations)
             else:
-                log.L.debug("Authid %s confirmed %s times" % (auth_id, confirmations))
+                # New confirmation for existing authid
+                self.topUp(auth_id, 0, "confirmation", confirmations)
         else:
+            # First payment for new authid
             payment = AuthId(auth_id, service_id, amount, confirmations, height, txid)
             self.add(payment)
     
-    def topUp(self, paymentid, amount):
-        self.authids[paymentid].topUp(amount)
+    def topUp(self, paymentid, amount, msg="", confirmations=None):
+        self.authids[paymentid].topUp(amount, msg, confirmations)
 
     def spend(self, paymentid, balance, msg=""):
         self.authids[paymentid].spend(balance, msg)

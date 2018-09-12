@@ -45,6 +45,9 @@ class AuthId(object):
     def getId(self):
         return(self.id)
     
+    def getOverallTime(self):
+        return(self.overalltime)
+    
     def activate(self):
         self.activated = True
 
@@ -102,7 +105,7 @@ class AuthId(object):
             activated = "yes"
         else:
             activated= "no"
-        str = '{"status": "OK", "activated": "%s", balance": "%.3f", "created":"%s", minutes_left": "%d", "spending": "%s", "charged_count": "%d", "spent_count": "%d"}' % (activated, self.getBalance(), timefmt(self.created), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
+        str = '{"status": "OK", "activated": "%s", balance": "%.3f", "created":"%s", "minutes_overall": "%d", minutes_left": "%d", "spending": "%s", "charged_count": "%d", "spent_count": "%d"}' % (activated, self.getBalance(), timefmt(self.created), self.getOverallTime(), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
         return(str)
     
     def topUp(self, itns, msg="", confirmations=None):

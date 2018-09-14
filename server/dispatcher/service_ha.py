@@ -106,14 +106,14 @@ class ServiceHa(Service):
         self.mgmtClose()
         return(self.isAlive())
     
-    def addAuthId(self, authid):
+    def addAuthId(self, authid, msg=""):
         """ Add authid to internal acl on haproxy """
         self.mgmtConnect()
         self.mgmtWrite("add acl #20 " + authid.getId() + "\n")
         self.mgmtClose()
         super().addAuthId(authid)
         
-    def delAuthId(self, authid):
+    def delAuthId(self, authid, msg=""):
         """ Remove authid from internal acl on haproxy """
         self.mgmtConnect()
         self.mgmtWrite("del acl #20 " + authid.getId() + "\n")

@@ -66,6 +66,7 @@ make install FORCE=1
      --sdp-service-name proxy --sdp-service-id 1a --sdp-service-fqdn $ENDPOINT --sdp-service-port $PORT \
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 10 --sdp-service-verifications 0
+     --sdp-uri https://sdp.staging.cloud.lethean.io/v1
 
 /usr/local/bin/lethean-wallet-vpn-rpc --wallet-file ~/vpn --daemon-host $DAEMON_HOST --vpn-rpc-bind-port 14660 --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log </dev/null >/dev/null 2>/dev/null &
 

@@ -1,0 +1,78 @@
+@startuml
+robust "Wallet" as W
+robust "HaClient" as HC
+robust "HaServer" as HS
+robust "Dispatcher" as D
+robust "Browser" as B
+
+@0
+W is Idle
+D is Idle
+HC is Idle
+HS is "NO_PAYMENT"
+B is Idle
+
+@10
+W is "Create config"
+
+@20
+W is "Run client"
+
+@30
+W is "Test local status"
+W -> HC@+5 : GET local/status
+
+@40 
+W is "Test remote status"
+HC is "Connected"
+HC -> HS@+5 : GET remote/status
+
+@50
+W is "Send payment1"
+HS is "NO_PAYMENT"
+D is "Waiting for payment"
+W -> D@+5 : Payment1
+
+@60
+D is "Waiting for first_confirmation,first_minutes"
+
+@70
+D is "Confirmed"
+D -> HS@+5 : Activate payment
+HS is "NOT_SPENDING"
+
+@80
+B is "Working"
+D is "Waiting for session"
+D@80 <-> @90 : Maximum timeout
+B -> D@+5 : Sessions
+
+@90
+D is "Spending"
+HS is "OK"
+W@90 <-> @150 : "First period"
+W -> D@+50 : Payment2
+W is "Send payment2"
+
+@150
+HS is "OK"
+W@150 <-> @250 : Second period
+
+@250
+D is "Spending"
+HS is "OK"
+W@200 -> D@250 : Paymentx
+
+@300
+D -> HS@+5 : Deactivating
+W@250 <-> @300 : xth period
+W@300 <-> @320 : No credit
+ 
+@310
+HS is "NO_PAYMENT"
+W is Idle
+HC is Idle
+D is Idle
+B is Idle
+
+@enduml

@@ -28,10 +28,8 @@ class AuthId(object):
         self.confirmations = int(confirmations)
         self.height = int(height)
         self.created = time.time()
-        self.overalltime = 0
         self.charged_count = int(0)
         self.lastmodify = time.time()
-        self.activated = None
         if (services.SERVICES.get(self.serviceid)):
             self.cost = services.SERVICES.get(self.serviceid).getCost()
         else:
@@ -41,18 +39,25 @@ class AuthId(object):
             self.topUp(float(balance))
         self.discharged_count = int(0)
         self.spending = None
+        self.activated = None
+        self.overalltime = 1
         
     def getId(self):
         return(self.id)
     
     def getOverallTime(self):
-        return(self.overalltime)
+        if self.spending: 
+            return(int(time.time()-self.spending))
+        else:
+            return(0)
     
     def activate(self):
         self.activated = True
+        services.SERVICES.get(s).addAuthId(self)
 
     def deActivate(self):
         self.activated = None
+        services.SERVICES.get(s).delAuthId(self)
         
     def isActivated(self):
         return(self.activated)
@@ -79,7 +84,7 @@ class AuthId(object):
         return(self.balance / self.cost)
     
     def getTimeSpent(self):
-        return(self.firstbalance / self.cost)
+        return(int(self.overalltime/60))
     
     def show(self):
         log.L.info(self.toString())
@@ -93,7 +98,7 @@ class AuthId(object):
             activated = "yes"
         else:
             activated = "no"
-        str = "%s: serviceid=%s, created=%s, modified=%s, spending=%s, activated=%s, balance=%f, perminute=%.3f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, activated, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
+        str = "%s: serviceid=%s, created=%s, modified=%s, spending=%s, activated=%s, balance=%f, perminute=%.3f, minsspent=%.1f, minsleft=%.1f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, activated, self.balance, self.cost, self.getTimeSpent(), self.getTimeLeft(), self.charged_count, self.discharged_count)
         return(str)
     
     def toJson(self):
@@ -128,7 +133,7 @@ class AuthId(object):
     def startSpending(self):
         """ Start spending of authid """
         if (not self.spending):
-            self.spending = True
+            self.spending = time.time()
             log.L.debug("Authid %s: Start spending" % (self.getId()))
         
     def isSpending(self):
@@ -150,6 +155,7 @@ class AuthId(object):
                 
     def spendTime(self, seconds):
         self.spend(self.cost * seconds / 60, "(%.2f minutes*%f)" % (seconds/60, self.cost))
+        self.overalltime += seconds
             
     def getBalance(self):
         return(self.balance)

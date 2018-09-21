@@ -7,6 +7,7 @@ import authids
 import services
 import sessions
 import config
+import random
 
 class ServiceMgmt(Service):
     
@@ -69,7 +70,7 @@ class ServiceMgmt(Service):
     def mgmtEvent(self, msg):
         p = re.search("^show authid (.*)", msg)
         if (p):
-            a = p.group(1)
+            a = p.group(1).upper()
             self.showAuthId(a)
             self.conn.close()
             return()
@@ -78,11 +79,20 @@ class ServiceMgmt(Service):
             self.showAuthIds()
             self.conn.close()
             return()
+        p = re.search("^topup (.*) (.*) (.*) (.*)", msg)
+        if (p):
+            a = p.group(1).upper()
+            i = float(p.group(2))
+            t = p.group(3)
+            c = int(p.group(4))
+            self.topUpAuthId(a, i, t, c)
+            self.conn.close()
+            return()
         p = re.search("^topup (.*) (.*)", msg)
         if (p):
             a = p.group(1).upper()
             i = float(p.group(2))
-            self.topUpAuthId(a, i)
+            self.topUpAuthId(a, i, random.randint(1000,20000), 1)
             self.conn.close()
             return()
         p = re.search("^spend (.*) (.*)", msg)
@@ -92,7 +102,7 @@ class ServiceMgmt(Service):
             self.spendAuthId(a, i)
             self.conn.close()
             return()
-        p = re.search("^startspend (.*)", msg)
+        p = re.search("^activate (.*)", msg)
         if (p):
             a = p.group(1).upper()
             self.startSpendAuthId(a)
@@ -156,8 +166,9 @@ class ServiceMgmt(Service):
         self.mgmtWrite("show session [sessionid]\n")
         self.mgmtWrite("kill session <sessionid>\n")
         self.mgmtWrite("topup <authid> <itns>\n")
+        self.mgmtWrite("topup <authid> <itns> [txid confirmations]\n")
         self.mgmtWrite("spend <authid> <itns>\n")
-        self.mgmtWrite("startspend <authid>\n")
+        self.mgmtWrite("activate <authid>\n")
         self.mgmtWrite("del authid <authid>\n")
         self.mgmtWrite("loglevel {DEBUG|INFO|WARNING|ERROR}\n")
         self.mgmtWrite("refresh\n")
@@ -206,12 +217,15 @@ class ServiceMgmt(Service):
         else:
             self.mgmtWrite("Bad authid?\n")
         
-    def topUpAuthId(self, id, itns):
+    def topUpAuthId(self, id, itns, txid, confirmations):
         authid = id.upper()
         sid = id[0:2]
         log.L.info("Got payment from MGMT for service %s, auth=%s, amount=%s" % (sid, authid, itns))
-        authids.AUTHIDS.update(authid, sid, float(itns), 1)
-        self.mgmtWrite("Topup (" + authids.AUTHIDS.get(authid).toString() + ")\n")
+        authids.AUTHIDS.update(authid, sid, float(itns), confirmations, 0, txid)
+        if authids.AUTHIDS.get(id):
+            self.mgmtWrite("Topup (" + authids.AUTHIDS.get(authid).toString() + ")\n")
+        else:
+            self.mgmtWrite("Bad serviceid.\n")
     
     def spendAuthId(self, id, itns):
         if (authids.AUTHIDS.get(id)):

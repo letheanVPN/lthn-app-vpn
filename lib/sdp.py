@@ -307,7 +307,7 @@ class SDP(object):
             log.L.error('Failed to validate signed data for SDP. Are you sure you entered a valid private key?')
             return False
 
-        encodedSignedPayload = base64.urlsafe_b64encode(signedPayload)
+        encodedSignedPayload = signedPayload.hex()
         # end ed25519 signing
 
         sdpAddServiceEndpoint = cfg.CAP.sdpUri + '/services/add/'
@@ -315,8 +315,8 @@ class SDP(object):
         log.L.info('Using SDP endpoint %s' % sdpAddServiceEndpoint)
 
         request = Request(sdpAddServiceEndpoint, jsonConfig.encode())
-        request.add_header('JWS', signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
-        log.L.debug('JWS header: ' + signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
+        request.add_header('JWS', header.decode('utf-8') + '.' + signingInput.decode('utf-8') + '.' + encodedSignedPayload)
+        log.L.debug('JWS header: ' + header.decode('utf-8') + '.' + signingInput.decode('utf-8') + '.' + encodedSignedPayload)
         request.add_header('Content-Type', 'application/json')
         
         try:

@@ -34,6 +34,7 @@ class Audit(object):
     STOP  = "STOP"
     MODIFY = "MOD"
     UPLOAD = "UPLOAD"
+    NEEDPAYMENT = "NEEDPAYMENT"
     AUTHID =  "AUTHID"
     SESSION = "SESSION"
     SERVICE = "SERVICE"

@@ -10,22 +10,10 @@ import getopt
 import log
 import logging
 import logging.config
-import atexit
-from pprint import pprint
-import time
-import pickle
-import binascii
-from util import *
-import sdp
-import services
-import authids
-import sessions
 import config
-import log
 import configargparse
-from service_ha import ServiceHa
-from service_ovpn import ServiceOvpn
-import atexit
+from util import *
+import services
 
 # Starting here
 def main(argv):
@@ -41,7 +29,7 @@ def main(argv):
     p.add(       '--wallet-rpc-uri',            dest='walletUri', metavar='URI', default='http://127.0.0.1:13660/json_rpc', help='Wallet URI')
     p.add(       '--wallet-username',           dest='walletUsername', metavar='USER', required=None, default='dispatcher', help='Wallet username')
     p.add(       '--wallet-password',           dest='walletPassword', metavar='PW', required=None, help='Wallet passwd')
-    p.add(       '--sdp-uri',                   dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://slsf2fy3eb.execute-api.us-east-1.amazonaws.com/qa/v1')
+    p.add(       '--sdp-server-uri',            dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.staging.cloud.lethean.io/v1')
 
     cfg = p.parse_args()
     

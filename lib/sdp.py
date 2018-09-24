@@ -316,8 +316,9 @@ class SDP(object):
 
         request = Request(sdpAddServiceEndpoint, jsonConfig.encode())
         request.add_header('JWS', signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
+        log.L.debug('JWS header: ' + signingInput.decode('utf-8') + '.' + encodedSignedPayload.decode('utf-8'))
         request.add_header('Content-Type', 'application/json')
-
+        
         try:
             response = urlopen(request).read()
             jsonResp = json.loads(response.decode('utf-8'))

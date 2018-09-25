@@ -287,7 +287,7 @@ class SDP(object):
 
         # begin ed25519 signing
         header = base64.urlsafe_b64encode(b'{"alg":"EdDSA"}')
-        signingInput = header + b'.' + payload
+        signingInput = payload
         key  = cfg.CAP.providerkey
         if (not key or len(key) != 64 or not re.match(r'^[a-zA-Z0-9]+$', key)):
             log.L.error('Invalid private key entered, must be 64 hexadecimal characters.')

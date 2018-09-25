@@ -11,7 +11,7 @@ import re
 class ServiceSyslog(Service):
     
     def run(self):
-        self.mgmtfile = config.Config.PREFIX + "/dev/log"
+        self.mgmtfile = config.Config.PREFIX + "/var/run/log"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)

@@ -34,10 +34,12 @@ class Audit(object):
     STOP  = "STOP"
     MODIFY = "MOD"
     UPLOAD = "UPLOAD"
-    NEEDPAYMENT = "NEEDPAYMENT"
+    NPAYMENT = "NEED_PAYMENT"
     AUTHID =  "AUTHID"
     SESSION = "SESSION"
     SERVICE = "SERVICE"
+    SWALLET = "SDP_WALLET"
+    PWALLET = "PROVIDER_WALLET"
     SDP = "SDP"
     
     def __init__(self, handler=None, level=logging.INFO):
@@ -50,8 +52,8 @@ class Audit(object):
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
         
-    def audit(self, type, action, obj, msg=''):
-        txt = "%s,%s,%s,%s" % (type, action, obj, msg)
+    def audit(self, action, type, obj, msg=''):
+        txt = "%s,%s,%s,%s" % (action, type, obj, msg)
         return(self.logger.info(txt))
 
 L = None

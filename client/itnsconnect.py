@@ -70,7 +70,12 @@ def main(argv):
         
     log.A.audit(log.A.START, log.A.SERVICE, "itnsconnect")
     services.SERVICES.load()
-    # Missing code here
+    
+    services.SERVICES.load()
+    # Generate client config for service id and put to stdout
+    id = "1a"
+    services.SERVICES.get(id).createClientConfig()
+    
     sys.exit()
         
 if __name__ == "__main__":

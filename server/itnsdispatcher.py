@@ -53,7 +53,6 @@ def main(argv):
     p.add(      '--run-services',            dest='runServices', default=True, type=bool, required=None, help='Run services from dispatcher or externally. Default to run by itnsdispatcher.')
     p.add(      '--track-sessions',          dest='trackSessions', default=True, type=bool, required=None, help='If true, dispatcher will track sessions. If not, existing sessions will not be terminated after payment is spent.')
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
-    p.add('-C', '--generate-client-config',  dest='C', metavar='SERVICEID', required=None, help='Generate client config for specified service on stdout and exit')
     p.add('-D',  '--generate-sdp',           dest='D', action='store_const', const='generate-sdp', required=None, help='Generate SDP by wizzard')
     p.add('-E',  '--edit-sdp',               dest='E', action='store_const', const='edit-sdp', required=None, help='Edit existing SDP config')
     p.add('-U',  '--upload-sdp',             dest='U', action='store_const', const='upload-sdp', required=None, help='Upload SDP')
@@ -152,6 +151,7 @@ def main(argv):
     if (cfg.U):
         log.L.warning("Uploading SDP to server %s" % (config.CONFIG.CAP.sdpUri))
         log.A.audit(log.A.UPLOAD, log.A.SDP, config.CONFIG.SDPFILE)
+        log.A.audit(log.A.NPAYMENT, log.A.SWALLET, "wallet_address", "paymentID")
         s=sdp.SDP()
         s.load(config.CONFIG.SDPFILE)
         if (not s.upload(config.CONFIG)):
@@ -177,13 +177,6 @@ def main(argv):
         services.SERVICES.load()
         # Generate config files for Openvpn and Haproxy only and exit
         services.SERVICES.createConfigs()
-        sys.exit()
-        
-    if (cfg.C):
-        services.SERVICES.load()
-        # Generate client config for service id and put to stdout
-        id = cfg.C
-        services.SERVICES.get(id).createClientConfig()
         sys.exit()
         
     if (cfg.D):

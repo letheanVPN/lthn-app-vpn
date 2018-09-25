@@ -10,7 +10,7 @@ class Service(object):
     Service class
     """
     
-    OPTS = dict()
+    OPTS = dict( enabled = True )
     OPTS_HELP = dict()
     OPTS_REQUIRED = dict()
     SOCKET_TIMEOUT = 0.01
@@ -54,6 +54,12 @@ class Service(object):
                 log.L.error("Service %s is not configured. You need to edit config file to add:\n[service-%s]\n%s=something" % (id, id, o))
                 sys.exit(2)
         self.initphase = True
+        
+    def isEnabled(self):
+        if "enabled" in self.cfg:
+            return(self.cfg["enabled"])
+        else:
+            return(True)
         
     def helpOpts(self, name):
         print(name)

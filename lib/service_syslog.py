@@ -9,7 +9,15 @@ import sessions
 import re
 
 class ServiceSyslog(Service):
-            
+    
+    def run(self):
+        self.mgmtfile = config.Config.PREFIX + "/dev/log"
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.sock.bind(self.mgmtfile)
+        self.sock.settimeout(self.SOCKET_TIMEOUT)
+        self.name = "Syslog server"
+        super().run()
+
     def orchestrate(self):
         s = self.getLine()
         while (s != None):

@@ -216,6 +216,9 @@ def main(argv):
     # Load authids from file
     tmpauthids=authids.AUTHIDS.load()
     if (tmpauthids):
+        if not hasattr(tmpauthids,'version') or tmpauthids.getVersion()<authids.AUTHIDS.getVersion():
+            log.L.error("You have incompatible authids database. You need to remove authids file %s to continue." % (config.Config.AUTHIDSFILE))
+            sys.exit(2)
         authids.AUTHIDS=tmpauthids
     
     if not authids.AUTHIDS.getFromWallet():

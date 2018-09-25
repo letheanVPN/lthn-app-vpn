@@ -33,6 +33,10 @@ class Service(object):
             
         self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
         self.cfg = config.CONFIG.getService(self.id)
+        self.cfgfile = self.dir + "/cfg"
+        self.pidfile = self.dir + "/pid"
+        self.mgmtfile = self.dir + "/mgmt"
+        self.process = None
         if (not self.cfg):
             self.cfg = {}
         for o in self.OPTS:

@@ -11,21 +11,16 @@ import random
 
 class ServiceMgmt(Service):
     
-    def __init__(self, s):
-        self.id  = "MS"
-        self.name = "Mgmt"
-        self.type = "management"
-        self.mgmtip = "socket"
-        self.mgmtport = s
-        self.mgmtfile = s
-        self.pidfile = None
-        self.process = None
+    def run(self):
+        self.mgmtfile = config.Config.PREFIX + "/var/run/mgmt"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
         self.mgmt = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.mgmt.bind(self.mgmtfile)
         self.mgmt.listen(1)
         self.mgmt.setblocking(0)
+        self.name = "Management server"
+        super().run()
         
     def orchestrate(self):
         try:
@@ -240,7 +235,5 @@ class ServiceMgmt(Service):
             self.mgmtWrite("Spending.\n")
         else:
             self.mgmtWrite("Bad authid?\n")
-            
-    def stop(self):
-        super().stop()
+    
 

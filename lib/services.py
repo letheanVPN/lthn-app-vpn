@@ -30,16 +30,18 @@ class Services(object):
                     log.L.error("Unknown service type %s in SDP!" % (s["type"]))
                     sys.exit(1)
             self.services[id_.upper()] = so
-        self.syslog = ServiceSyslog(config.Config.PREFIX + "/var/run/log")
-        self.mgmt = ServiceMgmt(config.Config.PREFIX + "/var/run/mgmt")
-        self.http = ServiceHttp()
+        self.syslog = ServiceSyslog("SS")
+        self.mgmt = ServiceMgmt("MS")
+        self.http = ServiceHttp("HS")
  
     def run(self):
+        self.http.run()
+        self.mgmt.run()
+        self.syslog.run()
         if (config.CONFIG.CAP.runServices):
             for id in self.services:
                 s = self.services[id]
                 s.run()
-        self.http.run()
         atexit.register(self.stop)
     
     def createConfigs(self):
@@ -64,6 +66,7 @@ class Services(object):
                 s.stop()
         self.syslog.stop()
         self.mgmt.stop()
+        self.http.stop()
             
     def show(self):
         for id in self.services:

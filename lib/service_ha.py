@@ -44,7 +44,7 @@ class ServiceHa(Service):
          'crtkey',
          'bind_addr'
     )
-    
+        
     def run(self):
         self.createConfig()
         cmd = [config.Config.HAPROXY_BIN, "-Ds", "-p", self.pidfile, "-f", self.cfgfile]
@@ -150,9 +150,6 @@ class ServiceHa(Service):
     def createConfig(self):
         if (not os.path.exists(self.dir)):
             os.mkdir(self.dir)
-        self.cfgfile = self.dir + "/cfg"
-        self.pidfile = self.dir + "/pid"
-        self.mgmtfile = self.dir + "/mgmt"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
         tfile = config.Config.PREFIX + "/etc/haproxy_server.tmpl"

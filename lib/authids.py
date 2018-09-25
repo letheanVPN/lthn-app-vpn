@@ -213,10 +213,18 @@ class AuthId(object):
 class AuthIds(object):
     """Active AUTHIDS sessions container"""
     
+    version = 2
+    
     def __init__(self):
         self.authids = {}
         self.lastmodify = time.time()
         self.lastheight = 0
+        
+    def getVersion(self):
+        if hasattr(self, 'version'):
+            return(self.version)
+        else:
+            return(0)
         
     def add(self, payment):
         log.L.warning("New authid %s" % (payment.getId()))

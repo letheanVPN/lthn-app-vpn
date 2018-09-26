@@ -28,7 +28,7 @@ frontend ssltunnel
         capture request header {payment_header} len 64
 
         acl allowed_payments hdr({payment_header}) -u 20 -M
-	acl is_mgmt_host url_dom {ctrldomain}
+	acl is_mgmt_host url_reg {ctrldomain}
         acl is_mgmt_path path_beg {ctrlpath}
         acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
         acl is_proxy_request url_reg '.*://.*'

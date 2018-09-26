@@ -16,7 +16,7 @@ frontend icproxy
         maxconn         8000
         timeout client  {timeout}
 
-        acl is_mgmt_host url_reg {ctrldomain}
+        acl is_mgmt_host url_dom -m reg -i {ctrldomain}
         acl is_mgmt_path path_beg {ctrlpath}
         acl is_stats_path path_beg /stats
         acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$

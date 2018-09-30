@@ -27,7 +27,7 @@ class ServiceHa(Service):
         paymentid = 'authid1', uniqueid = 'abcd1234', 
         dispatcher_http_host = '127.0.0.1', dispatcher_http_port = 8188,
         track_sessions = True,
-        max_conns_per_ip = 100, max_conns_per_period = 100, max_requests_per_period = 100,
+        max_conns_per_ip = 10000, max_conns_per_period = 10000, max_requests_per_period = 10000,
         conns_period = "10s"
     )
     OPTS_HELP = dict(

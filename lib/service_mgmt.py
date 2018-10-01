@@ -216,7 +216,7 @@ class ServiceMgmt(Service):
         authid = id.upper()
         sid = id[0:2]
         log.L.info("Got payment from MGMT for service %s, auth=%s, amount=%s" % (sid, authid, itns))
-        authids.AUTHIDS.update(authid, sid, float(itns), confirmations, 0, txid)
+        authids.AUTHIDS.update(authid, sid, float(itns), confirmations=confirmations, height=0, txid=txid)
         if authids.AUTHIDS.get(id):
             self.mgmtWrite("Topup (" + authids.AUTHIDS.get(authid).toString() + ")\n")
         else:

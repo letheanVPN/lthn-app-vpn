@@ -24,6 +24,7 @@ class AuthId(object):
         self.id = authid.upper()
         self.balance = float(0)
         self.txid = txid
+        self.txids = dict()
         self.serviceid = serviceid.upper()
         self.confirmations = int(confirmations)
         self.height = int(height)
@@ -42,8 +43,7 @@ class AuthId(object):
             self.invalid = True
             return(None)
         if (float(balance) > 0):
-            self.topUp(float(balance))
-        
+            self.topUp(float(balance),msg="Init", txid=txid, confirmations=confirmations)
         
     def getId(self):
         return(self.id)
@@ -70,9 +70,6 @@ class AuthId(object):
     
     def getHeight(self):
         return(self.height)
-    
-    def getTxId(self):
-        return(self.txid)
 
     def getServiceId(self):
         return(self.serviceid)
@@ -144,7 +141,9 @@ class AuthId(object):
             "left": self.getTimeLeft(),
             "confirmations": self.getConfirmations(),
             "charged_cnt": self.charged_count,
-            "discharged_cnt": self.discharged_count
+            "discharged_cnt": self.discharged_count,
+            "txid": self.txid,
+            "txid_history": ','.join(self.txids)
             }
         return(data)
     
@@ -154,12 +153,20 @@ class AuthId(object):
     def toJson(self):
         return(util.valuesToJson(self.getInfo()))
     
-    def topUp(self, itns, msg="", confirmations=None):
-        """ TopUp authid. If itns is zero, only update internal acls of services. If confirmations is set, it is updated. If it is same payment but more confirmations, ignore."""
-        if confirmations:
-            if (int(confirmations) >= self.confirmations):
-                self.confirmations = int(confirmations)
+    def isKnownTxId(self,txid):
+        return(txid in self.txids)
+    
+    def topUp(self, itns, msg="", txid=None, confirmations=None):
+        """ TopUp authid. If itns is zero, only update internal acls of services. If payment has same txid, only update confirmations"""
+        if txid:
+            if (self.isKnownTxId(txid)):
+                self.confirmations=confirmations
                 log.L.debug("Authid %s: Verified %s times." % (self.getId(), self.confirmations))
+                return
+            else:
+                self.confirmations=0
+                self.txids[txid] = txid
+                self.txid = txid
                 
         if (itns > 0):
             self.balance += itns
@@ -234,19 +241,19 @@ class AuthIds(object):
     def update(self, auth_id, service_id, amount, confirmations, height=0, txid=None):
         if auth_id in self.authids.keys():
             # New payment for existing authid
-            if (txid != self.authids[auth_id].getTxId()):
-                self.topUp(auth_id, amount, txid, confirmations)
+            if (not self.authids[auth_id].isKnownTxId(txid)):
+                self.topUp(auth_id, amount, msg="New txid %s" % (txid), txid=txid, confirmations=confirmations)
             else:
                 # New confirmation for existing authid
-                self.topUp(auth_id, 0, "confirmation", confirmations)
+                self.topUp(auth_id, 0, msg="Same txid", txid=txid, confirmations=confirmations)
         else:
             # First payment for new authid
             payment = AuthId(auth_id, service_id, amount, confirmations, height, txid)
             if not payment.invalid:
                 self.add(payment)
     
-    def topUp(self, paymentid, amount, msg="", confirmations=None):
-        self.authids[paymentid].topUp(amount, msg, confirmations)
+    def topUp(self, paymentid, itns, msg="", txid=None, confirmations=None):
+        self.authids[paymentid].topUp(itns, msg, txid, confirmations)
 
     def spend(self, paymentid, balance, msg=""):
         self.authids[paymentid].spend(balance, msg)
@@ -386,7 +393,7 @@ class AuthIds(object):
                 service_id = tx['payment_id'][0:2]
                 auth_id = tx['payment_id'].upper()
                 amount = tx['amount'] / 100000000
-                log.L.info("Got payment for service %s, auth=%s, amount=%s, confirmations=%s, height=%s, txid=%s" % (service_id, auth_id, amount, confirmations, tx['height'], tx['txid']))
+                log.L.info("Payment/confirmation for service %s, auth=%s, amount=%s, confirmations=%s, height=%s, txid=%s" % (service_id, auth_id, amount, confirmations, tx['height'], tx['txid']))
 
                 # Try to update internal authid db with this payment
                 self.update(auth_id, service_id, float(amount), int(confirmations), tx['height'], tx['txid'])

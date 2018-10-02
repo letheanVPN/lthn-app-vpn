@@ -21,25 +21,34 @@ class Services(object):
         sdp.load(config.Config.SDPFILE)
         for id_ in sdp.listServices():
             s = sdp.getService(id_)
-            if (s["type"]):
-                if (s["type"] == "vpn"):
-                    so = ServiceOvpn(id_, s)
-                elif (s["type"] == "proxy"):
-                    so = ServiceHa(id_, s)
-                else:
-                    log.L.error("Unknown service type %s in SDP!" % (s["type"]))
-                    sys.exit(1)
-            self.services[id_.upper()] = so
-        self.syslog = ServiceSyslog(config.Config.PREFIX + "/var/run/log")
-        self.mgmt = ServiceMgmt(config.Config.PREFIX + "/var/run/mgmt")
-        self.http = ServiceHttp()
+            cfg = config.CONFIG.getService(id_)
+            if ("enabled" in cfg and cfg["enabled"]) or not "enabled" in cfg:
+                if (s["type"]):
+                    if (s["type"] == "vpn"):
+                        so = ServiceOvpn(id_, s)
+                    elif (s["type"] == "proxy"):
+                        so = ServiceHa(id_, s)
+                    else:
+                        log.L.error("Unknown service type %s in SDP!" % (s["type"]))
+                        sys.exit(1)
+                self.services[id_.upper()] = so
+            else:
+                log.L.warning("Service %s disabled m config file." % (id_))
+        self.syslog = ServiceSyslog("SS")
+        self.mgmt = ServiceMgmt("MS")
+        self.http = ServiceHttp("HS")
  
     def run(self):
+        if self.syslog.isEnabled():
+            self.syslog.run()
+        if self.mgmt.isEnabled():
+            self.mgmt.run()
+        if self.http.isEnabled():
+            self.http.run()
         if (config.CONFIG.CAP.runServices):
             for id in self.services:
                 s = self.services[id]
                 s.run()
-        self.http.run()
         atexit.register(self.stop)
     
     def createConfigs(self):
@@ -48,9 +57,12 @@ class Services(object):
             s.createConfig()
             
     def orchestrate(self):
-        self.syslog.orchestrate()
-        self.mgmt.orchestrate()
-        self.http.orchestrate()
+        if self.syslog.isEnabled():
+            self.syslog.orchestrate()
+        if self.mgmt.isEnabled():
+            self.mgmt.orchestrate()
+        if self.http.isEnabled():
+            self.http.orchestrate()
         for id in self.services:
             if (not self.services[id].orchestrate()):
                 log.L.error("Service %s died! Exiting!" % (self.services[id].id))
@@ -62,8 +74,12 @@ class Services(object):
             s = self.services[id]
             if (s.isAlive()):
                 s.stop()
-        self.syslog.stop()
-        self.mgmt.stop()
+        if self.syslog.isEnabled():
+            self.syslog.stop()
+        if self.mgmt.isEnabled():
+            self.mgmt.stop()
+        if self.http.isEnabled():
+            self.http.stop()
             
     def show(self):
         for id in self.services:

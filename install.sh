@@ -44,12 +44,14 @@ sudo chmod 600 "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
 sudo chown "$ITNS_USER" "$INSTALL_PREFIX/$ITNS_PREFIX/dev/net/tun"
 
 # Copy bin files
-sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/dispatcher/itnsdispatcher.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
+sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./server/itnsdispatcher.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
+sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 770 ./client/itnsconnect.py $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsconnect
 sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsdispatcher
+sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$ITNS_PREFIX/bin/itnsconnect
 
 # Copy lib files
-for f in authids.py  config.py sdp.py  service.py services.py  sessions.py util.py log.py service_*py; do
-    sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 ./server/dispatcher/$f $INSTALL_PREFIX/$ITNS_PREFIX/lib/
+for f in lib/*py; do
+    sudo install -o "$ITNS_USER" -g "$ITNS_GROUP" -m 440 $f $INSTALL_PREFIX/$ITNS_PREFIX/lib/
 done
 sed -i 's^/opt/itns^'"$ITNS_PREFIX"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
 sed -i 's^/usr/sbin/openvpn^'"$OPENVPN_BIN"'^' $INSTALL_PREFIX/$ITNS_PREFIX/lib/config.py
@@ -63,7 +65,9 @@ done)
 if [ -f build/etc/systemd/system/itnsdispatcher.service ]; then
     echo "Installing service file /etc/systemd/system/itnsdispatcher.service as user $ITNS_USER"
     sed -i "s^User=root^User=$ITNS_USER^" build/etc/systemd/system/itnsdispatcher.service
-    sudo cp build/etc/systemd/system/itnsdispatcher.service /etc/systemd/system/
+    if ! diff -q build/etc/systemd/system/itnsdispatcher.service /etc/systemd/system/itnsdispatcher.service; then
+      sudo cp build/etc/systemd/system/itnsdispatcher.service /etc/systemd/system/
+    fi
 fi
 
 # Copy generated configs

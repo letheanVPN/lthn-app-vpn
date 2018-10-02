@@ -5,7 +5,7 @@ import os
 import pickle
 import services
 import time
-from util import *
+import util
 import json
 import requests
 from requests.auth import HTTPDigestAuth
@@ -24,35 +24,37 @@ class AuthId(object):
         self.id = authid.upper()
         self.balance = float(0)
         self.txid = txid
+        self.txids = dict()
         self.serviceid = serviceid.upper()
         self.confirmations = int(confirmations)
         self.height = int(height)
         self.created = time.time()
-        self.overalltime = 0
         self.charged_count = int(0)
+        self.discharged_count = int(0)
         self.lastmodify = time.time()
+        self.spending = None
         self.activated = None
+        self.overalltime = 0
+        self.invalid = None
         if (services.SERVICES.get(self.serviceid)):
             self.cost = services.SERVICES.get(self.serviceid).getCost()
         else:
-            log.L.error("Dropping authid %s (serviceid %s does not exists)" % (self.authid, self.serviceid))
+            log.L.error("Bad authid %s (serviceid %s does not exists)" % (authid, serviceid))
+            self.invalid = True
             return(None)
         if (float(balance) > 0):
-            self.topUp(float(balance))
-        self.discharged_count = int(0)
-        self.spending = None
+            self.topUp(float(balance),msg="Init", txid=txid, confirmations=confirmations)
         
     def getId(self):
         return(self.id)
     
-    def getOverallTime(self):
-        return(self.overalltime)
-    
     def activate(self):
         self.activated = True
+        self.getService().addAuthId(self)
 
     def deActivate(self):
         self.activated = None
+        self.getService().delAuthId(self)
         
     def isActivated(self):
         return(self.activated)
@@ -68,23 +70,57 @@ class AuthId(object):
     
     def getHeight(self):
         return(self.height)
-    
-    def getTxId(self):
-        return(self.txid)
 
     def getServiceId(self):
         return(self.serviceid)
+    
+    def getService(self):
+        return(services.SERVICES.get(self.serviceid))
     
     def getTimeLeft(self):
         return(self.balance / self.cost)
     
     def getTimeSpent(self):
-        return(self.firstbalance / self.cost)
-    
+        if self.spending: 
+            return(int(self.overalltime/60))
+        else:
+            return(0)
+        
+    def isCreditOk(self):
+        if self.invalid:
+            return(None)
+        s = self.getService()
+        if self.getTimeSpent()==0 and not self.isActivated():
+            if self.getTimeLeft()<int(s.json["firstPrePaidMinutes"]):
+                log.L.info("Not enough credit for authid %s and service %s (firstPrePaidMinutes=%s, balance=%s), need at least %s" % (self.getId(), self.getServiceId(), int(s.json["firstPrePaidMinutes"]), self.getBalance(), int(s.json["firstPrePaidMinutes"]) * float(s.getCost())))
+                return(None)
+            if self.getConfirmations()<int(s.json["firstVerificationsNeeded"]):
+                log.L.info("Not enough confirmations for authid %s and service %s (firstVerificationsNeeded=%s, verifications=%s), need at least %s" % (self.getId(), self.getServiceId(), int(s.json["firstVerificationsNeeded"]), self.getConfirmations(), int(s.json["firstVerificationsNeeded"])))
+                return(None)
+            return(True)
+        elif self.getTimeSpent()<int(s.json["firstPrePaidMinutes"]) and not self.isActivated():
+            if self.getConfirmations()<int(s.json["firstVerificationsNeeded"]):
+                log.L.info("Not enough confirmations for authid %s and service %s (firstVerificationsNeeded=%s, verifications=%s), need at least %s" % (self.getId(), self.getServiceId(), int(s.json["firstVerificationsNeeded"]), self.getConfirmations(), int(s.json["firstVerificationsNeeded"])))
+                return(None)
+            else:
+                return(True)
+        elif self.getTimeSpent()>int(s.json["firstPrePaidMinutes"]) and self.isActivated():
+            if self.getTimeLeft()<int(s.json["subsequentPrePaidMinutes"]):
+                log.L.info("Not enough credit for authid %s and service %s (subsequentPrePaidMinutes=%s, balance=%s), need at least %s" % (self.getId(), self.getServiceId(), int(s.json["firstPrePaidMinutes"]), self.getBalance(), int(s.json["subsequentPrePaidMinutes"]) * s.getCost()))
+                return(None)
+            else:
+                if self.getConfirmations()<int(s.json["subsequentVerificationsNeeded"]):
+                    log.L.info("Not enough confirmations for authid %s and service %s (subsequentVerificationsNeeded=%s, verifications=%s), need at least %s" % (self.getId(), self.getServiceId(), int(s.json["firstVerificationsNeeded"]), self.getConfirmations(), int(s.json["subsequentVerificationsNeeded"])))
+                    return(None)
+                else:
+                    return(True)
+        else:
+            return(True)
+                
     def show(self):
         log.L.info(self.toString())
-    
-    def toString(self):
+        
+    def getInfo(self):
         if self.isSpending():
             spending = "yes"
         else:
@@ -93,27 +129,44 @@ class AuthId(object):
             activated = "yes"
         else:
             activated = "no"
-        str = "%s: serviceid=%s, created=%s, modified=%s, spending=%s, activated=%s, balance=%f, perminute=%.3f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, timefmt(self.created), timefmt(self.lastmodify), spending, activated, self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)
-        return(str)
+        data={
+            "id": self.id,
+            "serviceid": self.serviceid,
+            "created": util.timefmt(self.created),
+            "modified": util.timefmt(self.lastmodify),
+            "activated": activated,
+            "spending": spending,
+            "balance": self.getBalance(),
+            "overall": self.getTimeSpent(),
+            "left": self.getTimeLeft(),
+            "confirmations": self.getConfirmations(),
+            "charged_cnt": self.charged_count,
+            "discharged_cnt": self.discharged_count,
+            "txid": self.txid,
+            "txid_history": ','.join(self.txids)
+            }
+        return(data)
+    
+    def toString(self):
+        return(util.valuesToString(self.getInfo()))
     
     def toJson(self):
-        if self.isSpending():
-            spending = "yes"
-        else:
-            spending = "no"
-        if self.isActivated():
-            activated = "yes"
-        else:
-            activated= "no"
-        str = '{"status": "OK", "activated": "%s", balance": "%.3f", "created":"%s", "minutes_overall": "%d", minutes_left": "%d", "spending": "%s", "charged_count": "%d", "spent_count": "%d"}' % (activated, self.getBalance(), timefmt(self.created), self.getOverallTime(), self.getTimeLeft(), spending, self.charged_count, self.discharged_count)
-        return(str)
+        return(util.valuesToJson(self.getInfo()))
     
-    def topUp(self, itns, msg="", confirmations=None):
-        """ TopUp authid. If itns is zero, only update internal acls of services. If confirmations is set, it is updated. If it is same payment but more confirmations, ignore."""
-        if confirmations:
-            if (int(confirmations) >= self.confirmations):
+    def isKnownTxId(self,txid):
+        return(txid in self.txids)
+    
+    def topUp(self, itns, msg="", txid=None, confirmations=None):
+        """ TopUp authid. If itns is zero, only update internal acls of services. If payment has same txid, only update confirmations"""
+        if txid:
+            if (self.isKnownTxId(txid)):
+                self.confirmations=confirmations
                 log.L.debug("Authid %s: Verified %s times." % (self.getId(), self.confirmations))
-                self.confirmations = int(confirmations)
+                return
+            else:
+                self.confirmations=0
+                self.txids[txid] = txid
+                self.txid = txid
                 
         if (itns > 0):
             self.balance += itns
@@ -122,13 +175,14 @@ class AuthId(object):
             self.charged_count += 1
             log.L.debug("Authid %s: Topup %.3f, new balance %.3f" % (self.getId(), itns, self.balance))
             log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%.3f,balance=%.3f %s" % (itns, self.balance, msg))
-        for s in services.SERVICES.getAll():
-            services.SERVICES.get(s).addAuthIdIfTopup(self)
-            
+        
+        if self.isCreditOk() and not self.isActivated():
+            self.activate()
+           
     def startSpending(self):
         """ Start spending of authid """
         if (not self.spending):
-            self.spending = True
+            self.spending = time.time()
             log.L.debug("Authid %s: Start spending" % (self.getId()))
         
     def isSpending(self):
@@ -145,11 +199,13 @@ class AuthId(object):
             self.discharged_count += 1
             log.L.debug("Authid %s: Spent %f, new balance %f" % (self.getId(), itns, self.balance))
             log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "spent,amount=%s,balance=%s %s" % (itns, self.balance, msg))
-            for s in services.SERVICES.getAll():
-                services.SERVICES.get(s).delAuthIdIfSpent(self)
+        
+        if not self.isCreditOk() and self.isActivated():
+            self.deActivate()
                 
     def spendTime(self, seconds):
         self.spend(self.cost * seconds / 60, "(%.2f minutes*%f)" % (seconds/60, self.cost))
+        self.overalltime += seconds
             
     def getBalance(self):
         return(self.balance)
@@ -164,10 +220,18 @@ class AuthId(object):
 class AuthIds(object):
     """Active AUTHIDS sessions container"""
     
+    version = 2
+    
     def __init__(self):
         self.authids = {}
         self.lastmodify = time.time()
         self.lastheight = 0
+        
+    def getVersion(self):
+        if hasattr(self, 'version'):
+            return(self.version)
+        else:
+            return(0)
         
     def add(self, payment):
         log.L.warning("New authid %s" % (payment.getId()))
@@ -177,18 +241,19 @@ class AuthIds(object):
     def update(self, auth_id, service_id, amount, confirmations, height=0, txid=None):
         if auth_id in self.authids.keys():
             # New payment for existing authid
-            if (txid != self.authids[auth_id].getTxId()):
-                self.topUp(auth_id, amount, txid, confirmations)
+            if (not self.authids[auth_id].isKnownTxId(txid)):
+                self.topUp(auth_id, amount, msg="New txid %s" % (txid), txid=txid, confirmations=confirmations)
             else:
                 # New confirmation for existing authid
-                self.topUp(auth_id, 0, "confirmation", confirmations)
+                self.topUp(auth_id, 0, msg="Same txid", txid=txid, confirmations=confirmations)
         else:
             # First payment for new authid
             payment = AuthId(auth_id, service_id, amount, confirmations, height, txid)
-            self.add(payment)
+            if not payment.invalid:
+                self.add(payment)
     
-    def topUp(self, paymentid, amount, msg="", confirmations=None):
-        self.authids[paymentid].topUp(amount, msg, confirmations)
+    def topUp(self, paymentid, itns, msg="", txid=None, confirmations=None):
+        self.authids[paymentid].topUp(itns, msg, txid, confirmations)
 
     def spend(self, paymentid, balance, msg=""):
         self.authids[paymentid].spend(balance, msg)
@@ -203,15 +268,15 @@ class AuthIds(object):
         return(self.authids.keys())
 
     def remove(self, paymentid):
-        if (self.get(paymentid)):
-            log.L.warning("Removing authid %s (balance=%.3f)" % (paymentid, self.get(paymentid).getBalance()))
-            log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%.3f" % (self.get(paymentid).getBalance()))
-            for s in services.SERVICES.getAll():
-                services.SERVICES.get(s).delAuthId(self.get(paymentid))
+        p = self.get(paymentid)
+        if (p):
+            log.L.warning("Removing authid %s (balance=%.3f)" % (paymentid, p.getBalance()))
+            log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%.3f" % (p.getBalance()))
+            p.getService().delAuthId(p)
             self.authids.pop(paymentid)
         
     def toString(self):
-        str = "%d ids, last updated %s\npayment spending activated minutes_left\n" % (len(self.authids), timefmt(self.lastmodify))
+        str = "%d ids, last updated %s\npayment spending activated minutes_left\n" % (len(self.authids), util.timefmt(self.lastmodify))
         for id, paymentid in self.authids.items():
             if paymentid.isSpending():
                 spending = "yes"
@@ -225,7 +290,7 @@ class AuthIds(object):
         return(str)
         
     def show(self):
-        log.L.warning("Authids: %d ids, last updated %s" % (len(self.authids), timefmt(self.lastmodify)))
+        log.L.warning("Authids: %d ids, last updated %s" % (len(self.authids), util.timefmt(self.lastmodify)))
         for id, paymentid in self.authids.items():
             paymentid.show()
             
@@ -328,7 +393,7 @@ class AuthIds(object):
                 service_id = tx['payment_id'][0:2]
                 auth_id = tx['payment_id'].upper()
                 amount = tx['amount'] / 100000000
-                log.L.info("Got payment for service %s, auth=%s, amount=%s, confirmations=%s, height=%s, txid=%s" % (service_id, auth_id, amount, confirmations, tx['height'], tx['txid']))
+                log.L.info("Payment/confirmation for service %s, auth=%s, amount=%s, confirmations=%s, height=%s, txid=%s" % (service_id, auth_id, amount, confirmations, tx['height'], tx['txid']))
 
                 # Try to update internal authid db with this payment
                 self.update(auth_id, service_id, float(amount), int(confirmations), tx['height'], tx['txid'])

@@ -27,7 +27,7 @@ class ServiceHa(Service):
         paymentid = 'authid1', uniqueid = 'abcd1234', 
         dispatcher_http_host = '127.0.0.1', dispatcher_http_port = 8188,
         track_sessions = True,
-        max_conns_per_ip = 100, max_conns_per_period = 100, max_requests_per_period = 100,
+        max_conns_per_ip = 10000, max_conns_per_period = 10000, max_requests_per_period = 10000,
         conns_period = "10s"
     )
     OPTS_HELP = dict(
@@ -44,7 +44,7 @@ class ServiceHa(Service):
          'crtkey',
          'bind_addr'
     )
-    
+        
     def run(self):
         self.createConfig()
         cmd = [config.Config.HAPROXY_BIN, "-Ds", "-p", self.pidfile, "-f", self.cfgfile]
@@ -150,9 +150,6 @@ class ServiceHa(Service):
     def createConfig(self):
         if (not os.path.exists(self.dir)):
             os.mkdir(self.dir)
-        self.cfgfile = self.dir + "/cfg"
-        self.pidfile = self.dir + "/pid"
-        self.mgmtfile = self.dir + "/mgmt"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
         tfile = config.Config.PREFIX + "/etc/haproxy_server.tmpl"
@@ -184,7 +181,7 @@ class ServiceHa(Service):
                           payment_header='X-ITNS-PaymentID',
                           mgmt_header='X-ITNS-MgmtID',
                           mgmtid=config.Config.CAP.providerid,
-                          ctrldomain='remote.lethean.',
+                          ctrldomain='^(remote.lethean|_remote_)$',
                           ctrlpath='/status',
                           disp_http_host=self.cfg['dispatcher_http_host'],
                           disp_http_port=self.cfg['dispatcher_http_port'],
@@ -234,7 +231,7 @@ class ServiceHa(Service):
                           port=port,
                           sport=8181,
                           f_ca=f_ca,
-                          ctrldomain='local.lethean.',
+                          ctrldomain='^(local.lethean|_local_)$',
                           ctrlpath='/status',
                           mgmtid=self.cfg['uniqueid'],
                           ca=config.Config.CAP.providerCa,

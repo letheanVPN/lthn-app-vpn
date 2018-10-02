@@ -59,21 +59,14 @@ class ServiceHttp(Service):
     OPTS_REQUIRED = (
          'bind_addr', 'port'
     )
-    
-    def __init__(self):
-        super().__init__()
-        self.id  = "HH"
-        self.name = "HTTP status server"
-        log.L.info("Run service %s" % (self.id))
-        self.mgmtfile = None
-        self.process = None
-        self.pidfile = None
-        self.pid = -1
             
     def run(self):
         self.httpd = HttpStatusServer((self.cfg['bind_addr'],int(self.cfg['port'])), HttpStatusRequest)
         self.httpd.timeout = self.SOCKET_TIMEOUT
         atexit.register(self.stop)
+        self.name = "HTTP server"
+        self.pid = -1
+        super().run()
         
     def stop(self):
         if (self.pid > 0):

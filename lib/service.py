@@ -10,7 +10,7 @@ class Service(object):
     Service class
     """
     
-    OPTS = dict()
+    OPTS = dict( enabled = True )
     OPTS_HELP = dict()
     OPTS_REQUIRED = dict()
     SOCKET_TIMEOUT = 0.01
@@ -33,6 +33,10 @@ class Service(object):
             
         self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
         self.cfg = config.CONFIG.getService(self.id)
+        self.cfgfile = self.dir + "/cfg"
+        self.pidfile = self.dir + "/pid"
+        self.mgmtfile = self.dir + "/mgmt"
+        self.process = None
         if (not self.cfg):
             self.cfg = {}
         for o in self.OPTS:
@@ -50,6 +54,12 @@ class Service(object):
                 log.L.error("Service %s is not configured. You need to edit config file to add:\n[service-%s]\n%s=something" % (id, id, o))
                 sys.exit(2)
         self.initphase = True
+        
+    def isEnabled(self):
+        if "enabled" in self.cfg:
+            return(self.cfg["enabled"])
+        else:
+            return(True)
         
     def helpOpts(self, name):
         print(name)
@@ -195,41 +205,6 @@ class Service(object):
     def delAuthId(self, authid, msg=""):
         log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'deactivated in service %s %s' % (self.id, msg))
         return(True)
-    
-    def addAuthIdIfTopup(self, authid):
-        """ Should be probably more sophisticated. """
-        if not authid.isActivated():
-            # New payment. Must satisfy all criteria
-            if (authid.getTimeLeft()<int(self.json["firstPrePaidMinutes"])):
-                log.L.info("Not enough credit for authid %s and service %s (firstPrePaidMinutes=%s, balance=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstPrePaidMinutes"]), authid.getBalance(), int(self.json["firstPrePaidMinutes"]) * float(self.cost)))
-                return
-            if (authid.getConfirmations()<int(self.json["firstVerificationsNeeded"])):
-                log.L.info("Not enough confirmations for authid %s and service %s (firstVerificationsNeeded=%s, verifications=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstVerificationsNeeded"]), authid.getConfirmations(), int(self.json["firstVerificationsNeeded"])))
-                return
-            self.addAuthId(authid)
-            authid.activate()
-            
-    def delAuthIdIfSpent(self, authid):
-        """ Should be probably more sophisticated. """
-        
-        if authid.isActivated():
-            if authid.getOverallTime()>int(self.json["firstPrePaidMinutes"]):
-                if (authid.getTimeLeft()<int(self.json["subsequentPrePaidMinutes"])):
-                    log.L.info("Not enough credit for authid %s and service %s (subsequentPrePaidMinutes=%s, balance=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstPrePaidMinutes"]), authid.getBalance(), int(self.json["subsequentPrePaidMinutes"]) * float(self.cost)))
-                    self.delAuthId(authid, "Not enough subsequent credit")
-                    authid.deActivate()
-                    return
-                if (authid.getConfirmations()<int(self.json["subsequentVerificationsNeeded"])):
-                    log.L.info("Not enough confirmations for authid %s and service %s (subsequentVerificationsNeeded=%s, verifications=%s), need at least %s" % (authid.getId(), authid.getServiceId(), int(self.json["firstVerificationsNeeded"]), authid.getConfirmations(), int(self.json["subsequentVerificationsNeeded"])))
-                    self.delAuthId(authid, "Not enough subsequent confirmations")
-                    authid.deActivate()
-                    return
-        else:
-            # We should never get here.. 
-            self.delAuthId(authid)
-        if (authid.getBalance()<0):
-            self.delAuthId(authid, "Zero balance")
-            authid.deActivate()
 
     def getSessions(self):
         return({})

@@ -28,7 +28,7 @@ frontend ssltunnel
         capture request header {payment_header} len 64
 
         acl allowed_payments hdr({payment_header}) -u 20 -M
-	acl is_mgmt_host url_dom {ctrldomain}
+	acl is_mgmt_host hdr_reg(host) {ctrldomain}
         acl is_mgmt_path path_beg {ctrlpath}
         acl is_mgmt_id hdr_reg({mgmt_header}) ^{mgmtid}$
         acl is_proxy_request url_reg '.*://.*'
@@ -40,7 +40,7 @@ frontend ssltunnel
 	acl allowed_src_ips src -u 10 -f {f_allow_src_ips}        
         acl deny_src_ips src -u 11 -f {f_deny_src_ips}
         acl deny_dst_urlips url_ip -u 12 -f {f_deny_dst_ips}
-        acl deny_dst_doms url_reg -u 14 -f {f_deny_dst_doms}
+        acl deny_dst_doms url_dom -m reg -i -u 14 -f {f_deny_dst_doms}
 
         tcp-request content track-sc0 hdr_ip(CF-Connecting-IP,-1) if HTTP has_cf
         tcp-request content track-sc0 hdr_ip(X-Forwarded-For,-1) if HTTP !has_cf has_ff

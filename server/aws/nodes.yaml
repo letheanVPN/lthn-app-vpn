@@ -59,12 +59,12 @@ Parameters:
 
   SeedBlockchain:
     Type: String
-    Default: fromSnapshot
+    Default: fromS3
     Description: >
       Mount snapshot with historic blocks.
     AllowedValues:
       - doNotSeed
-      - fromSnapshot
+      - fromS3
 
   TXRateLimitKBs:
     Type: Number
@@ -82,7 +82,6 @@ Mappings:
       AMI: ami-759bc50a # ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server
     us-east-2:
       AMI: ami-5e8bb23b
-      BlockchainEbsSnapshot: snap-08d93b2e70aca8241
     us-west-1:
       AMI: ami-4aa04129
     us-west-2:
@@ -93,7 +92,6 @@ Mappings:
       AMI: ami-de8fb135
     eu-west-2:
       AMI: ami-6b3fd60c
-      BlockchainEbsSnapshot: snap-04c24ae9b23c883b3
     ap-northeast-1:
       AMI: ami-98cfaa75
     ap-southeast-1:
@@ -117,23 +115,9 @@ Mappings:
       AttachToTempSecurityGroup: true
       HostedZone: test.cloud.lethean.io
 
-  InstanceMap:
-    t2.micro:
-      BlkDevice: /dev/xvdf
-    t2.small:
-      BlkDevice: /dev/xvdf
-    t2.medium:
-      BlkDevice: /dev/xvdf
-    t3.micro:
-      BlkDevice: /dev/nvme1n1
-    t3.small:
-      BlkDevice: /dev/nvme1n1
-    t3.medium:
-      BlkDevice: /dev/nvme1n1
-
 
 Conditions:
-  SeedBlockchainFromSnapshot: !Equals [!Ref 'SeedBlockchain', fromSnapshot]
+  SeedBlockchainFromS3: !Equals [!Ref 'SeedBlockchain', fromS3]
   AttachToTempSecurityGroup: !Equals [!FindInMap [DeploymentMap, !Ref 'DeploymentType', AttachToTempSecurityGroup], true]
 
 
@@ -209,7 +193,7 @@ Resources:
         ]
       }
       ManagedPolicyArns:
-       - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+       - arn:aws:iam::aws:policy/AmazonS3FullAccess
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -282,6 +266,10 @@ Resources:
           roleName: !Ref 'S3ReadOnlyAccessInstanceProfile'
           buckets:
             - !FindInMap [DeploymentMap, !Ref 'DeploymentType', S3Bucket]
+            - !Join [., [
+                !Ref 'AWS::Region',
+                !FindInMap [DeploymentMap, !Ref 'DeploymentType', S3Bucket]
+              ]]
       AWS::CloudFormation::Init:
         configSets:
           default:
@@ -314,6 +302,47 @@ Resources:
               mode: '000755'
               owner: ubuntu
               group: ubuntu
+            /home/ubuntu/upload_lmdb.sh:
+              content: !Sub
+                - |
+                  #!/bin/bash
+
+                  pid=$(pgrep letheand)
+
+                  if [ $? -ne 0 ]
+                  then
+                  echo "No letheand process found"
+                  exit $?
+                  fi
+
+                  # Get command and arguments
+                  cmd=$(xargs -0 < /proc/$(pgrep letheand)/cmdline)
+
+                  if [ $? -ne 0 ]
+                  then
+                  echo "Could not get command"
+                  exit $?
+                  fi
+
+                  # Stop daemon
+                  echo "Stopping daemon"
+                  kill $pid
+                  sleep 5
+
+                  # Copy files
+                  echo "Uploading files to S3"
+                  aws s3 cp --no-progress /home/ubuntu/${DATA_DIR}/lmdb/data.mdb s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/data.mdb
+                  aws s3 cp --no-progress /home/ubuntu/${DATA_DIR}/lmdb/lock.mdb s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/lock.mdb
+
+                  # Run daemon with original arguments
+                  echo "Running $cmd"
+                  eval $cmd
+                - BUCKET: !FindInMap [DeploymentMap, !Ref 'DeploymentType', S3Bucket]
+                  PREFIX: daemon/
+                  DATA_DIR: !FindInMap [RegionMap, Global, DataDir]
+              mode: '000755'
+              owner: ubuntu
+              group: ubuntu
           commands:
             00_installSSHKeys:
               env:
@@ -323,17 +352,18 @@ Resources:
                 aws s3 cp --recursive s3://${BUCKET}/${PREFIX} /tmp/keys &&
                 cat /tmp/keys/* >> /home/ubuntu/.ssh/authorized_keys &&
                 rm -rf /tmp/keys
-            02_mountBlockchainVolume:
-              test: !If [SeedBlockchainFromSnapshot, true, false]
-              env:
-                DATA_DIR: !FindInMap [RegionMap, Global, DataDir]
-                BLK_DEVICE: !FindInMap [InstanceMap, !Ref 'InstanceType', BlkDevice]
-              command: >
-                mkdir -p /home/ubuntu/${DATA_DIR}/lmdb &&
-                echo "${BLK_DEVICE} /home/ubuntu/${DATA_DIR}/lmdb ext4 defaults,nofail 0 2" >> /etc/fstab &&
-                mount /home/ubuntu/${DATA_DIR}/lmdb &&
-                chown -R ubuntu: /home/ubuntu/${DATA_DIR}
-            03_enableSupervisorWeb:
+            01_downloadBlockchainDb:
+              test: !If [SeedBlockchainFromS3, true, false]
+              command: !Sub
+                - |
+                  mkdir -p /home/ubuntu/${DATA_DIR}/lmdb &&
+                  aws s3 cp --no-progress s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/data.mdb /home/ubuntu/${DATA_DIR}/lmdb/data.mdb &&
+                  aws s3 cp --no-progress s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/lock.mdb /home/ubuntu/${DATA_DIR}/lmdb/lock.mdb &&
+                  chown -R ubuntu: /home/ubuntu/${DATA_DIR}
+                - BUCKET: !FindInMap [DeploymentMap, !Ref 'DeploymentType', S3Bucket]
+                  PREFIX: daemon/
+                  DATA_DIR: !FindInMap [RegionMap, Global, DataDir]
+            02_enableSupervisorWeb:
               command: >
                 /bin/echo -e '[inet_http_server]\nport = *:8081\n' >> /etc/supervisor/supervisord.conf &&
                 service supervisor stop
@@ -354,6 +384,11 @@ Resources:
                 BRANCH="${BRANCH}"
                 DAEMONOPTS="${DAEMONOPTS}"
                 -i -u ubuntu
+            01_installUploadCron:
+              command: >
+                hour=$(($(dd if=/dev/urandom count=1 2>/dev/null | cksum | cut -d' ' -f1) % 24)) &&
+                minute=$(($(dd if=/dev/urandom count=1 2>/dev/null | cksum | cut -d' ' -f1) % 60)) &&
+                ( crontab -u ubuntu -l; echo "${minute} ${hour} * * * /home/ubuntu/upload_lmdb.sh 1>>/home/ubuntu/upload_lmdb.log 2>&1"; ) | crontab -u ubuntu -
 
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
@@ -371,15 +406,10 @@ Resources:
         ]
       ]
       BlockDeviceMappings:
-        - DeviceName: /dev/sdf
+        - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 20
+            VolumeSize: 32
             VolumeType: gp2
-            SnapshotId: !If [
-              SeedBlockchainFromSnapshot,
-              !FindInMap [RegionMap, !Ref 'AWS::Region', BlockchainEbsSnapshot],
-              !Ref 'AWS::NoValue'
-            ]
       UserData:
         Fn::Base64:
           Fn::Sub:

@@ -58,11 +58,11 @@ if [ -n "$PROVIDERID" ]; then
 fi
 ./configure.sh --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
 make install FORCE=1
-/opt/itns/bin/itnsdispatcher --generate-sdp \
+/opt/lthn/bin/lthnvpnd --generate-sdp \
      --provider-type $PROVTYPE \
      --provider-name EasyProvider \
      --wallet-address "$WALLET" \
-     --sdp-service-crt /opt/itns/etc/ca/certs/ha.cert.pem \
+     --sdp-service-crt /opt/lthn/etc/ca/certs/ha.cert.pem \
      --sdp-service-name proxy --sdp-service-id 1a --sdp-service-fqdn $ENDPOINT --sdp-service-port $PORT \
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 10 --sdp-service-verifications 0
@@ -80,13 +80,13 @@ EOF
 fi
 
 sudo systemctl restart squid
-sudo systemctl enable itnsdispatcher
-sudo systemctl restart itnsdispatcher
+sudo systemctl enable lthnvpnd
+sudo systemctl restart lthnvpnd
 sudo systemctl disable haproxy
 sudo systemctl stop haproxy
 
-cat /opt/itns/etc/sdp.json
-/opt/itns/bin/itnsdispatcher --upload-sdp
+cat /opt/lthn/etc/sdp.json
+/opt/lthn/bin/lthnvpnd --upload-sdp
 
 ) 2>&1 | tee easy.log 
 

@@ -45,8 +45,8 @@ install_dispatcher(){
   chmod +x easy-deploy-node.sh
   EMAIL="$EMAIL" ./easy-deploy-node.sh
   sudo systemctl daemon-reload
-  sudo systemctl enable itnsdispatcher
-  sudo service itnsdispatcher restart
+  sudo systemctl enable lthnvpnd
+  sudo service lthnvpnd restart
 }
 
 install_packages

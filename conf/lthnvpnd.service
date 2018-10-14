@@ -1,0 +1,17 @@
+[Unit]
+Description=LTHN VPN dispatcher
+ConditionPathExists=/opt/lthn/bin/lthnvpnd
+After=syslog.target
+
+[Service]
+Type=simple
+ExecStart=/opt/lthn/bin/lthnvpnd
+ExecStopPost=rm -f /opt/lthn/var/run/lthnvpnd.pid
+User=root
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+PIDFile=/opt/lthn/var/run/lthnvpnd.pid
+
+[Install]
+WantedBy=multi-user.target

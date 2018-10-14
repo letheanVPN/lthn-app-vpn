@@ -840,7 +840,7 @@ class SDPService(object):
 
 
     def setCost(self, cost):
-        print('Enter service cost in Intense Coin (ITNS) per minute. You may use up to 8 decimal places. Minimum 0.00000001')
+        print('Enter service cost in Intense Coin (LTHN) per minute. You may use up to 8 decimal places. Minimum 0.00000001')
         if (self.data['cost']):
             if (cost):
                 choice = float(cost)

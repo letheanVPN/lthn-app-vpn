@@ -31,8 +31,8 @@ class Config(object):
     CAP = None
     
     def __init__(self, action="read", services=None):
-        if (os.getenv('ITNS_PREFIX')):
-            type(self).PREFIX = os.getenv('ITNS_PREFIX')
+        if (os.getenv('LTHN_PREFIX')):
+            type(self).PREFIX = os.getenv('LTHN_PREFIX')
         
         type(self).OPENVPN_BIN = "/usr/sbin/openvpn"
         type(self).HAPROXY_BIN = "/usr/sbin/haproxy"

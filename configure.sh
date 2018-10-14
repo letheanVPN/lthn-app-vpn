@@ -6,7 +6,7 @@ export TOPDIR=$(realpath $(dirname $0))
 export PARMS="$@"
 
 # Static defaults
-LTHN_PREFIX=/opt/itns/
+LTHN_PREFIX=/opt/lthn/
 
 # General usage help
 usage() {

@@ -53,7 +53,7 @@ sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnv
 for f in lib/*py; do
     sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 440 $f $INSTALL_PREFIX/$LTHN_PREFIX/lib/
 done
-sed -i 's^/opt/itns^'"$LTHN_PREFIX"'^' $INSTALL_PREFIX/$LTHN_PREFIX/lib/config.py
+sed -i 's^/opt/lthn^'"$LTHN_PREFIX"'^' $INSTALL_PREFIX/$LTHN_PREFIX/lib/config.py
 sed -i 's^/usr/sbin/openvpn^'"$OPENVPN_BIN"'^' $INSTALL_PREFIX/$LTHN_PREFIX/lib/config.py
 sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$LTHN_PREFIX/lib/config.py
 

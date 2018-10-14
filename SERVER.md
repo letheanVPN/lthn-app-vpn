@@ -66,22 +66,22 @@ make install [FORCE=1]
 ```
 
 ### Public configuration - sdp.json
-*/opt/itns/etc/sdp.json* describes local services for orchestration. It is uploaded to SDP server by --upload-sdp option. Note that uploading to SDP server is paid service. <!--  **TODO add SDP server integration instructions** --> 
+*/opt/lthn/etc/sdp.json* describes local services for orchestration. It is uploaded to SDP server by --upload-sdp option. Note that uploading to SDP server is paid service. <!--  **TODO add SDP server integration instructions** --> 
 After installation, you will be instructed to generate the sdp.json file, which is required to run the dispatcher.
 You can either answer questions using the wizard (*--generate-sdp*) or you can use cmdline params to set defaults. See help.
 ```bash
-/opt/itns/bin/lthnvpnd --generate-sdp --wallet-address some_wallet_address [--sdp-service-name someName] ...
+/opt/lthn/bin/lthnvpnd --generate-sdp --wallet-address some_wallet_address [--sdp-service-name someName] ...
 
 ```
 
 You may need to invoke lthnvpnd using `python3` if you receive dependency errors. If you opted to use the `--runas-user` and `--runas-group` setup params, you will also need to `su -` to that user or use `sudo` when using the dispatcher.
 ```bash
 [su - vpnuser]
-python3 /opt/itns/bin/lthnvpnd ...
+python3 /opt/lthn/bin/lthnvpnd ...
 ```
 
 ### Private configuration - dispatcher.ini
-*/opt/itns/etc/dispatcher.ini* is a local file containing private information needed to run the  dispatcher. Do not upload it anywhere or share it with anyone as it contains private keys. You should also create a backup of this file.
+*/opt/lthn/etc/dispatcher.ini* is a local file containing private information needed to run the  dispatcher. Do not upload it anywhere or share it with anyone as it contains private keys. You should also create a backup of this file.
 By default, *make install* will generate a default file for you but you need to configure it to suit your needs.
 File format:
 ```ini
@@ -145,7 +145,7 @@ You can use more env variables to tune parameters. See script header for availab
 
 ## Usage 
 ```bash
- /opt/itns/bin/lthnvpnd -h
+ /opt/lthn/bin/lthnvpnd -h
 usage: lthnvpnd [-f CONFIGFILE] [-h] [-s SDPFILE] [-p PIDFILE]
                       [-l LEVEL] [-A FILE] [-a FILE] [--refresh-time SEC]
                       [--save-time SEC] [--max-wait-to-spend SEC] [-lc FILE]
@@ -175,20 +175,20 @@ override defaults.
 
 optional arguments:
   -f CONFIGFILE, --config CONFIGFILE
-                        Config file (default: /opt/itns//etc/dispatcher.ini)
+                        Config file (default: /opt/lthn//etc/dispatcher.ini)
   -h, --help            Help (default: None)
   -s SDPFILE, --sdp SDPFILE
-                        SDP file (default: /opt/itns//etc/sdp.json)
+                        SDP file (default: /opt/lthn//etc/sdp.json)
   -p PIDFILE, --pid PIDFILE
                         PID file (default:
-                        /opt/itns//var/run/lthnvpnd.pid)
+                        /opt/lthn//var/run/lthnvpnd.pid)
   -l LEVEL, --log-level LEVEL
                         Log level (default: WARNING)
   -A FILE, --authids FILE
                         Authids db file. Use "none" to disable. (default:
-                        /opt/itns//var/authids.db)
+                        /opt/lthn//var/authids.db)
   -a FILE, --audit-log FILE
-                        Audit log file (default: /opt/itns//var/log/audit.log)
+                        Audit log file (default: /opt/lthn//var/log/audit.log)
   --refresh-time SEC    Refresh frequency. Set to 0 for disable autorefresh.
                         (default: 30)
   --save-time SEC       Save authid frequency. Use 0 to not save authid
@@ -282,10 +282,10 @@ Happy flying with better privacy!
 ```
 
 ## Management interface
-The dispatcher has a management interface available by default in */opt/itns/var/run/mgmt*.
+The dispatcher has a management interface available by default in */opt/lthn/var/run/mgmt*.
 You can manually add or remove authids and query its status.
 ```
-echo "help" | socat stdio /opt/itns/var/run/mgmt
+echo "help" | socat stdio /opt/lthn/var/run/mgmt
 show authid [authid]
 show session [sessionid]
 kill session <sessionid>
@@ -301,14 +301,14 @@ cleanup
 
 Example 1: Show sessions:
 ```
-echo "show session" | socat stdio /opt/itns/var/run/mgmt
+echo "show session" | socat stdio /opt/lthn/var/run/mgmt
 Added (authid2: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:07 2018, balance=100000.000000, perminute=0.001000, minsleft=100000000.000000, charged_count=1, discharged_count=0
 
 ```
 
 Example 2: Topup authid:
 ```
- echo "topup 1abbcc 1" | socat stdio /opt/itns/var/run/mgmt
+ echo "topup 1abbcc 1" | socat stdio /opt/lthn/var/run/mgmt
 TopUp (1abbcc: serviceid=1a, created=Tue Jul 17 19:39:07 2018,modified=Tue Jul 17 19:39:47 2018, balance=100001.000000, perminute=0.001000, minsleft=100001000.000000, charged_count=2, discharged_count=0
 
 ```
@@ -320,7 +320,7 @@ To update the dispatcher, run the following commands from the directory that the
 git pull
 ./configure.sh --easy
 make install
-rm -f /opt/itns/var/authids.db
+rm -f /opt/lthn/var/authids.db
 sudo systemctl daemon-reload
 sudo systemctl restart lthnvpnd
 ```

@@ -64,9 +64,12 @@ done)
 
 if [ -f build/etc/systemd/system/lthnvpnd.service ]; then
     echo "Installing service file /etc/systemd/system/lthnvpnd.service as user $LTHN_USER"
-    sed -i "s^User=root^User=$LTHN_USER^" build/etc/systemd/system/lthnvpnd.service
+    sed -i "s^User=lthn^User=$LTHN_USER^" build/etc/systemd/system/lthnvpnd.service
     if ! diff -q build/etc/systemd/system/lthnvpnd.service /etc/systemd/system/lthnvpnd.service; then
       sudo cp build/etc/systemd/system/lthnvpnd.service /etc/systemd/system/
+    fi
+    if ! [ -f /etc/default/lthnvpnd ]; then
+      sudo cp conf/lthnvpnd.env /etc/default/lthnvpnd
     fi
 fi
 

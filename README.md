@@ -38,6 +38,14 @@ You can filter your traffic for specific sites. Please refer to [server](SERVER.
 #### Q: As a provider, do I need audit log?
 If somebody does something harmful, you are responsible as an exit node. It is up to you.
 
+#### Q: What is status of IPv4/IPv6 support?
+Both client and server works perfectly on IPv4 network. We are working on full native IPv6 support but for now, see this matrix.
+
+| Client  | Provider | Web        | Support             |
+| ------- | -------- | -------    | ------------------- | 
+| IPv4    | IPv4     | IPv4/IPv6  | Full                |
+| IPv6    | IPv6     | IPv4/IPv6  | No-session-tracking |
+
 ### Client
 
 #### Q: Will Lethean project make me anonymous? ####

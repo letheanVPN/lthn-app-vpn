@@ -1,0 +1,17 @@
+[Unit]
+Description=LTHN daemon
+ConditionPathExists=/opt/lthn/bin/letheand
+After=syslog.target
+
+[Service]
+EnvironmentFile=/etc/default/letheand
+Type=simple
+ExecStart=/opt/lthn/bin/letheand $LETHEAND_ARGS
+User=lthn
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
+

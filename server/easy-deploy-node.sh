@@ -9,6 +9,7 @@ if [ "$USER" = "root" ]; then
 fi
 
 # Set defaults. Can be overriden by env variables
+[ -z "$LTHNPREFIX" ] && LTHNPREFIX=/opt/lthn
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$PROVIDERID" ] && PROVIDERID=""
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
@@ -21,8 +22,11 @@ fi
 [ -z "$PORT" ] && PORT="8080"
 [ -z "$PROVTYPE" ] && PROVTYPE="residential"
 [ -z "$EMAIL" ] && EMAIL=""
+[ -z "$ZABBIX_SERVER" ] && ZABBIX_SERVER=""
+[ -z "$ZABBIX_HOSTNAME" ] && ZABBIX_HOSTNAME=$(uname -n)
+[ -z "$ZABBIX_META" ] && ZABBIX_META="LETHEANNODE"
 
-export BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL DAEMON_BIN_URL DAEMON_HOST WALLETPASS PROVIDERID PROVIDERKEY
+export LTHNPREFIX BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL DAEMON_BIN_URL DAEMON_HOST WALLETPASS PROVIDERID PROVIDERKEY ZABBIX_SERVER ZABBIX_PSK ZABBIX_PORT ZABBIX_META
 
 (
 sudo apt update
@@ -33,10 +37,33 @@ install_wallet(){
   DAEMONBZ2=$(basename $DAEMON_BIN_URL)
   DAEMONDIR=$(basename $DAEMON_BIN_URL .tar.bz2)
   wget -nc -c $DAEMON_BIN_URL && \
-  sudo tar --strip-components 1 -C /usr/local/bin/ -xjvf $DAEMONBZ2 && \
-  /usr/local/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
-  echo @reboot /usr/local/bin/lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log >wallet.crontab && \
-  crontab wallet.crontab 
+  sudo tar --strip-components 1 -C $LTHNPREFIX/bin/ -xjvf $DAEMONBZ2 && \
+  sudo cp conf/letheand.service /etc/systemd/system/ && \
+  sudo cp conf/letheand.env /etc/default/letheand && \
+  sudo cp conf/lethean-wallet-vpn-rpc.service /etc/systemd/system/ && \
+  cp conf/lethean-wallet-vpn-rpc.env wallet.env && \
+  $LTHNPREFIX/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
+  echo LETHEANVPNRPC_ARGS="--vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password '$WALLETPASS' --log-file ~/wallet.log" >>wallet.env && \
+  sudo cp wallet.env /etc/default/lethean-wallet-vpn-rpc
+  sudo sed -i "s^User=lthn^User=$USER^" /etc/systemd/system/letheand.service
+  sudo sed -i "s^User=lthn^User=$USER^" /etc/systemd/system/lethean-wallet-vpn-rpc.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable lethean-wallet-vpn-rpc
+  sudo systemctl start lethean-wallet-vpn-rpc
+}
+
+install_zabbix(){
+  wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb
+  sudo dpkg -i zabbix-release_4.0-2+stretch_all.deb
+  sudo apt update
+  sudo apt install -y zabbix-agent zabbix-sender
+  sudo sed -i "s/Server=(.*)/Server=$ZABBIX_SERVER" /etc/zabbix/zabbix_agentd.conf
+  sudo sed -i "s/ServerActive=(.*)/ServerActive=$ZABBIX_SERVER" /etc/zabbix/zabbix_agentd.conf
+  sudo sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME" /etc/zabbix/zabbix_agentd.conf
+  sudo sed -i "s/HostMetadata=(.*)/HostMetadata=$ZABBIX_META" /etc/zabbix/zabbix_agentd.conf
+  sudo systemctl daemon-reload
+  sudo systemctl enable zabbix-agent
+  sudo systemctl start zabbix-agent
 }
 
 if ! [ -f ~/vpn.address.txt ]; then
@@ -44,30 +71,40 @@ if ! [ -f ~/vpn.address.txt ]; then
 fi
 WALLET=$(cat ~/vpn.address.txt)
 
-if ! [ -d lethean-vpn  ]; then
-  git clone https://github.com/LetheanMovement/lethean-vpn.git
-  cd lethean-vpn
-else
-  cd lethean-vpn
-  git pull
+if [ -n "$ZABBIX_SERVER" ]; then
+  install_zabbix
 fi
-git checkout $BRANCH
+
+if [ -f lthnvpnd.py ] || [ -f server/lthnvpnd.py ]; then  
+  # We are already in dev directory
+  if [ -f lthnvpnd.py ];  then
+     cd ..
+  fi
+else
+  if ! [ -d lethean-vpn  ]; then
+    git clone https://github.com/LetheanMovement/lethean-vpn.git
+    cd lethean-vpn
+  else
+    cd lethean-vpn
+    git pull
+  fi
+  git checkout $BRANCH
+fi
+
 pip3 install -r requirements.txt
 if [ -n "$PROVIDERID" ]; then
   provideropts="--with-providerid $PROVIDERID --with-providerkey $PROVIDERKEY"
 fi
-./configure.sh --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
+./configure.sh --prefix "$LTHNPREFIX" --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
 make install FORCE=1
-/opt/lthn/bin/lthnvpnd --generate-sdp \
+$LTHNPREFIX/bin/itnsdispatcher --generate-sdp \
      --provider-type $PROVTYPE \
      --provider-name EasyProvider \
      --wallet-address "$WALLET" \
-     --sdp-service-crt /opt/lthn/etc/ca/certs/ha.cert.pem \
+     --sdp-service-crt $LTHNPREFIX/etc/ca/certs/ha.cert.pem \
      --sdp-service-name proxy --sdp-service-id 1a --sdp-service-fqdn $ENDPOINT --sdp-service-port $PORT \
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 10 --sdp-service-verifications 0
-
-/usr/local/bin/lethean-wallet-vpn-rpc --wallet-file ~/vpn --daemon-host $DAEMON_HOST --vpn-rpc-bind-port 14660 --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file ~/wallet.log </dev/null >/dev/null 2>/dev/null &
 
 sudo systemctl daemon-reload
 sudo systemctl enable squid
@@ -85,8 +122,8 @@ sudo systemctl restart lthnvpnd
 sudo systemctl disable haproxy
 sudo systemctl stop haproxy
 
-cat /opt/lthn/etc/sdp.json
-/opt/lthn/bin/lthnvpnd --upload-sdp
+cat /opt/itns/etc/sdp.json
+$LTHNPREFIX/bin/lthnvpnd --upload-sdp
 
 ) 2>&1 | tee easy.log 
 

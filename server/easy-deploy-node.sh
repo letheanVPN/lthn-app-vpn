@@ -36,13 +36,15 @@ sudo apt-get install -y joe less mc git python3 python3-pip haproxy openvpn tmux
 install_wallet(){
   DAEMONBZ2=$(basename $DAEMON_BIN_URL)
   DAEMONDIR=$(basename $DAEMON_BIN_URL .tar.bz2)
+  sudo mkdir -p $LTHNPREFIX/bin && \
+  sudo chown $USER $LTHNPREFIX/bin && \
   wget -nc -c $DAEMON_BIN_URL && \
   sudo tar --strip-components 1 -C $LTHNPREFIX/bin/ -xjvf $DAEMONBZ2 && \
   sudo cp conf/letheand.service /etc/systemd/system/ && \
   sudo cp conf/letheand.env /etc/default/letheand && \
   sudo cp conf/lethean-wallet-vpn-rpc.service /etc/systemd/system/ && \
   cp conf/lethean-wallet-vpn-rpc.env wallet.env && \
-  $LTHNPREFIX/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
+  $LTHNPREFIX/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet ~/vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
   echo LETHEANVPNRPC_ARGS="--vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password '$WALLETPASS' --log-file ~/wallet.log" >>wallet.env && \
   sudo cp wallet.env /etc/default/lethean-wallet-vpn-rpc
   sudo sed -i "s^User=lthn^User=$USER^" /etc/systemd/system/letheand.service
@@ -66,15 +68,6 @@ install_zabbix(){
   sudo systemctl start zabbix-agent
 }
 
-if ! [ -f ~/vpn.address.txt ]; then
-  install_wallet
-fi
-WALLET=$(cat ~/vpn.address.txt)
-
-if [ -n "$ZABBIX_SERVER" ]; then
-  install_zabbix
-fi
-
 if [ -f lthnvpnd.py ] || [ -f server/lthnvpnd.py ]; then  
   # We are already in dev directory
   if [ -f lthnvpnd.py ];  then
@@ -91,13 +84,22 @@ else
   git checkout $BRANCH
 fi
 
+if ! [ -f ~/vpn.address.txt ]; then
+  install_wallet
+fi
+WALLET=$(cat ~/vpn.address.txt)
+
+if [ -n "$ZABBIX_SERVER" ]; then
+  install_zabbix
+fi
+
 pip3 install -r requirements.txt
 if [ -n "$PROVIDERID" ]; then
   provideropts="--with-providerid $PROVIDERID --with-providerkey $PROVIDERKEY"
 fi
 ./configure.sh --prefix "$LTHNPREFIX" --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
 make install FORCE=1
-$LTHNPREFIX/bin/itnsdispatcher --generate-sdp \
+$LTHNPREFIX/bin/lthnvpnd --generate-sdp \
      --provider-type $PROVTYPE \
      --provider-name EasyProvider \
      --wallet-address "$WALLET" \

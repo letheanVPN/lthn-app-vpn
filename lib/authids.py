@@ -156,8 +156,8 @@ class AuthId(object):
     def isKnownTxId(self,txid):
         return(txid in self.txids)
     
-    def topUp(self, itns, msg="", txid=None, confirmations=None):
-        """ TopUp authid. If itns is zero, only update internal acls of services. If payment has same txid, only update confirmations"""
+    def topUp(self, lthn, msg="", txid=None, confirmations=None):
+        """ TopUp authid. If lthn is zero, only update internal acls of services. If payment has same txid, only update confirmations"""
         if txid:
             if (self.isKnownTxId(txid)):
                 self.confirmations=confirmations
@@ -168,13 +168,13 @@ class AuthId(object):
                 self.txids[txid] = txid
                 self.txid = txid
                 
-        if (itns > 0):
-            self.balance += itns
+        if (lthn > 0):
+            self.balance += lthn
             self.lastmodify = time.time()
             self.lastcharge = time.time()
             self.charged_count += 1
-            log.L.debug("Authid %s: Topup %.3f, new balance %.3f" % (self.getId(), itns, self.balance))
-            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%.3f,balance=%.3f %s" % (itns, self.balance, msg))
+            log.L.debug("Authid %s: Topup %.3f, new balance %.3f" % (self.getId(), lthn, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%.3f,balance=%.3f %s" % (lthn, self.balance, msg))
         
         if self.isCreditOk() and not self.isActivated():
             self.activate()
@@ -189,16 +189,16 @@ class AuthId(object):
         """ If authid had at least one session, it is spending until zero. """
         return(self.spending)
     
-    def spend(self, itns, msg=""):
+    def spend(self, lthn, msg=""):
         """ Spend authid. If balance is not enough for given service, remove it from its acl. """
-        if (itns > 0):
-            self.balance -= itns
+        if (lthn > 0):
+            self.balance -= lthn
             self.lastmodify = time.time()
-            self.overalltime += itns/self.cost
+            self.overalltime += lthn/self.cost
             self.lastdisCharge = time.time()
             self.discharged_count += 1
-            log.L.debug("Authid %s: Spent %f, new balance %f" % (self.getId(), itns, self.balance))
-            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "spent,amount=%s,balance=%s %s" % (itns, self.balance, msg))
+            log.L.debug("Authid %s: Spent %f, new balance %f" % (self.getId(), lthn, self.balance))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "spent,amount=%s,balance=%s %s" % (lthn, self.balance, msg))
         
         if not self.isCreditOk() and self.isActivated():
             self.deActivate()
@@ -252,8 +252,8 @@ class AuthIds(object):
             if not payment.invalid:
                 self.add(payment)
     
-    def topUp(self, paymentid, itns, msg="", txid=None, confirmations=None):
-        self.authids[paymentid].topUp(itns, msg, txid, confirmations)
+    def topUp(self, paymentid, lthn, msg="", txid=None, confirmations=None):
+        self.authids[paymentid].topUp(lthn, msg, txid, confirmations)
 
     def spend(self, paymentid, balance, msg=""):
         self.authids[paymentid].spend(balance, msg)

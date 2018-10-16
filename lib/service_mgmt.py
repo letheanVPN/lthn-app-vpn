@@ -160,9 +160,9 @@ class ServiceMgmt(Service):
         self.mgmtWrite("show authid [authid]\n")
         self.mgmtWrite("show session [sessionid]\n")
         self.mgmtWrite("kill session <sessionid>\n")
-        self.mgmtWrite("topup <authid> <itns>\n")
-        self.mgmtWrite("topup <authid> <itns> [txid confirmations]\n")
-        self.mgmtWrite("spend <authid> <itns>\n")
+        self.mgmtWrite("topup <authid> <lthn>\n")
+        self.mgmtWrite("topup <authid> <lthn> [txid confirmations]\n")
+        self.mgmtWrite("spend <authid> <lthn>\n")
         self.mgmtWrite("activate <authid>\n")
         self.mgmtWrite("del authid <authid>\n")
         self.mgmtWrite("loglevel {DEBUG|INFO|WARNING|ERROR}\n")
@@ -212,19 +212,19 @@ class ServiceMgmt(Service):
         else:
             self.mgmtWrite("Bad authid?\n")
         
-    def topUpAuthId(self, id, itns, txid, confirmations):
+    def topUpAuthId(self, id, lthn, txid, confirmations):
         authid = id.upper()
         sid = id[0:2]
-        log.L.info("Got payment from MGMT for service %s, auth=%s, amount=%s" % (sid, authid, itns))
-        authids.AUTHIDS.update(authid, sid, float(itns), confirmations=confirmations, height=0, txid=txid)
+        log.L.info("Got payment from MGMT for service %s, auth=%s, amount=%s" % (sid, authid, lthn))
+        authids.AUTHIDS.update(authid, sid, float(lthn), confirmations=confirmations, height=0, txid=txid)
         if authids.AUTHIDS.get(id):
             self.mgmtWrite("Topup (" + authids.AUTHIDS.get(authid).toString() + ")\n")
         else:
             self.mgmtWrite("Bad serviceid.\n")
     
-    def spendAuthId(self, id, itns):
+    def spendAuthId(self, id, lthn):
         if (authids.AUTHIDS.get(id)):
-            authids.AUTHIDS.get(id).spend(float(itns), "MGMT")
+            authids.AUTHIDS.get(id).spend(float(lthn), "MGMT")
             self.mgmtWrite("Spent (" + authids.AUTHIDS.get(id).toString() + ")\n")
         else:
             self.mgmtWrite("Bad authid?\n")

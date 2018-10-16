@@ -178,7 +178,7 @@ class SDP(object):
 
     def setProviderId(self, providerid=None):
         if (providerid == None):
-            print('Enter provider ID (PUBLIC KEY). This should come directly from `itnsdispatcher.py --generate-providerid FILE` - make sure it is the file ending in .public, not .seed or .private!')
+            print('Enter provider ID (PUBLIC KEY). This should come directly from `lthnvpnd.py --generate-providerid FILE` - make sure it is the file ending in .public, not .seed or .private!')
             choice = input('[64 character hexadecimal] ').strip()
         else:
             choice = providerid

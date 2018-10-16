@@ -10,7 +10,7 @@ import sys
 class Config(object):
     """Configuration container"""
     
-    PREFIX = "/opt/itns"
+    PREFIX = "/opt/lthn"
     OPENVPN_BIN = None
     HAPROXY_BIN = None
     SUDO_BIN = None
@@ -41,7 +41,7 @@ class Config(object):
         type(self).LOGLEVEL = logging.WARNING
         type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"
         type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
-        type(self).PIDFILE = type(self).PREFIX + "/var/run/itnsdispatcher.pid"
+        type(self).PIDFILE = type(self).PREFIX + "/var/run/lthnvpnd.pid"
         type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
         
         s = SDP()

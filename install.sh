@@ -46,8 +46,10 @@ sudo chown "$LTHN_USER" "$INSTALL_PREFIX/$LTHN_PREFIX/dev/net/tun"
 # Copy bin files
 sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lthnvpnd.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnd
 sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./client/lthnvpnc.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnc
+sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lvmgmt.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lvmgmt
 sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnd
 sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnc
+sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lvmgmt
 
 # Copy lib files
 for f in lib/*py; do
@@ -87,7 +89,7 @@ if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/dispatcher.ini ]; then
 fi
 
 if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/sdp.json ]; then
-    echo "ERROR: No SDP config file found. You can use lthnvpnd --generate-sdp to create it for you."
+    echo "ERROR: No SDP config file found. You can use lvmgmt --generate-sdp to create it for you."
     ERRORS=true 
 fi
 

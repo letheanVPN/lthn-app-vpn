@@ -325,7 +325,7 @@ if [ -n "$PROVIDERID" ]; then
     echo $PROVIDERKEY >build/etc/provider.private
 else
     if [ -n "$generate_providerid" ]; then
-        "$PYTHON_BIN" server/lthnvpnd.py --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
+        "$PYTHON_BIN" server/lvmgmt.py --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
     fi
 fi
 

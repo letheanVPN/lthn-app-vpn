@@ -101,7 +101,6 @@ class SDP(object):
 
         validNodeTypes = ['residential', 'commercial', 'government']
         if (self.data['provider']['nodeType'] not in validNodeTypes):
-            log.L.error('Invalid node type.')
             if not self.setNodeType(cap.nodeType):
                 return False
 
@@ -387,9 +386,9 @@ class SDPService(object):
                 cost=0.01,
                 downloadSpeed=None,
                 uploadSpeed=None,
-                firstPrePaidMinutes=2,
-                subsequentPrePaidMinutes=2,
-                firstVerificationsNeeded=1,
+                firstPrePaidMinutes=30,
+                subsequentPrePaidMinutes=30,
+                firstVerificationsNeeded=0,
                 subsequentVerificationsNeeded=1,
                 proxy=dict(
                     certificates=[],
@@ -447,38 +446,49 @@ class SDPService(object):
         ret = False
         
         while not ret:
+            log.L.info('Setting service name')
             ret = self.setName(cap.serviceName)
         ret = False
         while not ret:
+            log.L.info('Setting service type')
             ret = self.setType(cap.serviceType)
         ret = False
         while not ret:
+            log.L.info('Setting service port')
+            ret = self.setPort(cap.servicePort)
+        while not ret:
+            log.L.info('Setting service endpoint')
             ret = self.setEndpoints(cap.serviceFqdn)
         ret = False
-        while not ret:
-            ret = self.setPort(cap.servicePort)
         if not self.loadCertificate(cap.serviceCrt):
             sys.exit(1)
         ret = False
         while not ret:
+            log.L.info('Setting service cost')
             ret = self.setCost(cap.serviceCost)
         ret = False
         while not ret:
+            log.L.info('Setting service allow refunds')
             ret = self.setAllowRefunds(cap.serviceAllowRefunds)
         ret = False
         while not ret:
+            log.L.info('Setting service disable')
             ret = self.setDisable(cap.serviceDisable)
         ret = False
         while not ret:
-            ret = self.setDownloadSpeed(cap.serviceDownloadSpeed)
+            log.L.info('Setting service download speed')
+            ret = self.setDownloadSpeed(int(cap.serviceDownloadSpeed) * 1000 * 1000)
         ret = False
         while not ret:
-            ret = self.setUploadSpeed(cap.serviceUploadSpeed)
+            log.L.info('Setting service upload speed')
+            ret = self.setUploadSpeed(int(cap.serviceUploadSpeed) * 1000 * 1000)
         ret = False
         while not ret:
+            log.L.info('Setting service prepaid minutes')
             ret = self.setPrepaidMinutes(cap.servicePrepaidMinutes)
         ret = False
         while not ret:
+            log.L.info('Setting service verifications needed')
             ret = self.setVerificationsNeeded(cap.serviceVerificationsNeeded)
 
         return True
@@ -840,7 +850,6 @@ class SDPService(object):
 
 
     def setCost(self, cost):
-        print('Enter service cost in Intense Coin (LTHN) per minute. You may use up to 8 decimal places. Minimum 0.00000001')
         if (self.data['cost']):
             if (cost):
                 choice = float(cost)

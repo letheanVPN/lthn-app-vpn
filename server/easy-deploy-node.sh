@@ -44,8 +44,9 @@ install_wallet(){
   sudo cp conf/letheand.env /etc/default/letheand && \
   sudo cp conf/lethean-wallet-vpn-rpc.service /etc/systemd/system/ && \
   cp conf/lethean-wallet-vpn-rpc.env wallet.env && \
-  $LTHNPREFIX/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet ~/vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
-  echo LETHEANVPNRPC_ARGS="--vpn-rpc-bind-port 14660 --wallet-file ~/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password '$WALLETPASS' --log-file ~/wallet.log" >>wallet.env && \
+  $LTHNPREFIX/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet $HOME/vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
+  echo LETHEANVPNRPC_ARGS="--vpn-rpc-bind-port 14660 --wallet-file $HOME/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password '$WALLETPASS' --log-file $HOME/wallet.log" >>wallet.env && \
+  echo cd $HOME >>wallet.env && \
   sudo cp wallet.env /etc/default/lethean-wallet-vpn-rpc
   sudo sed -i "s^User=lthn^User=$USER^" /etc/systemd/system/letheand.service
   sudo sed -i "s^User=lthn^User=$USER^" /etc/systemd/system/lethean-wallet-vpn-rpc.service
@@ -84,10 +85,10 @@ else
   git checkout $BRANCH
 fi
 
-if ! [ -f ~/vpn.address.txt ]; then
+if ! [ -f $HOME/vpn.address.txt ]; then
   install_wallet
 fi
-WALLET=$(cat ~/vpn.address.txt)
+WALLET=$(cat $HOME/vpn.address.txt)
 
 if [ -n "$ZABBIX_SERVER" ]; then
   install_zabbix
@@ -99,7 +100,7 @@ if [ -n "$PROVIDERID" ]; then
 fi
 ./configure.sh --prefix "$LTHNPREFIX" --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
 make install FORCE=1
-$LTHNPREFIX/bin/lthnvpnd --generate-sdp \
+$LTHNPREFIX/bin/lvmgmt --generate-sdp \
      --provider-type $PROVTYPE \
      --provider-name EasyProvider \
      --wallet-address "$WALLET" \
@@ -124,7 +125,7 @@ sudo systemctl restart lthnvpnd
 sudo systemctl disable haproxy
 sudo systemctl stop haproxy
 
-cat /opt/itns/etc/sdp.json
+cat /opt/lthn/etc/sdp.json
 $LTHNPREFIX/bin/lthnvpnd --upload-sdp
 
 ) 2>&1 | tee easy.log 

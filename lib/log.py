@@ -52,8 +52,8 @@ class Audit(object):
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
         
-    def audit(self, action, type, obj, msg=''):
-        txt = "%s,%s,%s,%s" % (action, type, obj, msg)
+    def audit(self, action, type, obj=None, lthn=None, wallet=None, paymentid=None, srcip=None, dstip=None, msg=None):
+        txt = "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (action, type, obj, lthn, wallet, paymentid, srcip, dstip, msg)
         return(self.logger.info(txt))
 
 L = None

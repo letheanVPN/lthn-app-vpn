@@ -89,7 +89,7 @@ make install [FORCE=1]
 After installation, you will be instructed to generate the sdp.json file, which is required to run the dispatcher.
 You can either answer questions using the wizard (*--generate-sdp*) or you can use cmdline params to set defaults. See help.
 ```bash
-/opt/lthn/bin/lthnvpnd --generate-sdp --wallet-address some_wallet_address [--sdp-service-name someName] ...
+/opt/lthn/bin/lvmgmt --generate-sdp --wallet-address some_wallet_address [--sdp-service-name someName] ...
 
 ```
 

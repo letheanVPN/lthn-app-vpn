@@ -29,7 +29,7 @@ class ServiceSyslog(Service):
                 log.L.debug("syslog: " + repr(msg))
                 # 127.0.0.1:45940 [04/Sep/2018:18:40:06.448] ssltunnel~ b-preproxy/s-proxy 1/0/0/12/+12 200 +37 - - ---- 2/2/1/1/0 0/0 {1ACCCCC|TO_PROXY_CONNECT|} "CONNECT www.idnes.cz:443 HTTP/1.1"
                 p = re.search(
-                    "(^\d*\.\d*\.\d*\.\d*):(\d*) " # Host and port
+                    "(^\d*\.\d*\.\d*\.\d*)|(\[(.*)\]):(\d*) " # Host and port
                     + "\[(.*)\] " # Date 
                     + "(\w*)~? " # Frontend
                     + "(b-\w*)/(<?s-\w*>?) "  # Backend/Server
@@ -37,7 +37,7 @@ class ServiceSyslog(Service):
                     + "(\d*) " # State
                     + ".*" # Not needed
                     + "{(.*)\|(.*)\|(.*)} " # authid, reason, overlimit
-                    + '"(.*)"'
+                    + '"(.*) (.*) (.*)"'
                     , msg)
                 if (p):
                     ip = p.group(1)
@@ -50,9 +50,11 @@ class ServiceSyslog(Service):
                     authid = p.group(9)
                     reason = p.group(10)
                     overlimit = p.group(11)
-                    action = p.group(12)
+                    method = p.group(12)
+                    uri = p.group(13)
+                    proto = p.group(14)
                     if (server=="s-proxy"):
-                        sessions.SESSIONS.add(authid, ip, port, action)
+                        sessions.SESSIONS.add(authid, ip, port, method=method, uri=uri, proto=proto)
                     else:
                         log.L.debug("Ignoring haproxy log for server " + server)
                 else:

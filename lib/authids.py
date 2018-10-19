@@ -174,7 +174,7 @@ class AuthId(object):
             self.lastcharge = time.time()
             self.charged_count += 1
             log.L.debug("Authid %s: Topup %.3f, new balance %.3f" % (self.getId(), lthn, self.balance))
-            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "topup,amount=%.3f,balance=%.3f %s" % (lthn, self.balance, msg))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, paymentid=self.id, lthn="+%.3f" % (lthn)) 
         
         if self.isCreditOk() and not self.isActivated():
             self.activate()
@@ -198,7 +198,7 @@ class AuthId(object):
             self.lastdisCharge = time.time()
             self.discharged_count += 1
             log.L.debug("Authid %s: Spent %f, new balance %f" % (self.getId(), lthn, self.balance))
-            log.A.audit(log.A.AUTHID, log.A.MODIFY, self.id, "spent,amount=%s,balance=%s %s" % (lthn, self.balance, msg))
+            log.A.audit(log.A.AUTHID, log.A.MODIFY, paymentid=self.id, lthn="-%.3f" % (lthn))
         
         if not self.isCreditOk() and self.isActivated():
             self.deActivate()
@@ -235,7 +235,7 @@ class AuthIds(object):
         
     def add(self, payment):
         log.L.warning("New authid %s" % (payment.getId()))
-        log.A.audit(log.A.AUTHID, log.A.ADD, payment.getId(), "init, balance=%.3f, confirmations=%s" % (payment.getBalance(), payment.getConfirmations()))
+        log.A.audit(log.A.AUTHID, log.A.ADD, paymentid=payment.getId(), lthn=balance, msg="init")
         self.authids[payment.getId()] = payment
         
     def update(self, auth_id, service_id, amount, confirmations, height=0, txid=None):
@@ -271,7 +271,7 @@ class AuthIds(object):
         p = self.get(paymentid)
         if (p):
             log.L.warning("Removing authid %s (balance=%.3f)" % (paymentid, p.getBalance()))
-            log.A.audit(log.A.AUTHID,log.A.DEL,paymentid, "%.3f" % (p.getBalance()))
+            log.A.audit(log.A.AUTHID, log.A.DEL, paymentid=paymentid, lthn=p.getBalance())
             p.getService().delAuthId(p)
             self.authids.pop(paymentid)
         

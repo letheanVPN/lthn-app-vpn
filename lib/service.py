@@ -203,11 +203,11 @@ class Service(object):
         log.L.info("Service %s (%s), id %s" % (self.getName(), self.getType(), self.getId()))
     
     def addAuthId(self, authid, msg=""):
-        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'activated in service %s %s' % (self.id, msg))
+        log.A.audit(log.A.AUTHID, log.A.MODIFY, paymentid=authid.getId(), serviceid=self.id, msg='activated')
         return(True)
         
     def delAuthId(self, authid, msg=""):
-        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'deactivated in service %s %s' % (self.id, msg))
+        log.A.audit(log.A.AUTHID, log.A.MODIFY, paymentid=authid.getId(), serviceid=self.id, msg='deactivated')
         return(True)
 
     def getSessions(self):

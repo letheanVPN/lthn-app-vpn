@@ -8,9 +8,13 @@ import services
 import sys
 from service_ha import ServiceHa
 from service_ovpn import ServiceOvpn
+import socket
+import ipaddress
+import hashlib
+import base64
 
 def timefmt(tme):
-    return(time.strftime("%Y-%m-%d_%H:%M", time.localtime(tme)))
+    return(time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(tme)))
 
 def valuesToString(values):
     str=""
@@ -21,6 +25,51 @@ def valuesToString(values):
 def valuesToJson(values):
     str=json.dumps(values)
     return(str)
+
+def is_valid_ipv4_address(address):
+    try:
+        socket.inet_pton(socket.AF_INET, address)
+    except AttributeError:  # no inet_pton here, sorry
+        try:
+            socket.inet_aton(address)
+        except socket.error:
+            return False
+        return address.count('.') == 3
+    except socket.error:  # not a valid address
+        return False
+
+    return True
+
+def anonymise_ip(ip):
+    if is_valid_ipv4_address(ip):
+        srcnet = ipaddress.ip_network(ip+"/24", strict=False)
+        h = hashlib.sha1()
+        h.update(str(srcnet).encode("utf-8"))
+        return(h.hexdigest())
+    elif is_valid_ipv6_address(ip):
+        srcnet = ipaddress.ip_network(ip+"/64", strict=False)
+        h = hashlib.sha1()
+        h.update(str(srcnet).encode("utf-8"))
+        return(h.hexdigest())
+    else:
+        return(None)
+    
+def anonymise_uri(uri):
+    h = hashlib.sha1()
+    h.update(uri.encode("utf-8"))
+    return(h.hexdigest())
+    
+def anonymise_paymentid(paymentid):
+    p = base64.b64encode(paymentid.encode("utf-8")).decode("utf-8")
+    print(p)
+    return(p[0:3] + p[-3:])
+
+def is_valid_ipv6_address(address):
+    try:
+        socket.inet_pton(socket.AF_INET6, address)
+    except socket.error:  # not a valid address
+        return False
+    return True
 
 def helpmsg(p):
     print(p.format_help())

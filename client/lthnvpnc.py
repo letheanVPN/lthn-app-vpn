@@ -12,13 +12,14 @@ import logging
 import logging.config
 import config
 import configargparse
-from util import *
+import util
 import services
 
 # Starting here
 def main(argv):
     config.CONFIG = config.Config("dummy")
     p = configargparse.getArgumentParser(ignore_unknown_config_file_keys=True, fromfile_prefix_chars='@')
+    util.commonArgs(p)
     p.add('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=config.Config.CONFIGFILE, help='Config file')
     p.add('-h', '--help',                    metavar='HELP', required=None, action='store_const', dest='h', const='h', help='Help')
     p.add('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
@@ -30,51 +31,18 @@ def main(argv):
     p.add(       '--wallet-password',           dest='walletPassword', metavar='PW', required=None, help='Wallet passwd')
     p.add(       '--sdp-server-uri',            dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.staging.cloud.lethean.io/v1')
 
-    cfg = p.parse_args()
-    
-    log.L = log.Log(level=cfg.d)
-    ah = logging.FileHandler(cfg.a)
-    log.A = log.Audit(handler=ah)
-    
     # Initialise config
+    cfg = p.parse_args()    
     config.CONFIG = config.Config("dummy")
+    util.parseCommonArgs(p, cfg)
     config.Config.CAP = cfg
-    config.Config.VERBOSE = cfg.v
-    config.Config.CONFIGFILE = cfg.config
-    config.Config.SDPFILE = cfg.sdp
-    config.Config.d = cfg.d
-    config.Config.SDPURI = cfg.sdpUri
 
-    if cfg.sdpUri.endswith('/'):
-        cfg.sdpUri = cfg.sdpUri[:-1]
-    
     # Initialise services
     services.SERVICES = services.Services()
 
-    if (cfg.h):
-        print(p.format_help())
-        if (config.Config.VERBOSE):
-            print(p.format_values())
-            print('Service options (can be set by [service-id] sections in ini file:')
-            ha = ServiceHa()
-            ha.helpOpts("==Haproxy==")
-            ovpn = ServiceOvpn()
-            ovpn.helpOpts("==OpenVPN==")
-            print('Use log level DEBUG during startup to see values assigned to services from SDP.')
-            print()
-        else:
-            print("Use -v option to more help info.")
-            print("Happy flying with better privacy!")
-        sys.exit()
-        
     log.A.audit(log.A.START, log.A.SERVICE, "itnsconnect")
-    services.SERVICES.load()
     
     services.SERVICES.load()
-    # Generate client config for service id and put to stdout
-    id = "1a"
-    services.SERVICES.get(id).createClientConfig()
-    
     sys.exit()
         
 if __name__ == "__main__":

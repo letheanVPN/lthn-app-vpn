@@ -123,7 +123,7 @@ class ServiceHa(Service):
     def killSession(self, id, info=''):
         self.mgmtConnect()
         self.mgmtWrite("shutdown session " + id + "\n")
-        log.A.audit(log.A.SESSION, log.A.KILL, id, info)
+        log.A.audit(log.A.SESSION, log.A.KILL, id, msg=info)
         self.mgmtClose()
         
     def getSessions(self):

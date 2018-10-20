@@ -6,7 +6,7 @@ export TOPDIR=$(realpath $(dirname $0))
 export PARMS="$@"
 
 # Static defaults
-ITNS_PREFIX=/opt/itns/
+LTHN_PREFIX=/opt/lthn/
 
 # General usage help
 usage() {
@@ -48,8 +48,8 @@ defaults() {
     findcmd pip3 PIP_BIN optional
     findcmd sudo SUDO_BIN optional
 
-    [ -z "$ITNS_USER" ] && ITNS_USER=$USER
-    [ -z "$ITNS_GROUP" ] && ITNS_GROUP=$USER
+    [ -z "$LTHN_USER" ] && LTHN_USER=$USER
+    [ -z "$LTHN_GROUP" ] && LTHN_GROUP=$USER
     wallet_address="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     wallet_rpc_uri=http://127.0.0.1:14660/json_rpc
     wallet_rpc_user=dispatcher
@@ -71,14 +71,14 @@ summary() {
     echo "Openssl bin:  $OPENSSL_BIN"
     echo "Openvpn bin:  $OPENVPN_BIN"
     echo "HAproxy bin:  $HAPROXY_BIN"
-    echo "Prefix:       $ITNS_PREFIX"
+    echo "Prefix:       $LTHN_PREFIX"
     echo "Bin dir:      $bin_dir"
     echo "Conf dir:     $sysconf_dir"
     echo "CA dir:       $ca_dir"
     echo "Data dir:     $data_dir"
     echo "Temp dir:     $tmp_dir"
-    echo "Run as user:  $ITNS_USER"
-    echo "Run as group:  $ITNS_GROUP"
+    echo "Run as user:  $LTHN_USER"
+    echo "Run as group:  $LTHN_GROUP"
     echo
 }
 
@@ -129,15 +129,15 @@ generate_crt() {
 
 generate_env() {
     cat <<EOF
-ITNS_PREFIX=$ITNS_PREFIX
+LTHN_PREFIX=$LTHN_PREFIX
 OPENVPN_BIN=$OPENVPN_BIN
 PYTHON_BIN=$PYTHON_BIN
 PIP_BIN=$PIP_BIN
 SUDO_BIN=$SUDO_BIN
 HAPROXY_BIN=$HAPROXY_BIN
 OPENSSL_BIN=$OPENSSL_BIN
-ITNS_USER=$ITNS_USER
-ITNS_GROUP=$ITNS_GROUP
+LTHN_USER=$LTHN_USER
+LTHN_GROUP=$LTHN_GROUP
 
 EOF
 }
@@ -151,7 +151,7 @@ while [[ $# -gt 0 ]]; do
         usage
     ;;
     --prefix)
-        ITNS_PREFIX="$2"
+        LTHN_PREFIX="$2"
         shift
         shift
     ;;
@@ -186,12 +186,12 @@ while [[ $# -gt 0 ]]; do
         shift
     ;;
     --runas-user)
-        ITNS_USER="$2"
+        LTHN_USER="$2"
         shift
         shift
     ;;
     --runas-group)
-        ITNS_GROUP="$2"
+        LTHN_GROUP="$2"
         shift
         shift
     ;;
@@ -264,8 +264,8 @@ while [[ $# -gt 0 ]]; do
     ;;
     --easy)
         cert_pass="1234"
-        cert_cn="ITNSEasyDeploy"
-        ITNS_USER="$USER"
+        cert_cn="LTHNEasyDeploy"
+        LTHN_USER="$USER"
         install_service=1
         generate_providerid=1
         generate_ca=1
@@ -281,11 +281,11 @@ while [[ $# -gt 0 ]]; do
 esac
 done
 
-bin_dir=${ITNS_PREFIX}/bin/
-sysconf_dir=${ITNS_PREFIX}/etc/
-ca_dir=${ITNS_PREFIX}/etc/ca/
-data_dir=${ITNS_PREFIX}/var/
-tmp_dir=${ITNS_PREFIX}/tmp/
+bin_dir=${LTHN_PREFIX}/bin/
+sysconf_dir=${LTHN_PREFIX}/etc/
+ca_dir=${LTHN_PREFIX}/etc/ca/
+data_dir=${LTHN_PREFIX}/var/
+tmp_dir=${LTHN_PREFIX}/tmp/
 
 if ! $HAPROXY_BIN -v | grep -qE "version 1.7|version 1.6|version 1.8"; then
     echo "Incompatible version of haproxy! You need 1.6.x, 1.7.x or 1.8.x version for now."
@@ -325,21 +325,21 @@ if [ -n "$PROVIDERID" ]; then
     echo $PROVIDERKEY >build/etc/provider.private
 else
     if [ -n "$generate_providerid" ]; then
-        "$PYTHON_BIN" server/itnsdispatcher.py --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
+        "$PYTHON_BIN" server/lvmgmt.py --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
     fi
 fi
 
 if [ -n "$generate_ini" ]; then
     sed \
-        -e "s#{ca}#${ITNS_PREFIX}/etc/ca/certs/ca.cert.pem#g" \
+        -e "s#{ca}#${LTHN_PREFIX}/etc/ca/certs/ca.cert.pem#g" \
         -e "s#{providerid}#$(cat build/etc/provider.public)#g" \
         -e "s#{providerkey}#$(cat build/etc/provider.private)#g" \
-        -e "s#{hacrt}#${ITNS_PREFIX}/etc/ca/certs/ha.cert.pem#g" \
-        -e "s#{vpncrt}#${ITNS_PREFIX}/etc/ca/certs/vpn.cert.pem#g" \
-        -e "s#{hakey}#${ITNS_PREFIX}/etc/ca/private/ha.cert.pem#g" \
-        -e "s#{vpnkey}#${ITNS_PREFIX}/etc/ca/private/ha.cert.pem#g" \
-        -e "s#{haboth}#${ITNS_PREFIX}/etc/ca/certs/ha.both.pem#g" \
-        -e "s#{vpnboth}#${ITNS_PREFIX}/etc/ca/certs/vpn.both.pem#g" \
+        -e "s#{hacrt}#${LTHN_PREFIX}/etc/ca/certs/ha.cert.pem#g" \
+        -e "s#{vpncrt}#${LTHN_PREFIX}/etc/ca/certs/vpn.cert.pem#g" \
+        -e "s#{hakey}#${LTHN_PREFIX}/etc/ca/private/ha.cert.pem#g" \
+        -e "s#{vpnkey}#${LTHN_PREFIX}/etc/ca/private/ha.cert.pem#g" \
+        -e "s#{haboth}#${LTHN_PREFIX}/etc/ca/certs/ha.both.pem#g" \
+        -e "s#{vpnboth}#${LTHN_PREFIX}/etc/ca/certs/vpn.both.pem#g" \
         -e "s#{wallet_rpc_user}#$wallet_rpc_user#g" \
         -e "s#{wallet_rpc_pass}#$wallet_rpc_pass#g" \
         -e "s#{wallet_address}#$wallet_address#g" \
@@ -355,7 +355,7 @@ fi
 
 if [ -n "$install_service" ]; then
     mkdir -p build/etc/systemd/system
-    cp conf/itnsdispatcher.service build/etc/systemd/system/
+    cp conf/lthnvpnd.service build/etc/systemd/system/
 fi
 
 generate_env >env.mk

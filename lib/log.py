@@ -1,5 +1,6 @@
 
 import logging
+import util
 
 class Log(object):
     
@@ -42,7 +43,7 @@ class Audit(object):
     PWALLET = "PROVIDER_WALLET"
     SDP = "SDP"
     
-    def __init__(self, handler=None, level=logging.INFO):
+    def __init__(self, handler=None, level=logging.INFO, anon=True):
         self.logger = logging.getLogger('audit')
         if (handler):
             formatter = logging.Formatter('%(asctime)s %(message)s')
@@ -51,9 +52,18 @@ class Audit(object):
             handler = logging.StreamHandler()
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
+        self.anon = anon
         
-    def audit(self, action, type, obj, msg=''):
-        txt = "%s,%s,%s,%s" % (action, type, obj, msg)
+    def audit(self, action, type, obj=None, anon=None, lthn=None, wallet=None, paymentid=None, sessionid=None, srcip=None, srcport=None, dstport=None, dstip=None, msg=None, method=None, uri=None, serviceid=None):
+        if (anon=="yes" or (anon is None and self.anon is True)):
+            if paymentid:
+                paymentid = util.anonymise_paymentid(paymentid)
+            if srcip:
+                srcip = util.anonymise_ip(srcip)
+            if uri:
+                uri = util.anonymise_uri(uri)
+                
+        txt = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"' % (action, type, obj, serviceid, lthn, wallet, paymentid, srcip, srcport, dstip, dstport, method, uri, msg)
         return(self.logger.info(txt))
 
 L = None

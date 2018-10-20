@@ -1,0 +1,17 @@
+[Unit]
+Description=LTHN daemon
+ConditionPathExists=/opt/lthn/bin/lethean-wallet-vpn-rpc
+After=syslog.target
+
+[Service]
+EnvironmentFile=/etc/default/lethean-wallet-vpn-rpc
+Type=simple
+ExecStart=/opt/lthn/bin/lethean-wallet-vpn-rpc $LETHEANVPNRPC_ARGS
+User=lthn
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
+

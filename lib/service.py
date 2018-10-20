@@ -49,10 +49,11 @@ class Service(object):
         for c in self.cfg:
             if c not in self.OPTS.keys():
                 log.L.warning("Unknown parameter %s for service %s" % (c,id))
-        for o in self.OPTS_REQUIRED:
-            if o not in self.cfg:
-                log.L.error("Service %s is not configured. You need to edit config file to add:\n[service-%s]\n%s=something" % (id, id, o))
-                sys.exit(2)
+        if id is not "00":
+            for o in self.OPTS_REQUIRED:
+                if o not in self.cfg:
+                    log.L.error("Service %s is not configured. You need to edit config file to add:\n[service-%s]\n%s=something" % (id, id, o))
+                    sys.exit(2)
         self.initphase = True
         
     def isEnabled(self):
@@ -66,7 +67,10 @@ class Service(object):
         for o in self.OPTS:
             if not o in self.OPTS_HELP:
                 self.OPTS_HELP[o] = ''
-            print("%s:      %s\n      default: %s" % (o, self.OPTS_HELP[o], self.OPTS[o]))
+            if self.OPTS_HELP[o] == '':
+                print("%s: (default=%s)" % (o, self.OPTS[o]))
+            else:
+                print("%s: %s, (default=%s)" % (o, self.OPTS_HELP[o], self.OPTS[o]))
         print()
         
     def run(self):
@@ -199,11 +203,11 @@ class Service(object):
         log.L.info("Service %s (%s), id %s" % (self.getName(), self.getType(), self.getId()))
     
     def addAuthId(self, authid, msg=""):
-        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'activated in service %s %s' % (self.id, msg))
+        log.A.audit(log.A.AUTHID, log.A.MODIFY, paymentid=authid.getId(), serviceid=self.id, msg='activated')
         return(True)
         
     def delAuthId(self, authid, msg=""):
-        log.A.audit(log.A.AUTHID, log.A.MODIFY, authid.getId(), 'deactivated in service %s %s' % (self.id, msg))
+        log.A.audit(log.A.AUTHID, log.A.MODIFY, paymentid=authid.getId(), serviceid=self.id, msg='deactivated')
         return(True)
 
     def getSessions(self):

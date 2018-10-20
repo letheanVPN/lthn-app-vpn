@@ -11,7 +11,7 @@ SESSIONS = None
 
 class Session(object):
     
-    def __init__(self, authid, srvid, ip, port, conninfo='', id=None):
+    def __init__(self, authid, srvid, ip, port, method=None, uri=None, proto=None, id=None):
         if (not id):
             id = "%s:%s:%s:%s" % (srvid, authid, ip, port)
         self.id = id
@@ -19,9 +19,7 @@ class Session(object):
         self.authid = authid
         self.ip = ip
         self.port = port
-        self.conninfo = conninfo
-        #log.L.debug("Adding session: authid=%s,%s:%s %s" % (authid, ip, port, conninfo))
-        log.A.audit(log.A.SESSION, log.A.ADD, self.id, "service=%s,ip=%s,port=%s,info='%s'" % (srvid, ip, port, conninfo))
+        log.A.audit(log.A.SESSION, log.A.ADD, sessionid=self.id, serviceid=srvid, srcip=ip, srcport=port, method=method, uri=uri)
         self.started = time.time()
     
     def isAlive(self):
@@ -79,11 +77,11 @@ class Sessions(object):
         else:
                 return(None)
             
-    def add(self, authid, ip, port, conninfo='', id=None):
+    def add(self, authid, ip, port, method=None, uri=None, proto=None, id=None):
         aid = authids.AUTHIDS.get(authid)
         if (aid):
             sid = aid.getServiceId()
-            session = Session(authid, sid, ip, port, conninfo, id)
+            session = Session(authid, sid, ip, port, method=method, uri=uri, proto=proto, id=id)
             self.sessions[session.getId()] = session
         else:
             log.L.warning("Ignoring session with unknown authid %s!" % (authid))
@@ -91,7 +89,7 @@ class Sessions(object):
     def remove(self, id, msg=''):
         s = self.get(id)
         if (s):
-            log.A.audit(log.A.SESSION, log.A.DEL, id, s.getInfo() + ' ' + msg)
+            log.A.audit(log.A.SESSION, log.A.DEL, sessionid=id, msg=s.getInfo() + ' ' + msg)
             log.L.debug("Removing session " + id)
             self.sessions.pop(id)
         else:

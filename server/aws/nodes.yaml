@@ -352,7 +352,16 @@ Resources:
                 aws s3 cp --recursive s3://${BUCKET}/${PREFIX} /tmp/keys &&
                 cat /tmp/keys/* >> /home/ubuntu/.ssh/authorized_keys &&
                 rm -rf /tmp/keys
-            01_downloadBlockchainDb:
+            01_mountSwapVolume:
+              command: >
+                fallocate -l 2G /mnt/swap &&
+                mkswap /mnt/swap &&
+                chmod 600 /mnt/swap &&
+                swapon /mnt/swap &&
+                echo '/mnt/swap  none  swap  sw 0 0' >> /etc/fstab &&
+                sysctl -w vm.swappiness=1 &&
+                echo 'vm.swappiness = 1' >> /etc/sysctl.conf;
+            02_downloadBlockchainDb:
               test: !If [SeedBlockchainFromS3, true, false]
               command: !Sub
                 - |
@@ -363,7 +372,7 @@ Resources:
                 - BUCKET: !FindInMap [DeploymentMap, !Ref 'DeploymentType', S3Bucket]
                   PREFIX: daemon/
                   DATA_DIR: !FindInMap [RegionMap, Global, DataDir]
-            02_enableSupervisorWeb:
+            03_enableSupervisorWeb:
               command: >
                 /bin/echo -e '[inet_http_server]\nport = *:8081\n' >> /etc/supervisor/supervisord.conf &&
                 service supervisor stop

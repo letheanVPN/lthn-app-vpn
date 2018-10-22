@@ -198,13 +198,14 @@ Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Type: network
       Name: !Join ['-', [
         !Ref 'AWS::StackName',
         !Select ['0', !Split ['-', !Select ['2', !Split [/, !Ref 'AWS::StackId']]]],
         RPC
       ]]
       Scheme: internet-facing
+      SecurityGroups:
+        - !GetAtt 'NodeSecurityGroup.GroupId'
       Subnets:
         - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet0'}
         - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet1'}
@@ -233,22 +234,22 @@ Resources:
           Type: forward
       LoadBalancerArn: !Ref 'LoadBalancer'
       Port: 48782
-      Protocol: TCP
+      Protocol: HTTP
 
 
   RPCTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 6
+      HealthCheckTimeoutSeconds: 29
       UnhealthyThresholdCount: 3
-      HealthyThresholdCount: 3
+      HealthyThresholdCount: 2
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
-        Value: 100
+        Value: 20
       Port: 48782
-      Protocol: TCP
+      Protocol: HTTP
       VpcId: !ImportValue {'Fn::Sub': '${VPCStack}-VpcId'}
       HealthCheckPath: /json_rpc
       Name: !Join ['-', [

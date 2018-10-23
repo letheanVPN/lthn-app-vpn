@@ -3,16 +3,16 @@
 ## Run as:
 #wget -O- https://raw.githubusercontent.com/LetheanMovement/lethean-vpn/master/server/easy-deploy-aws.sh | sudo -i -u ubuntu
 
-[ -z "$DAEMONURL" ] && DAEMONURL=https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/640/lethean-cli-linux-64bit-letheanize-617a36c.tar.bz2
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1030/lethean-cli-linux-64bit-v3.0.0.b2.tar.bz2"
 [ -z "$EMAIL" ] && EMAIL=lukas@lethean.io
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$DAEMONOPTS" ] && DAEMONOPTS=""
-DAEMONBZ2=$(basename $DAEMONURL)
-DAEMONDIR=$(basename $DAEMONURL .tar.bz2)
-export EMAIL DAEMONBZ2 DAEMONDIR DAEMONURL DAEMONOPTS BRANCH
+DAEMONBZ2=$(basename $DAEMON_BIN_URL)
+DAEMONDIR=$(basename $DAEMON_BIN_URL .tar.bz2)
+export EMAIL DAEMONBZ2 DAEMONDIR DAEMON_BIN_URL DAEMONOPTS BRANCH
 
 install_daemon(){
-  wget -nc -c $DAEMONURL && \
+  wget -nc -c $DAEMON_BIN_URL && \
   tar -xjvf $DAEMONBZ2 && \
   sudo cp $DAEMONDIR/* /usr/local/bin/ && \
   echo @reboot /usr/local/bin/letheand --restricted-rpc --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach >letheand.crontab && \

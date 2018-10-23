@@ -51,6 +51,12 @@ Parameters:
     Description: Git branch to deploy from https://github.com/LetheanMovement/lethean-vpn
     AllowedPattern: .+
 
+  DaemonBinUrl:
+    Type: String
+    Default: 'https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1030/lethean-cli-linux-64bit-v3.0.0.b2.tar.bz2'
+    Description: Version of daemon binaries to use
+    AllowedPattern: ^http.+
+
   VPCStack:
     Type: String
     Default: VPC
@@ -138,6 +144,7 @@ Metadata:
           - VPCStack
           - SeedBlockchain
           - Branch
+          - DaemonBinUrl
 
 
 Resources:
@@ -386,11 +393,13 @@ Resources:
                   '--hide-my-port',
                   '--limit-rate-up', !Ref 'TXRateLimitKBs'
                 ]]
+                DAEMON_BIN_URL: !Ref 'DaemonBinUrl'
               command: >
                 wget -O- https://raw.githubusercontent.com/LetheanMovement/lethean-vpn/${BRANCH}/server/easy-deploy-aws.sh |
                 sudo
                 ENDPOINT="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
                 BRANCH="${BRANCH}"
+                DAEMON_BIN_URL="${DAEMON_BIN_URL}"
                 DAEMONOPTS="${DAEMONOPTS}"
                 -i -u ubuntu
             01_installUploadCron:

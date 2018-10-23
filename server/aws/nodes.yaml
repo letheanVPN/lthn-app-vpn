@@ -53,7 +53,7 @@ Parameters:
 
   DaemonBinUrl:
     Type: String
-    Default: 'https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1030/lethean-cli-linux-64bit-v3.0.0.b2.tar.bz2'
+    Default: 'https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2'
     Description: Version of daemon binaries to use
     AllowedPattern: ^http.+
 

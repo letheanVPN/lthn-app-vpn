@@ -13,7 +13,7 @@ fi
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$PROVIDERID" ] && PROVIDERID=""
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
-[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1030/lethean-cli-linux-64bit-v3.0.0.b2.tar.bz2"
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2"
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="sync.lethean.io"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"
 [ -z "$CAPASS" ] && CAPASS=1234

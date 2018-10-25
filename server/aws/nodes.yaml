@@ -339,8 +339,8 @@ Resources:
 
                   # Copy files
                   echo "Uploading files to S3"
-                  aws s3 cp --no-progress /home/ubuntu/${DATA_DIR}/lmdb/data.mdb s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/data.mdb
-                  aws s3 cp --no-progress /home/ubuntu/${DATA_DIR}/lmdb/lock.mdb s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/lock.mdb
+                  /usr/local/bin/aws s3 cp --no-progress /home/ubuntu/${DATA_DIR}/lmdb/data.mdb s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/data.mdb
+                  /usr/local/bin/aws s3 cp --no-progress /home/ubuntu/${DATA_DIR}/lmdb/lock.mdb s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/lock.mdb
 
                   # Run daemon with original arguments
                   echo "Running $cmd"
@@ -407,7 +407,7 @@ Resources:
               command: >
                 hour=$(($(dd if=/dev/urandom count=1 2>/dev/null | cksum | cut -d' ' -f1) % 24)) &&
                 minute=$(($(dd if=/dev/urandom count=1 2>/dev/null | cksum | cut -d' ' -f1) % 60)) &&
-                ( crontab -u ubuntu -l; echo "${minute} ${hour} * * * /home/ubuntu/upload_lmdb.sh 1>>/home/ubuntu/upload_lmdb.log 2>&1"; ) | crontab -u ubuntu -
+                ( crontab -u ubuntu -l; echo "${minute} ${hour} * * * /bin/bash /home/ubuntu/upload_lmdb.sh 1>>/home/ubuntu/upload_lmdb.log 2>&1"; ) | crontab -u ubuntu -
 
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]

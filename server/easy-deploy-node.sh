@@ -125,7 +125,7 @@ sudo systemctl restart lthnvpnd
 sudo systemctl disable haproxy
 sudo systemctl stop haproxy
 
-cat /opt/lthn/etc/sdp.json
+cat $LTHNPREFIX/etc/sdp.json
 $LTHNPREFIX/bin/lthnvpnd --upload-sdp
 
 ) 2>&1 | tee easy.log 

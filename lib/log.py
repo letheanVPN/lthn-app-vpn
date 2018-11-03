@@ -63,7 +63,7 @@ class Audit(object):
             if uri:
                 uri = util.anonymise_uri(uri)
                 
-        txt = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"' % (action, type, obj, serviceid, lthn, wallet, paymentid, srcip, srcport, dstip, dstport, method, uri, msg)
+        txt = '"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"' % (action, type, obj, serviceid, lthn, wallet, paymentid, srcip, srcport, dstip, dstport, method, uri, msg)
         return(self.logger.info(txt))
 
 L = None

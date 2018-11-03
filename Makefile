@@ -32,3 +32,14 @@ ca: build/ca/index.txt
 build/ca/index.txt: env.mk
 	./configure.sh --generate-ca --with-capass "$(PASS)" --with-cn "$CN"
 
+docker-img:
+	docker build --build-arg "HTTP_PROXY=$$HTTP_PROXY" --build-arg "HTTPS_PROXY=$$HTTPS_PROXY" $(BUILD_ARGS) -t lethean/lethean-vpn:devel .
+
+docker: docker-img
+
+docker-clean:
+	docker rm -v lethean-vpn:devel 
+
+docker-shell:
+	 docker run -i -t lethean/lethean-vpn:devel bash
+	 

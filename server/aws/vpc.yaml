@@ -39,6 +39,10 @@ Mappings:
       AZs:
       - eu-west-2a
       - eu-west-2b
+    ap-southeast-1:
+      AZs:
+      - ap-southeast-1a
+      - ap-southeast-1b
 
 
 Conditions:
@@ -180,7 +184,7 @@ Resources:
       VpcId: !Ref 'VPC'
       RouteTableIds:
         - !Ref 'RouteTable'
-      ServiceName: com.amazonaws.us-east-1.dynamodb
+      ServiceName: !Join ['.', [com.amazonaws, !Ref 'AWS::Region', dynamodb]]
 
   S3VPCEndpoint:
     Type: AWS::EC2::VPCEndpoint
@@ -188,7 +192,7 @@ Resources:
       VpcId: !Ref 'VPC'
       RouteTableIds:
         - !Ref 'RouteTable'
-      ServiceName: com.amazonaws.us-east-1.s3
+      ServiceName: !Join ['.', [com.amazonaws, !Ref 'AWS::Region', s3]]
 
 
 Outputs:

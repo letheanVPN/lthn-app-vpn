@@ -41,7 +41,10 @@ def main(argv):
     p.add(       '--sdp-service-ulspeed',    dest='serviceUploadSpeed', metavar='Mbps', default=10, required=None, help='Upload speed for Service (for SDP service edit/creation only)')
     p.add(       '--sdp-service-prepaid-mins',  dest='servicePrepaidMinutes', default=30, metavar='TIME', required=None, help='Prepaid minutes for Service (for SDP service edit/creation only)')
     p.add(       '--sdp-service-verifications', dest='serviceVerificationsNeeded', default=0, metavar='NUMBER', required=None, help='Verifications needed for Service (for SDP service edit/creation only)')
- 
+    p.add(       '--sdp-provider-name',         dest='providerName', metavar='NAME', required=None, help='Provider Name') 
+    p.add(       '--sdp-provider-type',         dest='nodeType', metavar='TYPE', required=None, help='Provider type', default='residential', choices=['commercial', 'residential', 'government'])
+    p.add(       '--sdp-provider-terms',        dest='providerTerms', metavar='TEXT', required=None, help='Provider terms')
+
     # Initialise config
     config.CONFIG = config.Config("dummy")
     cfg = p.parse_args()

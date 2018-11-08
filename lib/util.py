@@ -96,18 +96,8 @@ def commonArgs(p):
     p.add('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file. Use "none" to disable.', default=config.Config.AUTHIDSFILE)
     p.add('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
     p.add('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
-    p.add(       '--wallet-address',            dest='walletAddr', metavar='ADDRESS', required=True, help='Wallet address')
-    p.add(       '--wallet-rpc-uri',            dest='walletUri', metavar='URI', default='http://127.0.0.1:13660/json_rpc', help='Wallet URI')
-    p.add(       '--wallet-username',           dest='walletUsername', metavar='USER', required=None, default='dispatcher', help='Wallet username')
-    p.add(       '--wallet-password',           dest='walletPassword', metavar='PW', required=None, help='Wallet passwd')
-    p.add(       '--sdp-server-uri',            dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.staging.cloud.lethean.io/v1')
-    p.add(       '--sdp-wallet',                dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
-    p.add(       '--provider-id',               dest='providerid', metavar='PROVIDERID', required=True, help='ProviderID (public ed25519 key)')
-    p.add(       '--provider-key',              dest='providerkey', metavar='PROVIDERKEY', required=True, help='ProviderID (private ed25519 key)')
-    p.add(       '--provider-name',             dest='providerName', metavar='NAME', required=True, help='Provider Name') 
-    p.add(       '--provider-type',             dest='nodeType', metavar='TYPE', required=None, help='Provider type', default='residential', choices=['commercial', 'residential', 'government'])
-    p.add(       '--provider-terms',            dest='providerTerms', metavar='TEXT', required=None, help='Provider terms')
-    p.add(       '--ca',                        dest='providerCa', metavar="ca.crt", required=True, help='Set certificate authority file')
+    p.add(       '--sdp-server-uri',         dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.staging.cloud.lethean.io/v1')
+    p.add(       '--sdp-wallet-address',     dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
 
 def parseCommonArgs(parser, cfg):
     if (cfg.lc):

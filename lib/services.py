@@ -6,8 +6,12 @@ from sdp import *
 import sys
 from service_mgmt import ServiceMgmt
 from service_ha import ServiceHa
+from service_hac import ServiceHaClient
+from service_has import ServiceHaServer
 from service_syslog import ServiceSyslog
 from service_ovpn import ServiceOvpn
+from service_ovpnc import ServiceOvpnClient
+from service_ovpns import ServiceOvpnServer
 from service_http import ServiceHttp
 
 SERVICES = None
@@ -25,9 +29,33 @@ class Services(object):
             if ("enabled" in cfg and cfg["enabled"]) or not "enabled" in cfg:
                 if (s["type"]):
                     if (s["type"] == "vpn"):
-                        so = ServiceOvpn(id_, s)
+                        so = ServiceOvpnServer(id_, s)
                     elif (s["type"] == "proxy"):
-                        so = ServiceHa(id_, s)
+                        so = ServiceHaServer(id_, s)
+                    else:
+                        log.L.error("Unknown service type %s in SDP!" % (s["type"]))
+                        sys.exit(1)
+                self.services[id_.upper()] = so
+            else:
+                log.L.warning("Service %s disabled m config file." % (id_))
+        self.syslog = ServiceSyslog("SS")
+        self.mgmt = ServiceMgmt("MS")
+        self.http = ServiceHttp("HS")
+        
+    def loadClient(self):
+        
+        self.services = {}
+        sdp = SDP()
+        sdp.load(config.Config.SDPFILE)
+        for id_ in sdp.listServices():
+            s = sdp.getService(id_)
+            cfg = config.CONFIG.getService(id_)
+            if ("enabled" in cfg and cfg["enabled"]) or not "enabled" in cfg:
+                if (s["type"]):
+                    if (s["type"] == "vpn"):
+                        so = ServiceOvpnClient(id_, s)
+                    elif (s["type"] == "proxy"):
+                        so = ServiceHaClient(id_, s)
                     else:
                         log.L.error("Unknown service type %s in SDP!" % (s["type"]))
                         sys.exit(1)

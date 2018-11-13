@@ -4,6 +4,7 @@ import socket
 import os
 import time
 import sys
+import subprocess
 
 class Service(object):
     """
@@ -15,7 +16,7 @@ class Service(object):
     OPTS_REQUIRED = dict()
     SOCKET_TIMEOUT = 0.01
     
-    def __init__(self, id=None, json=None):
+    def __init__(self, id=None, json=None, cfg=None):
         if (id):
             self.id = id.upper()
         else:
@@ -32,7 +33,10 @@ class Service(object):
             self.json = json    
             
         self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
-        self.cfg = config.CONFIG.getService(self.id)
+        if (cfg):
+            self.cfg = cfg
+        else:
+            self.cfg = config.CONFIG.getService(self.id)
         self.cfgfile = self.dir + "/cfg"
         self.pidfile = self.dir + "/pid"
         self.mgmtfile = self.dir + "/mgmt"
@@ -62,6 +66,9 @@ class Service(object):
         else:
             return(True)
         
+    def disable(self):
+        self.cfg["enabled"] = None
+        
     def helpOpts(self, name):
         print(name)
         for o in self.OPTS:
@@ -90,22 +97,13 @@ class Service(object):
         return(self.cost)
         
     def getLine(self):
-        if 'stderr' in locals():
-            if (self.stderr.poll(0.05)):
-                s = self.process.stderr.readline().strip()
-                if (s != b""):
-                    return(s)
-                else:
-                    return(None)
-        if 'stdout' in locals():
-            if (self.stdout.poll(0.05)):
-                s = self.process.stdout.readline().strip()
-                if (s != b""):
-                    return(s)
-                else:
-                    return(None)
-            else:
-                return(None)
+        try:
+            outs, errs = self.process.communicate(timeout=0.05)
+            return(outs + errs)
+        except subprocess.TimeoutExpired:
+            pass
+        except ValueError:
+            return(None)
             
     def mgmtConnect(self, ip=None, port=None):
         if (ip):
@@ -199,8 +197,14 @@ class Service(object):
     def getId(self):
         return(self.id)
     
+    def getCfg(self):
+        return(self.cfg)
+    
     def show(self):
         log.L.info("Service %s (%s), id %s" % (self.getName(), self.getType(), self.getId()))
+        
+    def getJson(self):
+        return(self.json)
     
     def addAuthId(self, authid, msg=""):
         log.A.audit(log.A.AUTHID, log.A.MODIFY, paymentid=authid.getId(), serviceid=self.id, msg='activated')

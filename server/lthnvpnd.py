@@ -81,13 +81,10 @@ def main(argv):
     p.add(      '--track-sessions',          dest='trackSessions', default=True, type=bool, required=None, help='If true, dispatcher will track sessions. If not, existing sessions will not be terminated after payment is spent.')
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
     p.add('-H',  '--from-height',            dest='initHeight', metavar='HEIGHT', required=None, type=int, default=-1, help='Initial height to start scan payments. Default is actual height.')
-    p.add(       '--wallet-address',         dest='walletAddr', metavar='ADDRESS', required=True, help='Provider wallet address')
     p.add(       '--wallet-rpc-uri',         dest='walletUri', metavar='URI', default='http://127.0.0.1:13660/json_rpc', help='Wallet RPC URI')
     p.add(       '--wallet-username',        dest='walletUsername', metavar='USER', required=None, default='dispatcher', help='Wallet RPC username')
     p.add(       '--wallet-password',        dest='walletPassword', metavar='PW', required=None, help='Wallet RPC passwd')
-    p.add(       '--provider-id',            dest='providerid', metavar='PROVIDERID', required=True, help='ProviderID (public ed25519 key)')
     p.add(       '--provider-key',           dest='providerkey', metavar='PROVIDERKEY', required=True, help='ProviderID (private ed25519 key)')
-    p.add(       '--ca',                     dest='providerCa', metavar="ca.crt", required=True, help='Set certificate authority file')
 
     # Initialise config
     cfg = p.parse_args()
@@ -100,7 +97,7 @@ def main(argv):
     config.Config.AUTHIDSFILE = cfg.A
 
     if (cfg.S):
-        services.SERVICES.load()
+        services.SERVICES.loadServer()
         # Generate config files for Openvpn and Haproxy only and exit
         services.SERVICES.createConfigs()
         sys.exit()
@@ -116,7 +113,7 @@ def main(argv):
         pf.close()
         atexit.register(remove_pidfile)
     
-    services.SERVICES.load()
+    services.SERVICES.loadServer()
         
     # Initialise sessions
     sessions.SESSIONS = sessions.Sessions()

@@ -3,9 +3,10 @@ global
         daemon
         ssl-default-bind-ciphers ECDH+AESGCM
         ssl-default-bind-options force-tlsv12
-        no log
+        log {f_logsocket}
+        stats socket {f_sock} mode 600 level admin
 
-frontend icproxy
+frontend lthnproxy
         bind            {bindaddr}:{proxyport}
         mode            http
         log             global
@@ -51,7 +52,8 @@ backend http-proxy
         
         http-request add-header {payment_header} {paymentid}
 
-        server hatls {server}:{port} force-tlsv12 ssl ca-file {ca}
+        {comment_tls} server hatls {server}:{port} force-tlsv12 ssl ca-file {ca}
+        {comment_clr} server hatls {server}:{port}
         errorfile 503 {f_err_connect}
 
 backend b-err

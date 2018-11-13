@@ -22,6 +22,7 @@ class ServiceHaServer(ServiceHa):
     OPTS = dict(
         name='Proxy', backend_proxy_server = '127.0.0.1:3128', status_port = 8181,
         bind_addr = '0.0.0.0',
+        port = None,
         crt = None, key = None, crtkey = None,
         max_connections = 2000, timeout = '30s', connect_timeout = '5s',
         paymentid = 'authid1', uniqueid = 'abcd1234', 
@@ -35,7 +36,8 @@ class ServiceHaServer(ServiceHa):
         max_conns_per_ip = 'Maximum number of simultanous connections per IP',
         max_conns_per_period = 'Maximum number of tcp connections per IP for period',
         max_requests_per_period = 'Maximum number of HTTP requests per IP for period',
-        conns_period = 'Measuring period'
+        conns_period = 'Measuring period',
+        port = 'Override port'
     )
     OPTS_REQUIRED = (
          'backend_proxy_server', 
@@ -62,6 +64,7 @@ class ServiceHaServer(ServiceHa):
     def createConfig(self):
         if (not os.path.exists(self.dir)):
             os.mkdir(self.dir)
+        os.chdir(self.dir)
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
         tfile = config.Config.PREFIX + "/etc/haproxy_server.tmpl"
@@ -72,7 +75,10 @@ class ServiceHaServer(ServiceHa):
             log.L.error("Cannot open haproxy template file %s" % (tfile))
         shutil.copy(config.Config.PREFIX + '/etc/ha_credit.http', self.dir + '/ha_credit.http')
         proxy_host, proxy_port = self.cfg['backend_proxy_server'].split(":")
-        port=self.json['proxy'][0]['port'].split('/')[0]
+        if ('port' in self.cfg):
+            port=self.cfg['port']
+        else:
+            port=self.json['proxy'][0]['port'].split('/')[0]
         out = tmpl.decode("utf-8").format(
                           bind_addr=self.cfg['bind_addr'],
                           bind_port=port,
@@ -90,8 +96,8 @@ class ServiceHaServer(ServiceHa):
                           forward_proxy=proxy_host+":"+proxy_port,
                           forward_proxy_host=proxy_host,
                           forward_proxy_port=proxy_port,
-                          payment_header='X-LTHN-PaymentID',
-                          mgmt_header='X-LTHN-MgmtID',
+                          payment_header=config.Config.CAP.authidHeader,
+                          mgmt_header=config.Config.CAP.mgmtHeader,
                           mgmtid=config.Config.CAP.providerid,
                           ctrldomain='^(remote.lethean|_remote_)$',
                           ctrlpath='/status',

@@ -37,6 +37,7 @@ class Config(object):
         type(self).OPENVPN_BIN = "/usr/sbin/openvpn"
         type(self).HAPROXY_BIN = "/usr/sbin/haproxy"
         type(self).SUDO_BIN = "/usr/bin/sudo"
+        type(self).STUNNEL_BIN = "/usr/bin/stunnel"
         type(self).OPENVPN_SUDO = True
         type(self).LOGLEVEL = logging.WARNING
         type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"

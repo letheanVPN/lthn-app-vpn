@@ -93,11 +93,20 @@ def commonArgs(p):
     p.add('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=config.Config.CONFIGFILE, help='Config file')    
     p.add('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
     p.add('-p', '--pid',                     dest='p', metavar='PIDFILE', required=None, default=config.Config.PIDFILE, help='PID file')
-    p.add('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file. Use "none" to disable.', default=config.Config.AUTHIDSFILE)
+    p.add('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file.', default="none")
     p.add('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
     p.add('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
     p.add(       '--sdp-server-uri',         dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.staging.cloud.lethean.io/v1')
     p.add(       '--sdp-wallet-address',     dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
+    p.add(       '--sdp-service-endpoint',   dest='serviceFqdn', metavar='FQDN', required=None, help='Service FQDN or IP')
+    p.add(       '--sdp-service-port',       dest='servicePort', metavar='NUMBER', required=None, help='Service port')
+    p.add(       '--sdp-service-id',         dest='serviceId', metavar='NUMBER', required=None, help='Service ID')
+    p.add(       '--provider-id',            dest='providerid', metavar='PROVIDERID', required=True, help='ProviderID (public ed25519 key)')
+    p.add(       '--ca',                     dest='providerCa', metavar="ca.crt", required=True, help='Set certificate authority file')
+    p.add(       '--wallet-address',         dest='walletAddr', metavar='ADDRESS', required=True, help='Provider wallet address')
+    p.add(       '--sdp-cache-file',         dest='sdpCacheFile', metavar='FILE', required=None, default=config.CONFIG.PREFIX + '/var/sdps.json', help='SDP cache')
+    p.add(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
+    p.add(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
 
 def parseCommonArgs(parser, cfg):
     if (cfg.lc):
@@ -118,7 +127,15 @@ def parseCommonArgs(parser, cfg):
     if (config.Config.AUTHIDSFILE == "none"):
         config.Config.T_SAVE = 0
         config.Config.AUTHIDSFILE = ''
-        
+    if (cfg.comp=="v3"):
+        cfg.mgmtHeader="X-ITNS-MgmtID"
+        cfg.authidHeader="X-ITNS-PaymentID"
+    elif (cfg.comp=="v4"):
+        cfg.mgmtHeader="X-LTHN-MgmtID"
+        cfg.authidHeader="X-LTHN-PaymentID"
+    else:
+        log.L.error("Bad compatibility level. Use v3 or v4 now.")
+        sys.exit(2)
     if cfg.sdpUri.endswith('/'):
         cfg.sdpUri = cfg.sdpUri[:-1]
     

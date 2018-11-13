@@ -174,6 +174,19 @@ class SDP(object):
                 log.L.error('The CA certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
                 return False
         return False
+    
+    def setCertificates(self, crt):
+        self.data['provider']['certificates'] = {}
+        self.data['provider']['certificates']['cn'] = 'ignored'
+        self.data['provider']['certificates']['id'] = 0
+        self.data['provider']['certificates']['content'] = crt
+        return True
+    
+    def getCertificates(self):
+        return(self.data['provider']['certificates']['content'])
+    
+    def getProviderId(self):
+        return(self.data['provider']['id'])
 
     def setProviderId(self, providerid=None):
         if (providerid == None):
@@ -213,6 +226,9 @@ class SDP(object):
 
         self.data['provider']['wallet'] = choice
         return True
+    
+    def getProviderName(self):
+        return(self.data['provider']['name'])
 
     def setProviderName(self, name=None):
         if (name == None):
@@ -225,11 +241,16 @@ class SDP(object):
         else:
             log.L.error('Invalid provider name!')
             return self.setProviderName()
+        
+    def getServiceById(self, sid):
+        for item in self.data["services"]:
+            if sid==item['id']:
+                return(item)
 
     def setNodeType(self, type):
         self.data['provider']['nodeType'] = type
         return True
-    
+        
     def getJson(self):
         self.load(None)
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=3)
@@ -249,7 +270,12 @@ class SDP(object):
             except IOError:
                 log.L.error("Cannot write %s" % (self.configFile))
                 sys.exit(1)
-
+                
+    def loadJson(self, j):
+        self.data=j
+        self.dataLoaded=True
+        return(True)
+        
     def load(self, config, prefix=None):
         if self.dataLoaded:
             return
@@ -434,9 +460,9 @@ class SDPService(object):
 
         if (thisService != None):
             self.data = jsonpickle.decode(thisService)
-            print('Loaded existing SDP service %s' % self.data['name'])
+            log.L.info('Loaded existing SDP service %s' % self.data['name'])
         else:
-            print('Creating new SDP service...')
+            log.L.info('Creating new SDP service...')
 
     def checkConfig(self, cap, id=None):
         if not id:

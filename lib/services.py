@@ -18,11 +18,14 @@ SERVICES = None
 
 class Services(object):
     
-    def load(self):
+    sdp = None
+    
+    def loadServer(self):
         
         self.services = {}
         sdp = SDP()
         sdp.load(config.Config.SDPFILE)
+        self.sdp = sdp
         for id_ in sdp.listServices():
             s = sdp.getService(id_)
             cfg = config.CONFIG.getService(id_)
@@ -42,20 +45,21 @@ class Services(object):
         self.mgmt = ServiceMgmt("MS")
         self.http = ServiceHttp("HS")
         
-    def loadClient(self):
+    def loadClient(self, sdp):
         
+        self.sdp = SDP()
+        self.sdp.loadJson(sdp)
         self.services = {}
-        sdp = SDP()
-        sdp.load(config.Config.SDPFILE)
-        for id_ in sdp.listServices():
-            s = sdp.getService(id_)
+        for id_ in self.sdp.listServices():
+            s = self.sdp.getService(id_)
             cfg = config.CONFIG.getService(id_)
+            print(id_)
             if ("enabled" in cfg and cfg["enabled"]) or not "enabled" in cfg:
                 if (s["type"]):
                     if (s["type"] == "vpn"):
-                        so = ServiceOvpnClient(id_, s)
+                        so = ServiceOvpnClient('C' + id_, s)
                     elif (s["type"] == "proxy"):
-                        so = ServiceHaClient(id_, s)
+                        so = ServiceHaClient(sdp["provider"]["id"] + ":" + id_, s)
                     else:
                         log.L.error("Unknown service type %s in SDP!" % (s["type"]))
                         sys.exit(1)
@@ -84,7 +88,7 @@ class Services(object):
             s = self.services[id]
             s.createConfig()
             
-    def orchestrate(self):
+    def orchestrate(self, err=None):
         if self.syslog.isEnabled():
             self.syslog.orchestrate()
         if self.mgmt.isEnabled():
@@ -92,10 +96,17 @@ class Services(object):
         if self.http.isEnabled():
             self.http.orchestrate()
         for id in self.services:
-            if (not self.services[id].orchestrate()):
+            o = self.services[id].orchestrate()
+            if (not err and not o):
                 log.L.error("Service %s died! Exiting!" % (self.services[id].id))
+                # Wait for all other processes to settle
+                i = 1
+                while i<20:
+                    self.orchestrate(True)
+                    i = i + 1
                 self.stop()
                 sys.exit(3)
+
 
     def stop(self):
         for id in self.services:

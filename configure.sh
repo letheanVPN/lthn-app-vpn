@@ -265,7 +265,9 @@ while [[ $# -gt 0 ]]; do
     --easy)
         cert_pass="1234"
         cert_cn="LTHNEasyDeploy"
-        LTHN_USER="$USER"
+        if [ -n "$USER" ]; then
+            LTHN_USER="$USER"
+        fi
         install_service=1
         generate_providerid=1
         generate_ca=1

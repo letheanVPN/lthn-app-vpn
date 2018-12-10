@@ -167,8 +167,8 @@ def main(argv):
     p.add('-C', '--generate-client-config', dest='C', action='store_const', const='C', required=None, help='Generate config for service')
     p.add('-O', '--connect', dest='O', action='store_const', const='O', required=None, help='Connect')
     p.add('-L', '--list-services', dest='L', action='store_const', const='L', required=None, help='List services')
-    p.add('--authid', dest='authId', metavar='AUTHID', required=True, default=None, help='Authentication ID. Use "random" to generate.')
-    p.add('--uniqueid', dest='uniqueId', metavar='UNIQUEID', required=True, default=None, help='Unique ID of proxy. Use "random" to generate.')
+    p.add('--authid', dest='authId', metavar='AUTHID', required=None, default=None, help='Authentication ID. Use "random" to generate.')
+    p.add('--uniqueid', dest='uniqueId', metavar='UNIQUEID', required=None, default=None, help='Unique ID of proxy. Use "random" to generate.')
     p.add('--stunnel-port', dest='stunnelPort', metavar='PORT', required=None, default=8187, help='Use this stunnel local port for connections over proxy.')
     p.add('--https-proxy-host', dest='httpsProxyHost', metavar='HOST', required=None, default=None, help='Use this https proxy host.')
     p.add('--https-proxy-port', dest='httpsProxyPort', metavar='PORT', required=None, default=3128, help='Use this https proxy port.')
@@ -227,10 +227,10 @@ def main(argv):
     elif (cfg.L):
         print("ProviderId,ServiceId,serviceType,ProviderName,ServiceName")
         for pid in sdps.SDPS.list():
-            sdp = sdps.SDPS.getSDP(pid)
-            for sid in sdps.SDPS.getSDP(pid).listServices():
-                service = sdp.getServiceById(sid)
-                print("%s,%s,%s,%s,%s" % (pid, sid, service['type'], sdp.getProviderName(), service['name']))
+            sdp = json.loads(sdps.SDPS.getSDP(pid))
+            for srv in sdp["services"]:
+                sid = srv["id"]
+                print("%s,%s,%s,%s,%s" % (pid, sid, srv["type"], sdp["provider"]["name"], srv["name"]))
     else:
         log.L.error("You must specify command (-C, -O, -L)")
         sys.exit(1)

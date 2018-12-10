@@ -96,7 +96,7 @@ def commonArgs(p):
     p.add('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file.', default="none")
     p.add('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
     p.add('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
-    p.add(       '--sdp-server-uri',         dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.staging.cloud.lethean.io/v1')
+    p.add(       '--sdp-server-uri',         dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.lethean.io/v1')
     p.add(       '--sdp-wallet-address',     dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
     p.add(       '--sdp-service-endpoint',   dest='serviceFqdn', metavar='FQDN', required=None, help='Service FQDN or IP')
     p.add(       '--sdp-service-port',       dest='servicePort', metavar='NUMBER', required=None, help='Service port')
@@ -107,6 +107,7 @@ def commonArgs(p):
     p.add(       '--sdp-cache-file',         dest='sdpCacheFile', metavar='FILE', required=None, default=config.CONFIG.PREFIX + '/var/sdps.json', help='SDP cache')
     p.add(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
     p.add(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
+
 
 def parseCommonArgs(parser, cfg):
     if (cfg.lc):

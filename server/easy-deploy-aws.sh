@@ -3,7 +3,7 @@
 ## Run as:
 #wget -O- https://raw.githubusercontent.com/LetheanMovement/lethean-vpn/master/server/easy-deploy-aws.sh | sudo -i -u ubuntu
 
-[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2"
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2"
 [ -z "$EMAIL" ] && EMAIL=lukas@lethean.io
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$DAEMONOPTS" ] && DAEMONOPTS=""

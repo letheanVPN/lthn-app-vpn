@@ -2,6 +2,8 @@
 This repository contains code needed to setup and run an exit node on the Lethean Virtual Private Network (VPN) or to use Lethean service as client in CLI mode.
 If you are looking for GUI, please look [here](https://github.com/LetheanMovement/lethean-gui)
 
+**If you are seeking for stable version, use [latest release](https://github.com/LetheanMovement/lethean-vpn/releases/tag/v3.0.0.b2). This is development version! 
+
 **The exit node is currently only supported on Linux.**
 
 # Design
@@ -16,6 +18,37 @@ More information about client mode is [here](CLIENT.md)
 
 ## Server mode
 As a server, dispatcher helps you to create, publish and run your service as a provider. More info about server mode is [here](SERVER.md)
+
+## Docker
+We have prepared docker images for you. It is probably easiest way how to run client or exit node.
+There are two directories which needs to be mounted to host: /opt/lthn/etc/ and /var/log/.
+
+### General usage
+```
+ docker run --volume localetc:/opt/lthn/etc --volume locallog:/var/log lethean/lethean-vpn:devel [cmd [args]]
+```
+where cmd can be run,easy-deploy or sh
+localetc is local directory to store configs
+locallog is local directory to store logs
+
+### Recomended steps to use exit node
+```
+ mkdir etc log
+ docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel easy-deploy
+ docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel
+```
+
+### Recomended steps to use client
+List all services from SDP
+```
+ mkdir etc log
+ docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel lthnvpnc -L
+```
+Connect to service 1A of provider providerid
+```
+ mkdir etc log
+ docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel lthnvpnc --sdp-service-id 1A --provider-id providerid -O
+```
 
 ## FAQ
 

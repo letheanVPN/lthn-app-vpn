@@ -43,6 +43,7 @@ def main(argv):
     p.add(       '--sdp-provider-name',         dest='providerName', metavar='NAME', required=None, help='Provider Name') 
     p.add(       '--sdp-provider-type',         dest='nodeType', metavar='TYPE', required=None, help='Provider type', default='residential', choices=['commercial', 'residential', 'government'])
     p.add(       '--sdp-provider-terms',        dest='providerTerms', metavar='TEXT', required=None, help='Provider terms')
+    p.add(       '--provider-key',           dest='providerkey', metavar='PROVIDERKEY', required=True, help='ProviderID (private ed25519 key)')
 
     # Initialise config
     config.CONFIG = config.Config("dummy")

@@ -69,6 +69,7 @@ run)
     echo "Starting dispatcher" >&2
     unset HTTP_PROXY
     unset http_proxy
+    shift
     while true; do
         lthnvpnd "$@"
         sleep 3

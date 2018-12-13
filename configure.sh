@@ -53,7 +53,7 @@ defaults() {
     wallet_address="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     wallet_rpc_uri=http://127.0.0.1:14660/json_rpc
     wallet_rpc_user=dispatcher
-    wallet_rpc_pass=somepassword
+    wallet_rpc_pass=SecretPass
 }
 
 summary() {

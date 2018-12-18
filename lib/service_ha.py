@@ -19,20 +19,18 @@ class ServiceHa(Service):
         
     def run(self):
         self.createConfig()
-        cmd = "stdbuf -oL " + config.Config.HAPROXY_BIN + " -Ds" + " -p " + self.pidfile + " -f " + self.cfgfile
-        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=True)
+        cmd = [ config.Config.HAPROXY_BIN, "-Ds", "-p", self.pidfile, "-f", self.cfgfile ]
+        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=None, preexec_fn=os.setsid)
         time.sleep(0.3)
-        if (os.path.exists(self.pidfile)):
-            with open (self.pidfile, "r") as p:
-                self.pid = int(p.readline().strip())
-        else:
-            self.pid = self.process.pid
+        self.pid = self.process.pid
         log.L.info("Run service %s: %s [pid=%s]" % (self.id, cmd, self.pid))
         self.mgmtConnect("socket", self.mgmtfile)
         super().run()
         
     def stop(self):
-        os.kill(self.pid, signal.SIGTERM)
+        log.L.info("Kill service PID %s: [pid=%s]" % (self.id, self.pid))
+        #os.kill(self.pid, signal.SIGTERM)
+        #os.killpg(os.getpgid(self.pid), signal.SIGTERM)
         super().stop()
             
     def isAlive(self):

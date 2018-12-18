@@ -132,4 +132,4 @@ class SDPList(object):
             sys.exit(1)
         localJson = json.loads(localSdp)
         id_ = localJson["provider"]["id"]
-        self.data[id_]=localSdp
+        self.data[id_]=localJson

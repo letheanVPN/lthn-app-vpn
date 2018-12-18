@@ -18,7 +18,7 @@ testvol(){
 }
 
 testconf(){
-    if ! [ -f /opt/lthn/etc/sdp.json ]; then
+    if ! [ -f /opt/lthn/etc/sdp.json ] || ! [ -f /opt/lthn/etc/dispatcher.ini ]; then
         echo "We are not configured! Exiting! Run easy-deploy first or configure manually"
         exit 1
     fi
@@ -55,7 +55,7 @@ fi
 run)
     testvol()
     testconf()
-    if which zabbix_agentd; then
+    if [ -x /usr/sbin/zabbix_agentd ]; then
        echo "Starting zabbix agent" >&2
        zabbix_agentd -c /etc/zabbix/zabbix_agentd.conf
     fi
@@ -63,6 +63,7 @@ run)
     squid 
     if [ -f $CONF/vpn ]; then
       lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file $CONF/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file /var/log/wallet.log &
+      sleep 4
     else
       echo "Wallet is not inside container." >&2
     fi

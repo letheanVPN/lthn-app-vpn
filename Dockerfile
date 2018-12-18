@@ -44,7 +44,7 @@ CMD ["run"]
 
 RUN useradd -ms /bin/bash lthn; \
   apt-get update; \
-  apt-get install -y sudo joe less haproxy openvpn squid net-tools wget; \
+  apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel; \
   echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers; \
   mkdir /usr/src/lethean-vpn; \
   chown -R lthn /usr/src/lethean-vpn
@@ -76,6 +76,6 @@ USER lthn
 RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --easy
 RUN make install
 RUN if [ -n "$PUBLIC_BUILD" ]; then \
-      rm -rf /opt/lthn/etc/* /opt/lthn/var/*; \
+      rm -rf /opt/lthn/etc/* /opt/lthn/var/* /usr/src/lethean-vpn/build /usr/src/lethean-vpn/env.mk; \
       mkdir -p /opt/lthn/var/log /opt/lthn/var/run; \
     fi

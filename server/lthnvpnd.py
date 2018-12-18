@@ -25,7 +25,6 @@ import log
 import configargparse
 from service_ha import ServiceHa
 from service_ovpn import ServiceOvpn
-import atexit
 import pwd
 import grp
 import util

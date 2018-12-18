@@ -146,3 +146,15 @@ def parseCommonArgs(parser, cfg):
     if (cfg.h):
         helpmsg(parser)
         sys.exit()
+
+def testLocalPort(bind, port, type=socket.SOCK_STREAM):
+    sock = socket.socket(socket.AF_INET, type)
+    result = False
+    try:
+        sock.bind((bind, port))
+        result = True
+    except:
+        log.L.error("Port %s is in use!" % (port))
+        sys.exit(1)
+    sock.close()
+    return result

@@ -23,6 +23,37 @@ import string
 import requests
 import json
 import socket
+import re
+import atexit
+
+def parseUri(cfg, uri):
+    # authid:mgmtid@providerid:serviceid
+    p = re.search("(.*):(.*)@(.*):(.*)", uri)
+    if (p):
+        cfg.authId = p.group(1)
+        cfg.uniqueId = p.group(2)
+        cfg.providerid = p.group(3)
+        cfg.serviceId = p.group(4)
+    else:
+        # authid@providerid:serviceid
+        p = re.search("(.*)@(.*):(.*)", uri)
+        if (p):
+            cfg.authId = p.group(1)
+            cfg.uniqueId = "_random_"
+            cfg.providerid = p.group(2)
+            cfg.serviceId = p.group(3)
+        else:
+            # providerid:serviceid
+            p = re.search("(.*):(.*)", uri)
+            if (p):
+                cfg.authId = "_random_"
+                cfg.uniqueId = "_random_"
+                cfg.providerid = p.group(1)
+                cfg.serviceId = p.group(2)
+            else:
+                log.L.error("Bad URI %s" % (uri))
+                return(None)
+    return(cfg)
 
 def generateAuthId():
     return (''.join(random.choice('ABCDEF0123456789') for _ in range(16)))
@@ -51,7 +82,7 @@ def waitForLocal(port, id):
     err = None
     while timeout < config.Config.CAP.connectTimeout:
         try:
-            log.L.warning("Waiting for local proxy...")
+            log.L.warning("Waiting for local proxy (%s: %s) ..." % (config.Config.CAP.mgmtHeader, id))
             r = requests.get("http://localhost:%s/stats" % (port),
                      proxies={"http": None, "https": None},
                      headers={config.Config.CAP.mgmtHeader: id},
@@ -94,16 +125,18 @@ def waitForRemote(port, id):
             else:
                 print(headers)
                 print(r.headers)
-        except Exception:
+        except Exception as e:
             timeout = timeout * 2
-            pass
+            err = e
+    log.L.error("Error connecting to port %s (%s)." % (port, err))
+    sys.exit(2)
         
 def waitForPayment(port, id, aid):
     timeout = 5
     while timeout < config.Config.CAP.paymentTimeout:
         try:
-            log.L.warning("Waiting for payment to settle...")
             headers = {config.Config.CAP.mgmtHeader: id, config.Config.CAP.authidHeader: aid}
+            log.L.warning("Waiting for payment to settle (%s: %s, %s: %s)" % (config.Config.CAP.mgmtHeader, id, config.Config.CAP.authidHeader, aid))
             r = requests.get("http://remote.lethean/status",
                      proxies={
                         "http": "http://localhost:%s" % (port),
@@ -115,14 +148,23 @@ def waitForPayment(port, id, aid):
             if (r.status_code == 200):
                 log.L.warning("Payment arrived. Happy flying!")
                 return True
+            elif (r.status_code == 403):
+                time.sleep(timeout)
+                timeout = timeout * 1.2
             elif (r.status_code == 503 and r.status_response == "BAD_ID"):
                 log.L.error("This is not our remote proxy! Something is bad.")
                 sys.exit(2)
+            elif (r.status_code == 503 and r.status_response == "CONNECTION_ERROR"):
+                log.L.error("Error connecting to provider (CONNECTION_ERROR). Blocked?")
+                sys.exit(2)
+            elif (r.status_code == 504):
+                log.L.error("Error connecting to provider (TIMEOUT). Blocked?")
+                sys.exit(2)
             else:
                 pass
-        except Exception:
-            timeout = timeout * 1.2
-            pass
+        except Exception as e:
+            log.L.error("Error connecting to provider (%s)" % (e))
+            sys.exit(2)
 
 def PaymentStatus(port, id, aid):
     timeout = 5
@@ -179,13 +221,39 @@ def main(argv):
     p.add('--exit-on-no-payment', dest='exitNoPayment', metavar='Bool', required=None, default=None, help='Exit after payment is gone.')
  
     # Initialise config
-    cfg = p.parse_args()    
+    (cfg, args) = p.parse_known_args()
     config.CONFIG = config.Config("dummy")
     util.parseCommonArgs(p, cfg)
     
-    if cfg.authId == "random":
+    if (len(args)==1):
+        cmd = args[0]
+        if (cmd == "list"):
+            cfg.L = True
+    elif (len(args)>1):
+        cmd = args[0]
+        uri = args[1]
+        if (cmd == "connect"):
+            cfg.O = True
+            p = re.search("(.*)/(.*)", uri)
+            if (p):
+                log.L.error("Complex URI not supported yet :(")
+                sys.exit(1)
+            cfg = parseUri(cfg, uri)
+            if not cfg:
+                sys.exit(1)
+        elif (cmd == "show"):
+           log.L.error("Not implemented yet")
+           sys.exit(1)
+        else:
+           log.L.error("Use lthnvpnc {show|connect} uri or lthnvpnc list.")
+           sys.exit(1)
+    else:
+        log.L.error("Use lthnvpnc {show|connect} uri or lthnvpnc list.")
+        sys.exit(1)
+            
+    if cfg.authId == "_random_":
         cfg.authId = generateAuthId()
-    if cfg.uniqueId == "random":
+    if cfg.uniqueId == "_random_":
         cfg.uniqueId = generateAuthId()
     
     config.Config.CAP = cfg
@@ -206,16 +274,17 @@ def main(argv):
             services.SERVICES.show()
             sid = services.SERVICES.get(cfg.serviceId)
             sdp = sdps.SDPS.getSDP(cfg.providerid)
+            atexit.register(sid.stop)
             sid.run()
             scfg = sid.getCfg()
             waitForLocal(scfg["status_port"], scfg["uniqueid"])
             waitForRemote(scfg["proxy_port"], cfg.providerid)
-            log.L.warning("No you need to pay to provider's wallet.")
+            log.L.warning("Now you need to pay to provider's wallet.")
             log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=cfg.authId, anon="no")
             waitForPayment(scfg["proxy_port"], cfg.providerid, cfg.authId)
             while True:
                 sleep(6)
-                if not PaymentStaus(scfg["proxy_port"], cfg.providerid, cfg.authId):
+                if not PaymentStatus(scfg["proxy_port"], cfg.providerid, cfg.authId):
                     log.L.warning("Payment gone!")
                     if config.Config.CAP.exitNoPayment:
                         log.L.warning("Exiting.")
@@ -225,14 +294,14 @@ def main(argv):
                         waitForPayment(scfg["proxy_port"], cfg.providerid, cfg.authId)
                       
     elif (cfg.L):
-        print("ProviderId,ServiceId,serviceType,ProviderName,ServiceName")
+        print("ProviderId:ServiceId,serviceType,ProviderName,ServiceName")
         for pid in sdps.SDPS.list():
-            sdp = json.loads(sdps.SDPS.getSDP(pid))
+            sdp = sdps.SDPS.getSDP(pid)
             for srv in sdp["services"]:
                 sid = srv["id"]
-                print("%s,%s,%s,%s,%s" % (pid, sid, srv["type"], sdp["provider"]["name"], srv["name"]))
+                print("%s:%s,%s,%s,%s" % (pid, sid, srv["type"], sdp["provider"]["name"], srv["name"]))
     else:
-        log.L.error("You must specify command (-C, -O, -L)")
+        log.L.error("You must specify command (list|connect|show)")
         sys.exit(1)
             
 if __name__ == "__main__":

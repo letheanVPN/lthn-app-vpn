@@ -32,8 +32,8 @@ class ServiceStunnel(Service):
     
     def run(self):
         self.createConfig()
-        cmd = "stdbuf -oL " + config.Config.STUNNEL_BIN + " " + self.cfgfile
-        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, shell=True, universal_newlines=True)
+        cmd = [ config.Config.STUNNEL_BIN, self.cfgfile ]
+        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, shell=None, universal_newlines=True)
         time.sleep(0.3)
         if (os.path.exists(self.pidfile)):
             with open (self.pidfile, "r") as p:

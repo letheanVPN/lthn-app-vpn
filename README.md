@@ -2,8 +2,7 @@
 This repository contains code needed to setup and run an exit node on the Lethean Virtual Private Network (VPN) or to use Lethean service as client in CLI mode.
 If you are looking for GUI, please look [here](https://github.com/LetheanMovement/lethean-gui)
 
-**If you are seeking for stable version, use [latest release](https://github.com/LetheanMovement/lethean-vpn/releases/tag/v3.0.0.b2). This is development version! 
-
+**This is development version! If you are seeking for stable version, use** [latest release](https://github.com/LetheanMovement/lethean-vpn/releases/tag/v3.0.0.b2). 
 **The exit node is currently only supported on Linux.**
 
 # Design
@@ -25,29 +24,50 @@ There are two directories which needs to be mounted to host: /opt/lthn/etc/ and 
 
 ### General usage
 ```
- docker run --volume localetc:/opt/lthn/etc --volume locallog:/var/log lethean/lethean-vpn:devel [cmd [args]]
+ docker run --volume -p expose:internal localetc:/opt/lthn/etc --volume locallog:/var/log limosek/lethean-vpn:devel [cmd [args]]
 ```
 where cmd can be run,easy-deploy or sh
 localetc is local directory to store configs
 locallog is local directory to store logs
+expose is port to expose to outside
+internal is internal port of dispatcher
 
 ### Recomended steps to use exit node
+Create configs and certificates (or copy your existing /opt/lthn/etc dir here.)
+Easiest way to create from scratch is probably to easy-deploy:
 ```
  mkdir etc log
- docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel easy-deploy
- docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel
+ docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel easy-deploy
+```
+After easy-deploy, all config files will be stored in your local etc directory. 
+You can edit sdp.json, dispatcher.ini and other things to respect your needs.
+Than to run dispatcher:
+```
+ docker run -p 8080:8080 --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel -l DEBUG
 ```
 
 ### Recomended steps to use client
-List all services from SDP
+Please note this is low level client. By default it does not dynamically create authid or mgmtid. It just need strict instructions what to do.
+Even more, it will not send any payments for service. It will only instruct you how much pay and how to pay.
+
+List all services from SDP platform:
 ```
  mkdir etc log
- docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel lthnvpnc -L
+ docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel lthnvpnc -L
 ```
-Connect to service 1A of provider providerid
+Simple URI is constructed of authid:mgmtid@providerid:serviceid
+authid is 32 bytes hexa string which identifies payment.
+mgmtid is 32 bytes hexa string which identifies this instance of client. Used by external tools to identify instance.
+
+More complex URI is still in development. By more complex URI, it will be possible to combine services and create enhanced privacy mode:
+
+URI1[[/URI2]/URI3] means "Connet to URI2, use it as proxy to connect to URI1". Can be chained more times. Latest URI will be connected first.
+URI1/{URI2,URI3,URI4} means  "Connect to URI2, URI3 and URI4 simultaneously and use it as round-robin set of proxies for connecting to URI1" 
+
+Connect to URI:
 ```
  mkdir etc log
- docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log lethean/lethean-vpn:devel lthnvpnc --sdp-service-id 1A --provider-id providerid -O
+ docker run -p 8080:8180 -p 8181:8181 --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel lthnvpnc URI
 ```
 
 ## FAQ

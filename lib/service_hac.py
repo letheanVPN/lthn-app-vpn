@@ -13,6 +13,7 @@ import signal
 import subprocess
 import sys
 import time
+import util
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 
@@ -32,7 +33,7 @@ class ServiceHaClient(ServiceHa):
                 port=None
                 )
     OPTS_HELP = dict(
-                     client_bind='Client bind address',
+                     proxy_bind='Client bind address',
                      max_conns_per_ip='Maximum number of simultanous connections per IP',
                      max_conns_per_period='Maximum number of tcp connections per IP for period',
                      max_requests_per_period='Maximum number of HTTP requests per IP for period',
@@ -42,6 +43,7 @@ class ServiceHaClient(ServiceHa):
                      )
     
     def run(self):
+        self.pid = None
         r = super().run()
         if self.stunnel:
             self.stunnel.run()

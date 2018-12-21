@@ -131,7 +131,7 @@ def parseCommonArgs(parser, cfg):
     if (cfg.comp=="v3"):
         cfg.mgmtHeader="X-ITNS-MgmtID"
         cfg.authidHeader="X-ITNS-PaymentID"
-    elif (cfg.comp=="v4"):
+    elif (cfg.comp=="v4" or cfg.comp=="v4b"):
         cfg.mgmtHeader="X-LTHN-MgmtID"
         cfg.authidHeader="X-LTHN-PaymentID"
     else:

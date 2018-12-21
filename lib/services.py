@@ -4,6 +4,7 @@ import config
 import log
 from sdp import *
 import sys
+import time
 from service_mgmt import ServiceMgmt
 from service_ha import ServiceHa
 from service_hac import ServiceHaClient
@@ -107,6 +108,12 @@ class Services(object):
                 self.stop()
                 sys.exit(3)
 
+    def sleep(self, s):
+        i = 0
+        while (i < s):
+            i = i + 0.1
+            time.sleep(0.1)
+            self.orchestrate()
 
     def stop(self):
         for id in self.services:

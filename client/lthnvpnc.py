@@ -76,129 +76,6 @@ def loadService(pid, sid):
         else:
             log.L.error("Provider id %s does not exists!" % (pid))
             return(None)
-        
-def waitForLocal(port, id):
-    timeout = 5
-    err = None
-    while timeout < config.Config.CAP.connectTimeout:
-        try:
-            log.L.warning("Waiting for local proxy (%s: %s) ..." % (config.Config.CAP.mgmtHeader, id))
-            r = requests.get("http://localhost:%s/stats" % (port),
-                     proxies={"http": None, "https": None},
-                     headers={config.Config.CAP.mgmtHeader: id},
-                     timeout=timeout
-                     )
-            if (r.status_code == 200):
-                log.L.warning("Local proxy OK")
-                return True
-            elif (r.status_code == 503 and r.status_response == "BAD_ID"):
-                log.L.error("This is not our proxy! Another instance is running on port %s?" % (port))
-                sys.exit(2)
-            err = r.status_code
-        except Exception as e:
-            timeout = timeout * 2
-            err = e
-        sleep(0.5)
-    log.L.error("Error connecting to port %s (%s)." % (port, err))
-    sys.exit(2)
-
-def waitForRemote(port, id):
-    timeout = 5
-    while timeout < config.Config.CAP.connectTimeout:
-        try:
-            log.L.warning("Waiting for remote proxy...")
-            headers = {config.Config.CAP.mgmtHeader: id}
-            r = requests.get("http://remote.lethean/status",
-                     proxies={
-                        "http": "http://localhost:%s" % (port),
-                        "https": None
-                     },
-                     headers=headers,
-                     timeout=timeout
-                     )
-            if (r.status_code == 403):
-                log.L.warning("Remote proxy is connected.")
-                return True
-            elif (r.status_code == 503 and r.status_response == "BAD_ID"):
-                log.L.error("This is not our remote proxy! Something is bad.")
-                sys.exit(2)
-            else:
-                print(headers)
-                print(r.headers)
-        except Exception as e:
-            timeout = timeout * 2
-            err = e
-    log.L.error("Error connecting to port %s (%s)." % (port, err))
-    sys.exit(2)
-        
-def waitForPayment(port, id, aid):
-    timeout = 5
-    while timeout < config.Config.CAP.paymentTimeout:
-        try:
-            headers = {config.Config.CAP.mgmtHeader: id, config.Config.CAP.authidHeader: aid}
-            log.L.warning("Waiting for payment to settle (%s: %s, %s: %s)" % (config.Config.CAP.mgmtHeader, id, config.Config.CAP.authidHeader, aid))
-            r = requests.get("http://remote.lethean/status",
-                     proxies={
-                        "http": "http://localhost:%s" % (port),
-                        "https": None
-                     },
-                     headers=headers,
-                     timeout=timeout
-                     )
-            if (r.status_code == 200):
-                log.L.warning("Payment arrived. Happy flying!")
-                return True
-            elif (r.status_code == 403):
-                time.sleep(timeout)
-                timeout = timeout * 1.2
-            elif (r.status_code == 503 and r.status_response == "BAD_ID"):
-                log.L.error("This is not our remote proxy! Something is bad.")
-                sys.exit(2)
-            elif (r.status_code == 503 and r.status_response == "CONNECTION_ERROR"):
-                log.L.error("Error connecting to provider (CONNECTION_ERROR). Blocked?")
-                sys.exit(2)
-            elif (r.status_code == 504):
-                log.L.error("Error connecting to provider (TIMEOUT). Blocked?")
-                sys.exit(2)
-            else:
-                pass
-        except Exception as e:
-            log.L.error("Error connecting to provider (%s)" % (e))
-            sys.exit(2)
-
-def PaymentStatus(port, id, aid):
-    timeout = 5
-    try:
-        log.L.info("Checking payment status")
-        headers = {config.Config.CAP.mgmtHeader: id, config.Config.CAP.authidHeader: aid}
-        r = requests.get("http://remote.lethean/status",
-                 proxies={
-                    "http": "http://localhost:%s" % (port),
-                    "https": None
-                 },
-                 headers=headers,
-                 timeout=timeout
-                 )
-        if (r.status_code == 200):
-            log.L.warning("Payment OK!")
-            return True
-        if (r.status_code == 403):
-            return None
-        elif (r.status_code == 503 and r.status_response == "BAD_ID"):
-            log.L.error("This is not our remote proxy! Something is bad.")
-            sys.exit(2)
-        else:
-           pass
-    except Exception:
-        log.L.warning("Cannot get remote status!")
-        pass
-        
-def sleep(s):
-    i = 0
-    while (i < s):
-        i = i + 0.1
-        time.sleep(0.1)
-        services.SERVICES.orchestrate()
     
 # Starting here
 def main(argv):
@@ -214,7 +91,7 @@ def main(argv):
     p.add('--stunnel-port', dest='stunnelPort', metavar='PORT', required=None, default=8187, help='Use this stunnel local port for connections over proxy.')
     p.add('--https-proxy-host', dest='httpsProxyHost', metavar='HOST', required=None, default=None, help='Use this https proxy host.')
     p.add('--https-proxy-port', dest='httpsProxyPort', metavar='PORT', required=None, default=3128, help='Use this https proxy port.')
-    p.add('--proxy-port', dest='proxyPort', metavar='PORT', required=None, default=8188, help='Use this port as local bind port for proxy.')
+    p.add('--proxy-port', dest='proxyPort', metavar='PORT', required=None, default=8186, help='Use this port as local bind port for proxy.')
     p.add('--proxy-bind', dest='proxyBind', metavar='IP', required=None, default="127.0.0.1", help='Use this host as local bind for proxy.')
     p.add('--connect-timeout', dest='connectTimeout', metavar='S', required=None, default=30, help='Timeout for connect to service.')
     p.add('--payment-timeout', dest='paymentTimeout', metavar='S', required=None, default=1200, help='Timeout for payment to service.')
@@ -273,25 +150,12 @@ def main(argv):
             services.SERVICES.syslog.run()
             services.SERVICES.show()
             sid = services.SERVICES.get(cfg.serviceId)
+            sid.cfg["uniqueid"] = cfg.uniqueId
+            sid.cfg["paymentid"] = cfg.authId
             sdp = sdps.SDPS.getSDP(cfg.providerid)
             atexit.register(sid.stop)
             sid.run()
-            scfg = sid.getCfg()
-            waitForLocal(scfg["status_port"], scfg["uniqueid"])
-            waitForRemote(scfg["proxy_port"], cfg.providerid)
-            log.L.warning("Now you need to pay to provider's wallet.")
-            log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=cfg.authId, anon="no")
-            waitForPayment(scfg["proxy_port"], cfg.providerid, cfg.authId)
-            while True:
-                sleep(6)
-                if not PaymentStatus(scfg["proxy_port"], cfg.providerid, cfg.authId):
-                    log.L.warning("Payment gone!")
-                    if config.Config.CAP.exitNoPayment:
-                        log.L.warning("Exiting.")
-                        sys.exit(2)
-                    else:
-                        log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=cfg.authId, anon="no")
-                        waitForPayment(scfg["proxy_port"], cfg.providerid, cfg.authId)
+            sid.connect(sdp)   
                       
     elif (cfg.L):
         print("ProviderId:ServiceId,serviceType,ProviderName,ServiceName")

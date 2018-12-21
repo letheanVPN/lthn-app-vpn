@@ -1,4 +1,4 @@
-HTTP/1.0 403 Forbidden
+HTTP/1.0 403 NO_PAYMENT
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET
 Access-Control-Allow-Headers: X-LTHN-Status

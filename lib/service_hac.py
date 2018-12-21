@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 import util
+import requests
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 
@@ -41,6 +42,13 @@ class ServiceHaClient(ServiceHa):
                      endpoint='Override endpoint',
                      port='Override port'
                      )
+           
+    OK = 1
+    E_EXPIRED = -5
+    E_CONERR = -4
+    E_BADID = -2
+    E_TIMEOUT = -3
+    E_GENERAL = -1
     
     def run(self):
         self.pid = None
@@ -48,6 +56,30 @@ class ServiceHaClient(ServiceHa):
         if self.stunnel:
             self.stunnel.run()
         return(r)
+    
+    def connect(self, sdp):
+        providerid = sdp["provider"]["id"]
+        code = self.waitForLocalEndpoint()
+        if (code<0):
+            return code
+        code = self.waitForRemoteEndpoint(providerid)
+        if (code<0):
+            return code
+        log.L.warning("Now you need to pay to provider's wallet.")
+        log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], anon="no")
+        code = self.waitForPayment(providerid)
+        if (code<0):
+            return code
+        while True:
+            services.SERVICES.sleep(6)
+            if self.PaymentStatus(providerid) == self.E_EXPIRED:
+                log.L.warning("Payment gone!")
+                if config.Config.CAP.exitNoPayment:
+                    log.L.warning("Exiting.")
+                    return self.E_EXPIRED
+                else:
+                    log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=cfg.authId, anon="no")
+                    self.waitForPayment(providerid)
             
     def orchestrate(self):
         if self.stunnel:
@@ -146,3 +178,140 @@ class ServiceHaClient(ServiceHa):
             log.L.warning("Configuration files created at %s" % (self.dir))
         except (IOError, OSError):
             log.L.error("Cannot write haproxy config file %s" % (self.cfgfile))
+            
+    """
+    Wait for local proxy to be ready
+    """
+    def waitForLocalEndpoint(self):
+        timeout = 5
+        err = None
+        while timeout < config.Config.CAP.connectTimeout:
+            try:
+                log.L.warning("Waiting for local proxy...")
+                r = requests.get("http://localhost:%s/stats" % (self.cfg["proxy_port"]),
+                         proxies={"http": None, "https": None},
+                         headers={config.Config.CAP.mgmtHeader: self.cfg["uniqueid"]},
+                         timeout=timeout
+                         )
+                if (r.status_code == 200):
+                    log.L.warning("Local proxy OK")
+                    return self.OK
+                elif (r.status_code == 503 and r.reason == "BAD_ID"):
+                    log.L.error("This is not our proxy! Another instance is running on port %s?" % (self.cfg["proxy_port"]))
+                    return self.E_BADID
+                log.L.debug("Request http://localhost:%s/stats (%s: %s, %s: %s) => %s [%s]" % (self.cfg["proxy_port"], config.Config.CAP.mgmtHeader, self.cfg["uniqueid"], config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason))
+            except Exception as e:
+                log.L.debug("Request http://localhost:%s/stats (%s: %s, %s: %s) => %s" % (self.cfg["proxy_port"], config.Config.CAP.mgmtHeader, self.cfg["uniqueid"], config.Config.CAP.authidHeader, self.cfg["paymentid"], e))
+                timeout = timeout * 2
+            services.SERVICES.sleep(timeout)
+        log.L.error("Timeout connecting to local endpoint!")
+        return self.E_TIMEOUT
+    
+    def waitForRemoteEndpoint(self, providerid):
+        timeout = 5
+        while timeout < config.Config.CAP.connectTimeout:
+            try:
+                log.L.warning("Waiting for remote proxy...")
+                headers = {config.Config.CAP.mgmtHeader: providerid}
+                r = requests.get("http://remote.lethean/status",
+                         proxies={
+                            "http": "http://localhost:%s" % (self.cfg["proxy_port"]),
+                            "https": None
+                         },
+                         headers=headers,
+                         timeout=timeout
+                         )  
+                log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s]" % (config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason))
+                if 'X-LTHN-Status' in r.headers:
+                    reason=r.headers['X-LTHN-Status']
+                elif 'X-ITNS-Status' in r.headers:
+                    reason=r.headers['X-ITNS-Status']
+                else:
+                    r.reason = r.reason
+                if (r.status_code == 403 and reason == "NO_PAYMENT"):
+                    log.L.warning("Remote proxy is connected.")
+                    return self.OK
+                elif (r.status_code == 503 and reason == "BAD_ID"):
+                    log.L.error("This is not our remote proxy! Something is bad.")
+                    return self.E_BADID
+            except Exception as e:
+                timeout = timeout * 2
+                log.L.debug("Request http://localhost:%s/stats (%s: %s, %s: %s) => %s" % (self.cfg["proxy_port"], config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], e))
+            services.SERVICES.sleep(timeout)
+        log.L.error("Timeout connecting to remote endpoint.")
+        return self.E_TIMEOUT
+
+    """
+    Wait for payment to be propagated to remote node
+    """
+    def waitForPayment(self, providerid):
+        timeout = 5
+        while timeout < config.Config.CAP.paymentTimeout:
+            try:
+                headers = {config.Config.CAP.mgmtHeader: providerid, config.Config.CAP.authidHeader: self.cfg["paymentid"]}
+                log.L.warning("Waiting for payment to settle...")
+                r = requests.get("http://remote.lethean/status",
+                         proxies={
+                            "http": "http://localhost:%s" % (self.cfg["proxy_port"]),
+                            "https": None
+                         },
+                         headers=headers,
+                         timeout=timeout
+                         )
+                if 'X-LTHN-Status' in r.headers:
+                    reason=r.headers['X-LTHN-Status']
+                elif 'X-ITNS-Status' in r.headers:
+                    reason=r.headers['X-ITNS-Status']
+                else:
+                    r.reason = r.reason
+                log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s,%s]" % (config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason, reason))
+                if (r.status_code == 200):
+                    log.L.warning("Payment arrived. Happy flying!")
+                    return self.E_OK
+                elif (r.status_code == 403):
+                    time.sleep(timeout)
+                    timeout = timeout * 2
+                elif (r.status_code == 503 and reason == "BAD_ID"):
+                    log.L.error("This is not our remote proxy! Something is bad.")
+                    return self.E_BADID
+                elif (r.status_code == 503 and reason == "CONNECTION_ERROR"):
+                    log.L.error("Error connecting to provider (CONNECTION_ERROR). Blocked?")
+                    return self.E_CONERR
+                elif (r.status_code == 504):
+                    log.L.error("Error connecting to provider (TIMEOUT). Blocked?")
+                    return self.E_CONERR
+                else:
+                    pass
+            except Exception as e:
+                log.L.error("Error connecting to provider (%s)" % (e))
+                return self.E_TIMEOUT
+            services.SERVICES.sleep(timeout)
+        log.L.error("Timeout waiting for payment!")
+        return self.E_TIMEOUT
+
+    def PaymentStatus(self, providerid):
+        timeout = 5
+        try:
+            log.L.info("Checking payment status")
+            headers = {config.Config.CAP.mgmtHeader: self.cfg["paymentid"], config.Config.CAP.authidHeader: providerid}
+            r = requests.get("http://remote.lethean/status",
+                     proxies={
+                        "http": "http://localhost:%s" % (self.cfg["proxy_port"]),
+                        "https": None
+                     },
+                     headers=headers,
+                     timeout=timeout
+                     )
+            if (r.status_code == 200):
+                log.L.warning("Payment OK!")
+                return self.OK
+            if (r.status_code == 403):
+                return self.E_EXPIRED
+            elif (r.status_code == 503 and r.reason == "BAD_ID"):
+                return E_BADID
+            else:
+               pass
+        except Exception:
+            log.L.warning("Cannot get remote status!")
+            return self.E_GENERAL
+        

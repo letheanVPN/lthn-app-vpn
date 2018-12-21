@@ -127,9 +127,15 @@ class SDPList(object):
         try:
             jf = open(config.CONFIG.SDPFILE, "r")
             localSdp = jf.read()
+            cf = open(config.CONFIG.PREFIX + "/etc/ca/certs/ca.cert.pem", "r")
+            localCa = cf.read()
         except (IOError, OSError):
             log.L.error("Cannot read SDP file %s" % (config.CONFIG.SDPFILE))
             sys.exit(1)
         localJson = json.loads(localSdp)
+        localJson['provider']['certificates'] = {}
+        localJson['provider']['certificates']['cn'] = 'ignored'
+        localJson['provider']['certificates']['id'] = 0
+        localJson['provider']['certificates']['content'] = localCa
         id_ = localJson["provider"]["id"]
         self.data[id_]=localJson

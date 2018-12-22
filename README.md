@@ -20,11 +20,14 @@ As a server, dispatcher helps you to create, publish and run your service as a p
 
 ## Docker
 We have prepared docker images for you. It is probably easiest way how to run client or exit node.
-There are two directories which needs to be mounted to host: /opt/lthn/etc/ and /var/log/.
+There is directory which needs to be mounted to host: /opt/lthn/etc . If you want to get syslog events from docker, you must bind /dev/log too.
 
 ### General usage
 ```
- docker run --volume -p expose:internal localetc:/opt/lthn/etc --volume locallog:/var/log limosek/lethean-vpn:devel [cmd [args]]
+ docker run -p expose:internal \
+   --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+   --mount type=bind,source=/dev/log,target=/dev/log \
+   limosek/lethean-vpn:devel [cmd [args]]
 ```
 where cmd can be run,easy-deploy or sh
 localetc is local directory to store configs
@@ -36,28 +39,39 @@ internal is internal port of dispatcher
 Create configs and certificates (or copy your existing /opt/lthn/etc dir here.)
 Easiest way to create from scratch is probably to easy-deploy:
 ```
- mkdir etc log
- docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel easy-deploy
+ mkdir etc
+ docker run --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+   --mount type=bind,source=/dev/log,target=/dev/log \
+   limosek/lethean-vpn:devel easy-deploy
 ```
 After easy-deploy, all config files will be stored in your local etc directory. 
 You can edit sdp.json, dispatcher.ini and other things to respect your needs.
+To upload your local SDP, use 
+```
+ docker run --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+   --mount type=bind,source=/dev/log,target=/dev/log \
+   limosek/lethean-vpn:devel upload-sdp
+```
+
 Than to run dispatcher:
 ```
- docker run -p 8080:8080 --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel -l DEBUG
+ docker run -p 8080:8080 --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+   --mount type=bind,source=/dev/log,target=/dev/log \
+   limosek/lethean-vpn:devel
 ```
 
 ### Recomended steps to use client
 Please note this is low level client. By default it does not dynamically create authid or mgmtid. It just need strict instructions what to do.
-Even more, it will not send any payments for service. It will only instruct you how much pay and how to pay.
+Even more, it will not send any payments for service. It will only instruct you how much pay and how to pay. You can parse your syslog messages to see how to pay.
 
 List all services from SDP platform:
 ```
- mkdir etc log
- docker run --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel lthnvpnc -L
+ docker run limosek/lethean-vpn:devel list
 ```
-Simple URI is constructed of authid:mgmtid@providerid:serviceid
-authid is 32 bytes hexa string which identifies payment.
-mgmtid is 32 bytes hexa string which identifies this instance of client. Used by external tools to identify instance.
+
+Simple URI is constructed of [authid[:mgmtid]]@providerid:serviceid
+authid is 16 bytes hexa string which identifies payment. Keep in mind that first two letters of authid must be same as serviceid.
+mgmtid is 16 bytes hexa string which identifies this instance of client. Used by external tools to identify instance.
 
 More complex URI is still in development. By more complex URI, it will be possible to combine services and create enhanced privacy mode:
 
@@ -66,8 +80,7 @@ URI1/{URI2,URI3,URI4} means  "Connect to URI2, URI3 and URI4 simultaneously and 
 
 Connect to URI:
 ```
- mkdir etc log
- docker run -p 8080:8180 -p 8181:8181 --volume $PWD/etc:/opt/lthn/etc --volume $PWD/log:/var/log limosek/lethean-vpn:devel lthnvpnc URI
+ docker run --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
 ```
 
 ## FAQ

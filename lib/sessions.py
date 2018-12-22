@@ -38,7 +38,7 @@ class Session(object):
         return(self.authid)
 
     def getInfo(self):
-        return(self.conninfo)
+        return("")
     
     def toString(self):
         str = "%s: serviceid=%s, info=%s, created=%s,modified=%s, balance=%f, perminute=%f, minsleft=%f, charged_count=%d, discharged_count=%d\n" % (self.id, self.serviceid, self.conninfo, timefmt(self.created), timefmt(self.lastmodify), self.balance, self.cost, self.balance / self.cost, self.charged_count, self.discharged_count)

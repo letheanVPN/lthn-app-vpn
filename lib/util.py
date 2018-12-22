@@ -61,7 +61,6 @@ def anonymise_uri(uri):
     
 def anonymise_paymentid(paymentid):
     p = base64.b64encode(paymentid.encode("utf-8")).decode("utf-8")
-    print(p)
     return(p[0:3] + p[-3:])
 
 def is_valid_ipv6_address(address):
@@ -109,14 +108,14 @@ def commonArgs(p):
     p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
 
 
-def parseCommonArgs(parser, cfg):
+def parseCommonArgs(parser, cfg, name):
     if (cfg.lc):
         logging.config.fileConfig(cfg.lc)
-        log.L = log.Log(level=cfg.d)
+        log.L = log.Log(level=cfg.d, name=name)
         log.A = log.Audit(level=logging.WARNING)
     else:
         ah = logging.FileHandler(cfg.a)
-        log.L = log.Log(level=cfg.d)
+        log.L = log.Log(level=cfg.d, name=name)
         log.A = log.Audit(handler=ah)
     config.Config.VERBOSE = cfg.v
     config.Config.CONFIGFILE = cfg.config

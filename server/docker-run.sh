@@ -93,6 +93,9 @@ easy-deploy)
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 10 --sdp-service-verifications 0 || \
        { errorExit 5 "Cannot create initial SDP!"; }
+    ;;
+
+upload-sdp)
     /opt/lthn/bin/lvmgmt --upload-sdp
     ;;
 
@@ -127,10 +130,16 @@ lthnvpnd|run)
     exec lthnvpnd "$@"
     ;;
 
-lthnvpnc|connect)
+connect)
     prepareClientConf || { errorExit 2 "Cannot create $CONF/dispatcher.ini! "; }
     shift
-    exec lthnvpnc "$@"
+    exec lthnvpnc connect "$@"
+    ;;
+
+list)
+    prepareClientConf || { errorExit 2 "Cannot create $CONF/dispatcher.ini! "; }
+    shift
+    exec lthnvpnc list "$@"
     ;;
 
 lvmgmt)

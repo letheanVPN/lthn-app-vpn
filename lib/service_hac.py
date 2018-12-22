@@ -15,6 +15,7 @@ import sys
 import time
 import util
 import requests
+import atexit
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 
@@ -73,6 +74,12 @@ class ServiceHaClient(ServiceHa):
             if (code<0):
                 return code
         log.L.warning("We are connected! Happy flying!")
+        if config.CONFIG.CAP.forkOnConnect:
+            log.L.warning("Forking into background.")
+            if (os.fork()):
+                atexit.unregister(services.SERVICES.stop)
+                atexit.unregister(self.stop)
+                sys.exit()
         while True:
             services.SERVICES.sleep(60)
             if self.PaymentStatus(providerid) == self.E_EXPIRED:

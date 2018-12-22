@@ -54,8 +54,7 @@ def parseUri(cfg, uri):
             else:
                 log.L.error("Bad URI %s" % (uri))
                 return(None)
-    if (cfg.authId[:2] != cfg.serviceId):
-        print(cfg.authId)
+    if (cfg.authId != "_random_" and cfg.authId[:2] != cfg.serviceId):
         log.L.error("Authid must start with serviceid!")
         return(None)
     return(cfg)
@@ -101,11 +100,12 @@ def main(argv):
     p.add_argument('--connect-timeout', dest='connectTimeout', metavar='S', required=None, default=30, help='Timeout for connect to service.')
     p.add_argument('--payment-timeout', dest='paymentTimeout', metavar='S', required=None, default=1200, help='Timeout for payment to service.')
     p.add_argument('--exit-on-no-payment', dest='exitNoPayment', metavar='Bool', required=None, default=None, help='Exit after payment is gone.')
-    
+    p.add_argument('--fork-on-connect', dest='forkOnConnect', metavar='Bool', required=None, default=None, help='Fork after successful paid connection. Client will fork into background.')
+      
     p.add('cmd', metavar='Command', choices=["connect","list"], help='Exit after payment is gone.')
         
     (cfg, args) = p.parse_known_args()
-    util.parseCommonArgs(p, cfg)
+    util.parseCommonArgs(p, cfg, 'lthnvpnc')
     config.Config.CAP = cfg
 
     config.CONFIG = config.Config("dummy")

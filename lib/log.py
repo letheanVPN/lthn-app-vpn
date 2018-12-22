@@ -4,12 +4,12 @@ import util
 
 class Log(object):
     
-    def __init__(self, handler=None, level=logging.WARNING):
+    def __init__(self, handler=None, level=logging.WARNING, name='lthn'):
         logging.basicConfig(level=level,
-                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                    format='%(asctime)s %(name)-12s %(process)d %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M',
                     )
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(name)
         if (handler):
             self.logger.addHandler(handler)
         self.logger.setLevel(level)
@@ -43,7 +43,7 @@ class Audit(object):
     PWALLET = "PROVIDER_WALLET"
     SDP = "SDP"
     
-    def __init__(self, handler=None, level=logging.INFO, anon=True):
+    def __init__(self, handler=None, level=logging.INFO, anon=True, name='audit'):
         self.logger = logging.getLogger('audit')
         if (handler):
             formatter = logging.Formatter('%(asctime)s %(message)s')

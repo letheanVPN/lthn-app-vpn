@@ -88,7 +88,7 @@ def main(argv):
     # Initialise config
     cfg = p.parse_args()
     config.CONFIG = config.Config("dummy")
-    util.parseCommonArgs(p, cfg)
+    util.parseCommonArgs(p, cfg, 'lthnvpnd')
     config.Config.CAP = cfg
     
     config.Config.T_SAVE = cfg.st

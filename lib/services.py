@@ -54,7 +54,6 @@ class Services(object):
         for id_ in self.sdp.listServices():
             s = self.sdp.getService(id_)
             cfg = config.CONFIG.getService(id_)
-            print(id_)
             if ("enabled" in cfg and cfg["enabled"]) or not "enabled" in cfg:
                 if (s["type"]):
                     if (s["type"] == "vpn"):

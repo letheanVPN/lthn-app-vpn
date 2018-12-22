@@ -48,7 +48,7 @@ def main(argv):
     # Initialise config
     config.CONFIG = config.Config("dummy")
     cfg = p.parse_args()
-    util.parseCommonArgs(p, cfg)
+    util.parseCommonArgs(p, cfg, 'lvmgmt')
     config.Config.CAP = cfg
     
     if (cfg.G):

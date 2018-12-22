@@ -426,7 +426,7 @@ class AuthIds(object):
                 self.save()
 
     def save(self):
-        if (config.Config.AUTHIDSFILE != ""):
+        if (config.Config.AUTHIDSFILE != "none"):
             try:
                 self.lastmodify = time.time()
                 log.L.debug("Saving authids db into %s" % (config.Config.AUTHIDSFILE))

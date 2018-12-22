@@ -1,6 +1,7 @@
 
 import logging
 import util
+import config
 
 class Log(object):
     

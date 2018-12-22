@@ -80,7 +80,11 @@ URI1/{URI2,URI3,URI4} means  "Connect to URI2, URI3 and URI4 simultaneously and 
 
 Connect to URI:
 ```
- docker run --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
+ docker run  -p 8186:8186 --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
+```
+Test proxy:
+```
+curl -x http://localhost:8186 -L https://lethean.io/
 ```
 
 ## FAQ

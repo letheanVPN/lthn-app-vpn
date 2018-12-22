@@ -72,6 +72,8 @@ USER lthn
 RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --easy
 RUN make install
 RUN if [ -n "$PUBLIC_BUILD" ]; then \
-      rm -rf /opt/lthn/etc/* /opt/lthn/var/* /usr/src/lethean-vpn/build /usr/src/lethean-vpn/env.mk; \
+      rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \
+        /opt/lthn/var/* \
+        /usr/src/lethean-vpn/build /usr/src/lethean-vpn/env.mk; \
       mkdir -p /opt/lthn/var/log /opt/lthn/var/run; \
     fi

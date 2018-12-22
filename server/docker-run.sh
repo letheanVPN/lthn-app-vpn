@@ -119,15 +119,15 @@ lthnvpnd|run)
     else
       echo "Wallet is not inside container." >&2
     fi
-    echo "Starting dispatcher" >&2
     unset HTTP_PROXY
     unset http_proxy    
     shift
-    while ! curl http://localhost:14660; do
+    while ! curl http://localhost:14660 >/dev/null 2>/dev/null; do
         echo "Waiting for walet rpc server."
         sleep 5
     done
-    exec lthnvpnd "$@"
+    echo "Starting dispatcher" >&2
+    exec lthnvpnd --syslog "$@"
     ;;
 
 connect)

@@ -87,6 +87,7 @@ def helpmsg(p):
 
 def commonArgs(p):
     p.add_argument('-l', '--log-level',               dest='d', metavar='LEVEL', help='Log level', default='WARNING')
+    p.add_argument(      '--syslog',                  dest='syslog', const='syslog', action='store_const', help='Use syslog', default=None)
     p.add_argument('-v', '--verbose',                 metavar='VERBOSITY', action='store_const', dest='v', const='v', help='Be more verbose')
     p.add_argument('-h', '--help',                    metavar='HELP', required=None, action='store_const', dest='h', const='h', help='Help')
     p.add_argument('-f', '--config',                  metavar='CONFIGFILE', required=None, is_config_file=True, default=config.Config.CONFIGFILE, help='Config file')    
@@ -113,6 +114,10 @@ def parseCommonArgs(parser, cfg, name):
         logging.config.fileConfig(cfg.lc)
         log.L = log.Log(level=cfg.d, name=name)
         log.A = log.Audit(level=logging.WARNING)
+    elif (cfg.syslog):
+        h = logging.handlers.SysLogHandler(address="/dev/log")
+        log.L = log.Log(level=cfg.d, name=name, handler=h)
+        log.A = log.Audit(handler=h)
     else:
         ah = logging.FileHandler(cfg.a)
         log.L = log.Log(level=cfg.d, name=name)

@@ -5,10 +5,6 @@ LABEL "io.lethean.vpn-server"="Lethean.IO"
 LABEL version="1.0"
 LABEL description="Letehan.io VPN server"
 
-VOLUME ["/opt/lthn/etc"]
-
-EXPOSE 8080/tcp
-
 ARG PROVIDERID=""
 ARG PROVIDERKEY=""
 ARG DAEMON_BIN_URL="https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2"

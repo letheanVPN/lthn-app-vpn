@@ -11,6 +11,7 @@ import log
 import logging
 import logging.config
 import config
+import argparse
 import configargparse
 import util
 import pprint
@@ -53,9 +54,16 @@ def parseUri(cfg, uri):
             else:
                 log.L.error("Bad URI %s" % (uri))
                 return(None)
+    if (cfg.authId[:2] != cfg.serviceId):
+        print(cfg.authId)
+        log.L.error("Authid must start with serviceid!")
+        return(None)
     return(cfg)
 
-def generateAuthId():
+def generateAuthId(sid):
+    return (sid+''.join(random.choice('ABCDEF0123456789') for _ in range(14)))
+
+def generateMgmtId():
     return (''.join(random.choice('ABCDEF0123456789') for _ in range(16)))
 
 def loadService(pid, sid):
@@ -83,55 +91,48 @@ def main(argv):
     config.CONFIG = config.Config("dummy")
     p = configargparse.getArgumentParser(ignore_unknown_config_file_keys=True, fromfile_prefix_chars='@')
     util.commonArgs(p)
-    p.add('-C', '--generate-client-config', dest='C', action='store_const', const='C', required=None, help='Generate config for service')
-    p.add('-O', '--connect', dest='O', action='store_const', const='O', required=None, help='Connect')
-    p.add('-L', '--list-services', dest='L', action='store_const', const='L', required=None, help='List services')
-    p.add('--authid', dest='authId', metavar='AUTHID', required=None, default=None, help='Authentication ID. Use "random" to generate.')
-    p.add('--uniqueid', dest='uniqueId', metavar='UNIQUEID', required=None, default=None, help='Unique ID of proxy. Use "random" to generate.')
-    p.add('--stunnel-port', dest='stunnelPort', metavar='PORT', required=None, default=8187, help='Use this stunnel local port for connections over proxy.')
-    p.add('--https-proxy-host', dest='httpsProxyHost', metavar='HOST', required=None, default=None, help='Use this https proxy host.')
-    p.add('--https-proxy-port', dest='httpsProxyPort', metavar='PORT', required=None, default=3128, help='Use this https proxy port.')
-    p.add('--proxy-port', dest='proxyPort', metavar='PORT', required=None, default=8186, help='Use this port as local bind port for proxy.')
-    p.add('--proxy-bind', dest='proxyBind', metavar='IP', required=None, default="127.0.0.1", help='Use this host as local bind for proxy.')
-    p.add('--connect-timeout', dest='connectTimeout', metavar='S', required=None, default=30, help='Timeout for connect to service.')
-    p.add('--payment-timeout', dest='paymentTimeout', metavar='S', required=None, default=1200, help='Timeout for payment to service.')
-    p.add('--exit-on-no-payment', dest='exitNoPayment', metavar='Bool', required=None, default=None, help='Exit after payment is gone.')
- 
-    # Initialise config
-    (cfg, args) = p.parse_known_args()
-    config.CONFIG = config.Config("dummy")
-    util.parseCommonArgs(p, cfg)
+    p.add_argument('--authid', dest='authId', metavar='AUTHID', required=None, default=None, help='Authentication ID. Use "random" to generate.')
+    p.add_argument('--uniqueid', dest='uniqueId', metavar='UNIQUEID', required=None, default=None, help='Unique ID of proxy. Use "random" to generate.')
+    p.add_argument('--stunnel-port', dest='stunnelPort', metavar='PORT', required=None, default=8187, help='Use this stunnel local port for connections over proxy.')
+    p.add_argument('--https-proxy-host', dest='httpsProxyHost', metavar='HOST', required=None, default=None, help='Use this https proxy host.')
+    p.add_argument('--https-proxy-port', dest='httpsProxyPort', metavar='PORT', required=None, default=3128, help='Use this https proxy port.')
+    p.add_argument('--proxy-port', dest='proxyPort', metavar='PORT', required=None, default=8186, help='Use this port as local bind port for proxy.')
+    p.add_argument('--proxy-bind', dest='proxyBind', metavar='IP', required=None, default="127.0.0.1", help='Use this host as local bind for proxy.')
+    p.add_argument('--connect-timeout', dest='connectTimeout', metavar='S', required=None, default=30, help='Timeout for connect to service.')
+    p.add_argument('--payment-timeout', dest='paymentTimeout', metavar='S', required=None, default=1200, help='Timeout for payment to service.')
+    p.add_argument('--exit-on-no-payment', dest='exitNoPayment', metavar='Bool', required=None, default=None, help='Exit after payment is gone.')
     
-    if (len(args)==1):
-        cmd = args[0]
-        if (cmd == "list"):
-            cfg.L = True
-    elif (len(args)>1):
-        cmd = args[0]
-        uri = args[1]
-        if (cmd == "connect"):
-            cfg.O = True
-            p = re.search("(.*)/(.*)", uri)
-            if (p):
-                log.L.error("Complex URI not supported yet :(")
-                sys.exit(1)
-            cfg = parseUri(cfg, uri)
-            if not cfg:
-                sys.exit(1)
-        elif (cmd == "show"):
-           log.L.error("Not implemented yet")
-           sys.exit(1)
-        else:
-           log.L.error("Use lthnvpnc {show|connect} uri or lthnvpnc list.")
-           sys.exit(1)
-    else:
-        log.L.error("Use lthnvpnc {show|connect} uri or lthnvpnc list.")
-        sys.exit(1)
+    p.add('cmd', metavar='Command', choices=["connect","list"], help='Exit after payment is gone.')
+        
+    (cfg, args) = p.parse_known_args()
+    util.parseCommonArgs(p, cfg)
+    config.Config.CAP = cfg
+
+    config.CONFIG = config.Config("dummy")
+    cmd = cfg.cmd
+    cfg.O = None
+    cfg.L = None
+    
+    if (cmd == "list"):
+        cfg.L = True
+    elif (cmd == "connect"):
+        cfg.O = True
+        if len(args)==0:
+            log.L.error("Expecting argument to connect!")
+            sys.exit(1)
+        uri = args[0]
+        p = re.search("(.*)/(.*)", uri)
+        if (p):
+            log.L.error("Complex URI not supported yet :(")
+            sys.exit(1)
+        cfg = parseUri(cfg, uri)
+        if not cfg:
+            sys.exit(1)
             
     if cfg.authId == "_random_":
-        cfg.authId = generateAuthId()
+        cfg.authId = generateAuthId(cfg.serviceId)
     if cfg.uniqueId == "_random_":
-        cfg.uniqueId = generateAuthId()
+        cfg.uniqueId = generateMgmtId()
     
     config.Config.CAP = cfg
 
@@ -141,11 +142,7 @@ def main(argv):
     sdps.SDPS = sdps.SDPList()
     sdps.SDPS.parse()
     
-    if (cfg.C):
-        if (loadService(cfg.providerid, cfg.serviceId)):    
-            services.SERVICES.get(cfg.serviceId).createConfig()
-            sys.exit()
-    elif (cfg.O):
+    if (cfg.O):
         if (loadService(cfg.providerid, cfg.serviceId)):
             services.SERVICES.syslog.run()
             services.SERVICES.show()

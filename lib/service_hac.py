@@ -44,6 +44,7 @@ class ServiceHaClient(ServiceHa):
                      )
            
     OK = 1
+    OK_NOPAYMENT = 2
     E_EXPIRED = -5
     E_CONERR = -4
     E_BADID = -2
@@ -65,20 +66,22 @@ class ServiceHaClient(ServiceHa):
         code = self.waitForRemoteEndpoint(providerid)
         if (code<0):
             return code
-        log.L.warning("Now you need to pay to provider's wallet.")
-        log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], anon="no")
-        code = self.waitForPayment(providerid)
-        if (code<0):
-            return code
+        if (code==self.OK_NOPAYMENT):
+            log.L.warning("Now you need to pay to provider's wallet.")
+            log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], anon="no")
+            code = self.waitForPayment(providerid)
+            if (code<0):
+                return code
+        log.L.warning("We are connected! Happy flying!")
         while True:
-            services.SERVICES.sleep(6)
+            services.SERVICES.sleep(60)
             if self.PaymentStatus(providerid) == self.E_EXPIRED:
                 log.L.warning("Payment gone!")
                 if config.Config.CAP.exitNoPayment:
                     log.L.warning("Exiting.")
                     return self.E_EXPIRED
                 else:
-                    log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=cfg.authId, anon="no")
+                    log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], anon="no")
                     self.waitForPayment(providerid)
             
     def orchestrate(self):
@@ -227,9 +230,12 @@ class ServiceHaClient(ServiceHa):
                 elif 'X-ITNS-Status' in r.headers:
                     reason=r.headers['X-ITNS-Status']
                 else:
-                    r.reason = r.reason
+                    reason = r.reason
                 if (r.status_code == 403 and reason == "NO_PAYMENT"):
                     log.L.warning("Remote proxy is connected.")
+                    return self.OK_NOPAYMENT
+                elif (r.status_code == 200 and reason == "OK"):
+                    log.L.warning("Remote proxy is connected and prepaid.")
                     return self.OK
                 elif (r.status_code == 503 and reason == "BAD_ID"):
                     log.L.error("This is not our remote proxy! Something is bad.")
@@ -263,11 +269,11 @@ class ServiceHaClient(ServiceHa):
                 elif 'X-ITNS-Status' in r.headers:
                     reason=r.headers['X-ITNS-Status']
                 else:
-                    r.reason = r.reason
+                    reason = r.reason
                 log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s,%s]" % (config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason, reason))
                 if (r.status_code == 200):
                     log.L.warning("Payment arrived. Happy flying!")
-                    return self.E_OK
+                    return self.OK
                 elif (r.status_code == 403):
                     time.sleep(timeout)
                     timeout = timeout * 2
@@ -293,7 +299,7 @@ class ServiceHaClient(ServiceHa):
         timeout = 5
         try:
             log.L.info("Checking payment status")
-            headers = {config.Config.CAP.mgmtHeader: self.cfg["paymentid"], config.Config.CAP.authidHeader: providerid}
+            headers = {config.Config.CAP.mgmtHeader: providerid, config.Config.CAP.authidHeader: self.cfg["paymentid"]}
             r = requests.get("http://remote.lethean/status",
                      proxies={
                         "http": "http://localhost:%s" % (self.cfg["proxy_port"]),
@@ -302,16 +308,24 @@ class ServiceHaClient(ServiceHa):
                      headers=headers,
                      timeout=timeout
                      )
+            if 'X-LTHN-Status' in r.headers:
+                reason=r.headers['X-LTHN-Status']
+            elif 'X-ITNS-Status' in r.headers:
+                reason=r.headers['X-ITNS-Status']
+            else:
+                reason = r.reason
+            log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s,%s]" % (config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason, reason))
             if (r.status_code == 200):
                 log.L.warning("Payment OK!")
+                log.L.debug(r.text)
                 return self.OK
             if (r.status_code == 403):
                 return self.E_EXPIRED
-            elif (r.status_code == 503 and r.reason == "BAD_ID"):
+            elif (r.status_code == 503 and reason == "BAD_ID"):
                 return E_BADID
             else:
                pass
-        except Exception:
-            log.L.warning("Cannot get remote status!")
+        except Exception as e:
+            log.L.warning("Cannot get remote status! (%s)" % (e))
             return self.E_GENERAL
         

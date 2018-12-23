@@ -14,6 +14,7 @@ from service_ovpn import ServiceOvpn
 from service_ovpnc import ServiceOvpnClient
 from service_ovpns import ServiceOvpnServer
 from service_http import ServiceHttp
+import pprint
 
 SERVICES = None
 
@@ -30,7 +31,9 @@ class Services(object):
         for id_ in sdp.listServices():
             s = sdp.getService(id_)
             cfg = config.CONFIG.getService(id_)
-            if ("enabled" in cfg and cfg["enabled"]) or not "enabled" in cfg:
+            if "enabled" not in cfg:
+                cfg["enabled"] = "true"
+            if (cfg["enabled"]=="true"):
                 if (s["type"]):
                     if (s["type"] == "vpn"):
                         so = ServiceOvpnServer(id_, s)
@@ -41,7 +44,7 @@ class Services(object):
                         sys.exit(1)
                 self.services[id_.upper()] = so
             else:
-                log.L.warning("Service %s disabled m config file." % (id_))
+                log.L.warning("Service %s disabled in config file." % (id_))
         self.syslog = ServiceSyslog("SS")
         self.mgmt = ServiceMgmt("MS")
         self.http = ServiceHttp("HS")

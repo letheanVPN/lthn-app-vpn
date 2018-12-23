@@ -21,7 +21,7 @@ class ServiceOvpnServer(ServiceOvpn):
         crt = None, key = None, crtkey = None,
         tundev = "tun0",
         mgmtport = "11193",
-        proto = "UDP"
+        enabled = True
     )
     OPTS_HELP = dict(
         tundev = "Local tun device"
@@ -92,12 +92,12 @@ class ServiceOvpnServer(ServiceOvpn):
         
         if (config.Config.CAP.servicePort):
             self.cfg['port'] = config.Config.CAP.servicePort
-        elif ('proto' not in self.cfg):
-            self.cfg['proto'] = self.json['vpn'][0]['port'].split('/')[1]
-        if (config.Config.CAP.serviceProto):
-            self.cfg['proto'] = config.Config.CAP.serviceProto
         elif ('port' not in self.cfg):
             self.cfg['port'] = self.json['vpn'][0]['port'].split('/')[0]
+        if (config.Config.CAP.serviceProto):
+            self.cfg['proto'] = config.Config.CAP.serviceProto
+        elif ('proto' not in self.cfg):
+            self.cfg['proto'] = self.json['vpn'][0]['port'].split('/')[1]
         if (config.Config.CAP.serviceFqdn):
             self.cfg['endpoint'] = config.Config.CAP.serviceFqdn
         elif ('endpoint' not in self.cfg):

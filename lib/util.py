@@ -100,7 +100,7 @@ def commonArgs(p):
     p.add_argument(       '--sdp-wallet-address',     dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
     p.add_argument(       '--sdp-service-endpoint',   dest='serviceFqdn', metavar='FQDN', required=None, help='Service FQDN or IP')
     p.add_argument(       '--sdp-service-port',       dest='servicePort', metavar='NUMBER', required=None, help='Service port')
-    p.add_argument(       '--sdp-service-proto',      dest='serviceProto', metavar='NUMBER', required=None, help='Service protocol')
+    p.add_argument(       '--sdp-service-proto',      dest='serviceProto', metavar='PROTOCOL', required=None, default=None, help='Service protocol')
     p.add_argument(       '--sdp-service-id',         dest='serviceId', metavar='NUMBER', required=None, help='Service ID')
     p.add_argument(       '--provider-id',            dest='providerid', metavar='PROVIDERID', required=None, default='<NOID>', help='ProviderID (public ed25519 key)')
     p.add_argument(       '--ca',                     dest='providerCa', metavar="ca.crt", required=None, default='<NOCA>', help='Set certificate authority file')

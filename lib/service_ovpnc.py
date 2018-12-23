@@ -23,8 +23,8 @@ class ServiceOvpnClient(ServiceOvpn):
         paymentid='authid1',
         tundev = "tun1",
         mgmtport = "11193",
-        proto = "UDP",
-        reneg = 600
+        reneg = 600,
+        enabled = True
     )
     OPTS_HELP = dict(
         http_proxy_host = "HTTP proxy used for connection to ovpn",
@@ -61,11 +61,11 @@ class ServiceOvpnClient(ServiceOvpn):
         if (config.Config.CAP.servicePort):
             self.cfg['port'] = config.Config.CAP.servicePort
         elif ('port' not in self.cfg):
-            self.cfg['proto'] = self.json['vpn'][0]['port'].split('/')[1]
+            self.cfg['port'] = self.json['vpn'][0]['port'].split('/')[0]
         if (config.Config.CAP.serviceProto):
             self.cfg['proto'] = config.Config.CAP.serviceProto
-        elif ('port' not in self.cfg):
-            self.cfg['port'] = self.json['vpn'][0]['port'].split('/')[0]
+        elif ('proto' not in self.cfg):
+            self.cfg['proto'] = self.json['vpn'][0]['port'].split('/')[1]
         if (config.Config.CAP.serviceFqdn):
             self.cfg['endpoint'] = config.Config.CAP.serviceFqdn
         elif ('endpoint' not in self.cfg):

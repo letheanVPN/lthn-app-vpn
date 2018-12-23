@@ -336,12 +336,12 @@ if [ -n "$generate_ini" ]; then
         -e "s#{ca}#${LTHN_PREFIX}/etc/ca/certs/ca.cert.pem#g" \
         -e "s#{providerid}#$(cat build/etc/provider.public)#g" \
         -e "s#{providerkey}#$(cat build/etc/provider.private)#g" \
+        -e "s#{vpncrt}#${LTHN_PREFIX}/etc/ca/certs/openvpn.cert.pem#g" \
+        -e "s#{vpnkey}#${LTHN_PREFIX}/etc/ca/private/openvpn.key.pem#g" \
+        -e "s#{vpnboth}#${LTHN_PREFIX}/etc/ca/certs/openvpn.both.pem#g" \
         -e "s#{hacrt}#${LTHN_PREFIX}/etc/ca/certs/ha.cert.pem#g" \
-        -e "s#{vpncrt}#${LTHN_PREFIX}/etc/ca/certs/vpn.cert.pem#g" \
-        -e "s#{hakey}#${LTHN_PREFIX}/etc/ca/private/ha.cert.pem#g" \
-        -e "s#{vpnkey}#${LTHN_PREFIX}/etc/ca/private/ha.cert.pem#g" \
+        -e "s#{hakey}#${LTHN_PREFIX}/etc/ca/private/ha.key.pem#g" \
         -e "s#{haboth}#${LTHN_PREFIX}/etc/ca/certs/ha.both.pem#g" \
-        -e "s#{vpnboth}#${LTHN_PREFIX}/etc/ca/certs/vpn.both.pem#g" \
         -e "s#{wallet_rpc_user}#$wallet_rpc_user#g" \
         -e "s#{wallet_rpc_pass}#$wallet_rpc_pass#g" \
         -e "s#{wallet_address}#$wallet_address#g" \

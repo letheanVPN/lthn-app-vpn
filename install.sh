@@ -44,6 +44,7 @@ sudo chmod 600 "$INSTALL_PREFIX/$LTHN_PREFIX/dev/net/tun"
 sudo chown "$LTHN_USER" "$INSTALL_PREFIX/$LTHN_PREFIX/dev/net/tun"
 
 # Copy bin files
+sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/unpriv-ip.sh $INSTALL_PREFIX/$LTHN_PREFIX/bin/
 sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lthnvpnd.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnd
 sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./client/lthnvpnc.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnc
 sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lvmgmt.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lvmgmt

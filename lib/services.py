@@ -55,13 +55,15 @@ class Services(object):
             s = self.sdp.getService(id_)
             cfg = config.CONFIG.getService(id_)
             if not cfg:
-                cfg = { "enabled": True }
+                cfg = { "enabled": None }
             if ("enabled" in cfg and cfg["enabled"]) or not "enabled" in cfg:
                 if (s["type"]):
                     if (s["type"] == "vpn"):
                         so = ServiceOvpnClient('C' + id_, s)
+                        so.disable()
                     elif (s["type"] == "proxy"):
                         so = ServiceHaClient(sdp["provider"]["id"] + ":" + id_, s)
+                        so.disable()
                     else:
                         log.L.error("Unknown service type %s in SDP!" % (s["type"]))
                         sys.exit(1)
@@ -82,7 +84,10 @@ class Services(object):
         if (config.CONFIG.CAP.runServices):
             for id in self.services:
                 s = self.services[id]
-                s.run()
+                if s.isEnabled():
+                    s.run()
+                else:
+                    log.L.warining("Service id %s disabled." % (id))
         atexit.register(self.stop)
     
     def createConfigs(self):
@@ -98,16 +103,18 @@ class Services(object):
         if self.http.isEnabled():
             self.http.orchestrate()
         for id in self.services:
-            o = self.services[id].orchestrate()
-            if (not err and not o):
-                log.L.error("Service %s died! Exiting!" % (self.services[id].id))
-                # Wait for all other processes to settle
-                i = 1
-                while i<20:
-                    self.orchestrate(True)
-                    i = i + 1
-                self.stop()
-                sys.exit(3)
+            s = self.services[id]
+            if (s.isEnabled()):
+                o = s.orchestrate()
+                if (not err and not o):
+                    log.L.error("Service %s died! Exiting!" % (self.services[id].id))
+                    # Wait for all other processes to settle
+                    i = 1
+                    while i<20:
+                        self.orchestrate(True)
+                        i = i + 1
+                    self.stop()
+                    sys.exit(3)
 
     def sleep(self, s):
         i = 0
@@ -119,7 +126,7 @@ class Services(object):
     def stop(self):
         for id in self.services:
             s = self.services[id]
-            if (s.isAlive()):
+            if (s.isEnabled() and s.isAlive()):
                 s.stop()
         if self.syslog.isEnabled():
             self.syslog.stop()

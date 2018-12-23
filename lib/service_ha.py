@@ -23,11 +23,18 @@ class ServiceHa(Service):
         if (os.path.isfile(self.pidfile)):
             os.remove(self.pidfile)
         os.chdir(self.dir)
+        log.L.info("Run service %s (%s)" % (self.id, cmd))
         self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=None, preexec_fn=os.setsid)
-        while not os.path.isfile(self.pidfile):
+        log.L.info("Waiting for pid")
+        i=0
+        while not os.path.isfile(self.pidfile) and i<20:
             time.sleep(0.1)
+            i = i+1
+        if (i==20):
+            log.L.error("Error runing service %s: %s" % (self.id, " ".join(cmd)))
+            sys.exit(1)
         self.pid = int(open(self.pidfile).read())
-        log.L.info("Run service %s: %s [pid=%s]" % (self.id, cmd, self.pid))
+        log.L.info("Service %s: [pid=%s]" % (self.id, self.pid))
         self.mgmtConnect("socket", self.mgmtfile)
         super().run()
         

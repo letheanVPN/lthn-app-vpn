@@ -6,6 +6,7 @@ import re
 import log
 import time
 import select
+import authids
 from subprocess import Popen
 from subprocess import PIPE
 from service_ovpn import ServiceOvpn
@@ -18,34 +19,14 @@ class ServiceOvpnServer(ServiceOvpn):
     
     OPTS = dict(
         crt = None, key = None, crtkey = None,
-        reneg = 600
+        tundev = "tun0",
+        mgmtport = "11193",
+        proto = "UDP"
     )
     OPTS_HELP = dict(
-        reneg = "Renegotiation interval"
+        tundev = "Local tun device"
     )
     
-    def run(self):
-        self.createConfig()
-        verb = "3"
-        if (config.Config.OPENVPN_SUDO):
-            cmd = ["/usr/bin/sudo", config.Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
-        else:
-            cmd = [config.Config.SUDO_BIN, Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
-        self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
-        time.sleep(0.3)
-        if (os.path.exists(self.pidfile)):
-            with open (self.pidfile, "r") as p:
-                self.pid = int(p.readline().strip())
-        else:
-            self.pid = self.process.pid
-        log.L.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
-        self.stdout = select.poll()
-        self.stderr = select.poll()
-        self.stdout.register(self.process.stdout, select.POLLIN)
-        self.stderr.register(self.process.stderr, select.POLLIN)
-        self.mgmtConnect("127.0.0.1", "11112")
-        log.L.warning("Started service %s[%s]" % (self.name, self.id))
-        
     def mgmtAuthClient(self, cid, kid):
         global AUTHIDS
         
@@ -62,33 +43,25 @@ class ServiceOvpnServer(ServiceOvpn):
                 break
             p = re.search(">CLIENT:ENV,username=(.*)", msg)
             if (p):
-                username = p.group(1)
+                username = p.group(1).strip()
             p = re.search(">CLIENT:ENV,password=(.*)", msg)
             if (p):
-                password = p.group(1)
+                password = p.group(1).strip()
             p = re.search(">CLIENT:ENV,untrusted_ip=(.*)", msg)
             if (p):
-                untrusted_ip = p.group(1)
+                untrusted_ip = p.group(1).strip()
             p = re.search(">CLIENT:ENV,untrusted_port=(.*)", msg)
             if (p):
-                untrusted_port = p.group(1)
+                untrusted_port = p.group(1).strip()
             msg = self.mgmtRead()
             
-        if (username == password and AUTHIDS.get(username)):
-            log.L.warning("Client %s authorized with %s." % (untrusted_ip, username))
+        if (username == password and authids.AUTHIDS.get(username)):
             self.mgmtWrite("client-auth %s %s\r\n" % (cid, kid))
             self.mgmtWrite("END\r\n")
+            log.A.audit(log.A.SESSION, log.A.ADD, paymentid=username, srcip=untrusted_ip, srcport=untrusted_port, serviceid=self.getId())
         else:
-            log.L.warning("Bad username/password %s/%s" % (username, password))
+            log.A.audit(log.A.SESSION, log.A.NPAYMENT, paymentid=username, srcip=untrusted_ip, srcport=untrusted_port, serviceid=self.getId())
             self.mgmtWrite("client-deny %s %s \"Bad auth\"\r\n" % (cid, kid))
-
-    def stop(self):
-        self.mgmtWrite("signal SIGTERM\r\n")
-        l = self.mgmtRead()
-        while (l is not None):
-            l = self.mgmtRead()
-        log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
-        return()
     
     def createConfig(self):
         if (not os.path.exists(self.dir)):
@@ -104,33 +77,52 @@ class ServiceOvpnServer(ServiceOvpn):
             tmpl = tf.read()
         except (IOError, OSError):
             log.L.error("Cannot open openvpn template file %s" % (tfile))
-        with open (config.Config.PREFIX + '/etc/ca/certs/ca.cert.pem', "r") as f:
+        with open (config.Config.CAP.providerCa, "r") as f:
             f_ca = "".join(f.readlines())
-        with open (config.Config.PREFIX + '/etc/ca/certs/openvpn.cert.pem', "r") as f:
+        with open (self.cfg["crt"], "r") as f:
             f_crt = "".join(f.readlines())
-        with open (config.Config.PREFIX + '/etc/ca/certs/openvpn.both.pem', "r") as f:
-            f_key = "".join(f.readlines())        
-        with open (config.Config.PREFIX + '/etc/openvpn.tlsauth', "r") as f:
-            f_ta = "".join(f.readlines())
+        with open (self.cfg["crtkey"], "r") as f:
+            f_key = "".join(f.readlines())
+        if (config.Config.CAP.vpndDns):
+            dns = "dhcp-option dns " + config.Config.CAP.vpndDns
+        else:
+            dns = ""
+        self.cfg["tundev"] = config.Config.CAP.vpndTun
+        self.cfg["mgmtport"] = config.Config.CAP.vpndMgmtPort
+        
+        if (config.Config.CAP.servicePort):
+            self.cfg['port'] = config.Config.CAP.servicePort
+        elif ('proto' not in self.cfg):
+            self.cfg['proto'] = self.json['vpn'][0]['port'].split('/')[1]
+        if (config.Config.CAP.serviceProto):
+            self.cfg['proto'] = config.Config.CAP.serviceProto
+        elif ('port' not in self.cfg):
+            self.cfg['port'] = self.json['vpn'][0]['port'].split('/')[0]
+        if (config.Config.CAP.serviceFqdn):
+            self.cfg['endpoint'] = config.Config.CAP.serviceFqdn
+        elif ('endpoint' not in self.cfg):
+            self.cfg['endpoint'] = self.json['vpn'][0]['endpoint']
         out = tmpl.decode("utf-8").format(
-                          port=11194,
-                          proto="udp",
+                          port=self.cfg['port'],
+                          proto=self.cfg['proto'].lower(),
                           f_dh=config.Config.PREFIX + '/etc/dhparam.pem',
                           tunnode=config.Config.PREFIX + '/dev/net/tun',
+                          tundev=self.cfg["tundev"],
                           f_ca=f_ca,
                           f_crt=f_crt,
                           f_key=f_key,
-                          f_ta=f_ta,
-                          workdir="/tmp",
+                          unprivip=config.Config.PREFIX + "/bin/unpriv-ip.sh",
+                          workdir=self.dir,
                           user="nobody",
                           group="nogroup",
                           f_status="status",
-                          iprange="10.10.10.0",
-                          ipmask="255.255.255.0",
-                          mgmt_sock="127.0.0.1 11112",
-                          reneg=60,
+                          iprange=config.Config.CAP.vpndIPRange,
+                          ipmask=config.Config.CAP.vpndIPMask,
+                          mgmt_sock="127.0.0.1 %s" % self.cfg["mgmtport"],
+                          reneg=config.Config.CAP.vpndReneg,
                           mtu=1400,
-                          mssfix=1300
+                          mssfix=1300,
+                          push_dns=dns
                           )
         try:
             cf = open(self.cfgfile, "wb")

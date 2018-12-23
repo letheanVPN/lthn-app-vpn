@@ -1,30 +1,35 @@
-port {port}
+rport {port}
 proto {proto}
-dev tun
+dev {tundev}
 persist-tun
 persist-key
 auth SHA256
 client
 remote {ip} {port} {proto}
-verify-x509-name "openvpn" name
+#verify-x509-name "openvpn" name
 auth-user-pass
 remote-cert-tls server
 cipher AES-256-CBC
 tun-mtu {mtu}
 mssfix {mssfix}
 float
+management {mgmt_sock}
+management-hold
+management-query-passwords
+{hproxy_comment} http-proxy {http_proxy} {http_proxy_port}
+syslog
+auth-retry nointeract
+{rgw_comment}redirect-gateway def1
+{bdns_comment}block-outside-dns
 
 <ca>
 {f_ca}
 </ca>
-<cert>
-{f_crt}
-</cert>
 topology subnet
 keepalive 30 120
 reneg-sec {reneg}
-<tls-auth>
-{f_ta}
-</tls-auth>
-key-direction 1
+#<tls-auth>
+#f_ta
+#</tls-auth>
+#key-direction 1
 

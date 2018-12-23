@@ -102,17 +102,19 @@ def main(argv):
     p.add_argument('--exit-on-no-payment', dest='exitNoPayment', metavar='Bool', required=None, default=None, help='Exit after payment is gone.')
     p.add_argument('--fork-on-connect', dest='forkOnConnect', metavar='Bool', required=None, default=None, help='Fork after successful paid connection. Client will fork into background.')
       
-    p.add('cmd', metavar='Command', choices=["connect","list"], help='Exit after payment is gone.')
+    p.add('cmd', metavar='{list|connect|help}', choices=["connect", "list","help"], help='Command to execute.')
         
     (cfg, args) = p.parse_known_args()
     util.parseCommonArgs(p, cfg, 'lthnvpnc')
     config.Config.CAP = cfg
-
     config.CONFIG = config.Config("dummy")
     cmd = cfg.cmd
     cfg.O = None
     cfg.L = None
     
+    if (cmd == "help"):
+        util.helpmsg(p)
+        sys.exit()
     if (cmd == "list"):
         cfg.L = True
     elif (cmd == "connect"):
@@ -147,6 +149,7 @@ def main(argv):
             services.SERVICES.syslog.run()
             services.SERVICES.show()
             sid = services.SERVICES.get(cfg.serviceId)
+            sid.enable()
             sid.cfg["uniqueid"] = cfg.uniqueId
             sid.cfg["paymentid"] = cfg.authId
             sdp = sdps.SDPS.getSDP(cfg.providerid)

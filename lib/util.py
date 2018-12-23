@@ -100,6 +100,7 @@ def commonArgs(p):
     p.add_argument(       '--sdp-wallet-address',     dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
     p.add_argument(       '--sdp-service-endpoint',   dest='serviceFqdn', metavar='FQDN', required=None, help='Service FQDN or IP')
     p.add_argument(       '--sdp-service-port',       dest='servicePort', metavar='NUMBER', required=None, help='Service port')
+    p.add_argument(       '--sdp-service-proto',      dest='serviceProto', metavar='NUMBER', required=None, help='Service protocol')
     p.add_argument(       '--sdp-service-id',         dest='serviceId', metavar='NUMBER', required=None, help='Service ID')
     p.add_argument(       '--provider-id',            dest='providerid', metavar='PROVIDERID', required=None, default='<NOID>', help='ProviderID (public ed25519 key)')
     p.add_argument(       '--ca',                     dest='providerCa', metavar="ca.crt", required=None, default='<NOCA>', help='Set certificate authority file')
@@ -107,6 +108,17 @@ def commonArgs(p):
     p.add_argument(       '--sdp-cache-file',         dest='sdpCacheFile', metavar='FILE', required=None, default=config.CONFIG.PREFIX + '/var/sdps.json', help='SDP cache')
     p.add_argument(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
     p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
+    p.add_argument(       '--vpnc-redirect-gateway',  dest='vpncRedirGw', metavar='Bool', required=None, default=True, help='Redirect gateway for VPN client')
+    p.add_argument(       '--vpnc-block-dns',         dest='vpncBlockDns', metavar='Bool', required=None, default=True, help='Block local DNS for VPN client')
+    p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
+    p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
+    p.add_argument(       '--vpnd-iprange',           dest='vpndIPRange', metavar='IP', required=None, default="172.31.0.0", help='IP Range for client IPs. Client will get /30 subnet from this range.')
+    p.add_argument(       '--vpnd-mask',              dest='vpndIPMask', metavar='MASK', required=None, default="255.255.0.0", help='IP mask for client IPs')
+    p.add_argument(       '--vpnd-reneg',             dest='vpndReneg', metavar='S', required=None, default=600, help='Client has to renegotiate after this number of seconds to check if paymentid is still active')
+    p.add_argument(       '--vpnd-tun',               dest='vpndTun', metavar='IF', required=None, default="tun0", help='Use specific tun device for server')
+    p.add_argument(       '--vpnc-tun',               dest='vpncTun', metavar='IF', required=None, default="tun1", help='Use specific tun device for client')
+    p.add_argument(       '--vpnd-mgmt-port',         dest='vpndMgmtPort', metavar='PORT', required=None, default="11192", help='Use specific port for local mgmt')
+    p.add_argument(       '--vpnc-mgmt-port',         dest='vpncMgmtPort', metavar='PORT', required=None, default="11193", help='Use specific port for local mgmt')
 
 
 def parseCommonArgs(parser, cfg, name):

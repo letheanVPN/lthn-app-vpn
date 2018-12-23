@@ -69,6 +69,9 @@ class Service(object):
     def disable(self):
         self.cfg["enabled"] = None
         
+    def enable(self):
+        self.cfg["enabled"] = True
+        
     def helpOpts(self, name):
         print(name)
         for o in self.OPTS:

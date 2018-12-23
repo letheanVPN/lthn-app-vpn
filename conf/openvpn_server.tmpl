@@ -1,9 +1,10 @@
 port {port}
 proto {proto}
-dev tun
+dev {tundev}
 dev-node {tunnode}
 persist-tun
 persist-key
+iproute {unprivip}
 verify-client-cert none
 management-client-auth
 <ca>
@@ -16,16 +17,16 @@ management-client-auth
 {f_key}
 </key>
 cd {workdir}
-script-security 3
+{push_dns}
 dh {f_dh}
-topology subnet
+topology net30
 server {iprange} {ipmask}
 keepalive 30 120
 reneg-sec {reneg}
-<tls-auth>
-{f_ta}
-</tls-auth>
-key-direction 0
+#<tls-auth>
+#f_ta
+#</tls-auth>
+#key-direction 0
 auth SHA256
 management {mgmt_sock}
 management-hold
@@ -38,3 +39,5 @@ status {f_status}
 float
 tun-mtu {mtu}
 mssfix {mssfix}
+syslog
+

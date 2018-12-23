@@ -112,7 +112,7 @@ def commonArgs(p):
     p.add_argument(       '--vpnc-block-dns',         dest='vpncBlockDns', metavar='Bool', required=None, default=True, help='Block local DNS for VPN client')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
-    p.add_argument(       '--vpnd-iprange',           dest='vpndIPRange', metavar='IP', required=None, default="172.31.0.0", help='IP Range for client IPs. Client will get /30 subnet from this range.')
+    p.add_argument(       '--vpnd-iprange',           dest='vpndIPRange', metavar='IP', required=None, default="10.11.0.0", help='IP Range for client IPs. Client will get /30 subnet from this range.')
     p.add_argument(       '--vpnd-mask',              dest='vpndIPMask', metavar='MASK', required=None, default="255.255.0.0", help='IP mask for client IPs')
     p.add_argument(       '--vpnd-reneg',             dest='vpndReneg', metavar='S', required=None, default=600, help='Client has to renegotiate after this number of seconds to check if paymentid is still active')
     p.add_argument(       '--vpnd-tun',               dest='vpndTun', metavar='IF', required=None, default="tun0", help='Use specific tun device for server')

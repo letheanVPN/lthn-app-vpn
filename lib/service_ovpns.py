@@ -19,9 +19,11 @@ class ServiceOvpnServer(ServiceOvpn):
     
     OPTS = dict(
         crt = None, key = None, crtkey = None,
-        tundev = "tun0",
-        mgmtport = "11193",
-        enabled = True
+        tundev = "",
+        mgmtport = "",
+        enabled = True,
+        iprange = "",
+        ipmask = "",
     )
     OPTS_HELP = dict(
         tundev = "Local tun device"
@@ -87,9 +89,14 @@ class ServiceOvpnServer(ServiceOvpn):
             dns = "dhcp-option dns " + config.Config.CAP.vpndDns
         else:
             dns = ""
-        self.cfg["tundev"] = config.Config.CAP.vpndTun
-        self.cfg["mgmtport"] = config.Config.CAP.vpndMgmtPort
-        
+        if "tundev" in self.cfg:
+            tundev = self.cfg["tundev"]
+        else:
+            tundev = config.Config.CAP.vpndTun
+        if "mgmtport" in self.cfg:    
+            mgmtport = self.cfg["mgmtport"]
+        else:
+            mgmtport = config.Config.CAP.vpndMgmtPort
         if (config.Config.CAP.servicePort):
             self.cfg['port'] = config.Config.CAP.servicePort
         elif ('port' not in self.cfg):
@@ -102,12 +109,20 @@ class ServiceOvpnServer(ServiceOvpn):
             self.cfg['endpoint'] = config.Config.CAP.serviceFqdn
         elif ('endpoint' not in self.cfg):
             self.cfg['endpoint'] = self.json['vpn'][0]['endpoint']
+        if "iprange" in self.cfg:
+            iprange = self.cfg["iprange"]
+        else:
+            iprange = config.Config.CAP.vpndIPRange
+        if "ipmask" in self.cfg:
+            ipmask = self.cfg["ipmask"]
+        else:
+            ipmask = config.Config.CAP.vpndIPMask    
         out = tmpl.decode("utf-8").format(
                           port=self.cfg['port'],
                           proto=self.cfg['proto'].lower(),
                           f_dh=config.Config.PREFIX + '/etc/dhparam.pem',
                           tunnode=config.Config.PREFIX + '/dev/net/tun',
-                          tundev=self.cfg["tundev"],
+                          tundev=tundev,
                           f_ca=f_ca,
                           f_crt=f_crt,
                           f_key=f_key,
@@ -116,9 +131,9 @@ class ServiceOvpnServer(ServiceOvpn):
                           user="nobody",
                           group="nogroup",
                           f_status="status",
-                          iprange=config.Config.CAP.vpndIPRange,
-                          ipmask=config.Config.CAP.vpndIPMask,
-                          mgmt_sock="127.0.0.1 %s" % self.cfg["mgmtport"],
+                          iprange=iprange,
+                          ipmask=ipmask,
+                          mgmt_sock="127.0.0.1 %s" % mgmtport,
                           reneg=config.Config.CAP.vpndReneg,
                           mtu=1400,
                           mssfix=1300,

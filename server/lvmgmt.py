@@ -70,7 +70,7 @@ def main(argv):
     elif (cfg.U):
         log.L.warning("Uploading SDP to server %s" % (config.CONFIG.CAP.sdpUri))
         log.A.audit(log.A.UPLOAD, log.A.SDP, config.CONFIG.SDPFILE)
-        log.A.audit(log.A.NPAYMENT, log.A.SWALLET, wallet=config.CONFIG.CAP.sdpWallet, paymentid=config.CONFIG.CAP.providerid, anon="no")
+        log.A.audit(log.A.NPAYMENT, log.A.SWALLET, wallet=config.CONFIG.CAP.sdpWallet, paymentid=config.CONFIG.CAP.providerid.upper(), anon="no")
         s=sdp.SDP()
         s.load(config.CONFIG.SDPFILE)
         if (not s.upload(config.CONFIG)):

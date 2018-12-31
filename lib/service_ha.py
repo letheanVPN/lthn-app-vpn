@@ -39,8 +39,9 @@ class ServiceHa(Service):
         super().run()
         
     def stop(self):
-        log.L.info("Kill service PID %s: [pid=%s]" % (self.id, self.pid))
-        os.kill(self.pid, signal.SIGTERM)
+        if self.pid is not None:
+            log.L.info("Kill service PID %s: [pid=%s]" % (self.id, self.pid))
+            os.kill(self.pid, signal.SIGTERM)
         super().stop()
             
     def isAlive(self):

@@ -39,16 +39,16 @@ def parseUri(cfg, uri):
         cfg.providerid = util.parseProvider(p.group(2))
         cfg.serviceId = p.group(3)
     else:
-        # authid@providerid:serviceid
-        p = re.search("(.*)@(.*):(.*)", uri)
+        # authid@providerid/serviceid
+        p = re.search("(.*)@(.*)/(.*)", uri)
         if (p):
             cfg.authId = p.group(1)
             cfg.uniqueId = "_random_"
             cfg.providerid = p.group(2)
             cfg.serviceId = p.group(3)
         else:
-            # providerid:serviceid
-            p = re.search("(.*):(.*)", uri)
+            # providerid/serviceid
+            p = re.search("(.*)/(.*)", uri)
             if (p):
                 cfg.authId = "_random_"
                 cfg.uniqueId = "_random_"
@@ -73,8 +73,8 @@ def loadService(pid, sid):
         log.L.error("You must specify serviceid and providerid!")
         return(None)
     else:
-        if sdps.SDPS.getSDP(pid):
-            s = sdps.SDPS.getSDP(pid)
+        if sdps.SDPS.getProviderSDP(pid):
+            s = sdps.SDPS.getProviderSDP(pid)
             services.SERVICES.loadClient(s)
             services.SERVICES.mgmt.disable()
             services.SERVICES.http.disable()
@@ -161,7 +161,7 @@ def main(argv):
             sid.enable()
             sid.cfg["uniqueid"] = cfg.uniqueId
             sid.cfg["paymentid"] = cfg.authId
-            sdp = sdps.SDPS.getSDP(cfg.providerid)
+            sdp = sdps.SDPS.getProviderSDP(cfg.providerid)
             atexit.register(sid.stop)
             if sid.getType()=="vpn" and cfg.vpncStandalone:
                 print("aaa")
@@ -177,7 +177,7 @@ def main(argv):
             sdp = sdps.SDPS.getProviderSDP(pid)
             for srv in sdp["services"]:
                 sid = srv["id"]
-                print("%s:%s,%s,%s,%s,%s" % (sdp["provider"]["fqdn"], pid, sid, srv["type"], sdp["provider"]["name"], srv["name"]))
+                print("%s:%s/%s,%s,%s,%s" % (sdp["provider"]["fqdn"], pid, sid, srv["type"], sdp["provider"]["name"], srv["name"]))
     else:
         log.L.error("You must specify command (list|connect|show)")
         sys.exit(1)

@@ -335,7 +335,7 @@ class SDP(object):
         encodedSignedPayload = signedPayload.hex()
         # end ed25519 signing
 
-        sdpAddServiceEndpoint = cfg.CAP.sdpUri + '/services/add/'
+        sdpAddServiceEndpoint = cfg.CAP.sdpUri['sdp'] + '/services/add/'
 
         log.L.info('Using SDP endpoint %s' % sdpAddServiceEndpoint)
 

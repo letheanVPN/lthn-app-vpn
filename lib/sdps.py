@@ -1,53 +1,65 @@
 
 import base64
 import config
-import ed25519
 import json
-import jsonpickle
 import log
 import os
-import pprint
-import re
-import sdp
 import sys
 import time
-from urllib.error import HTTPError
+import hashlib
 from urllib.request import Request
 from urllib.request import urlopen
 
 class SDPList(object):
     
     data = {}
-
-    def download(self, filter=None):
-        if self.isFresh():
-            log.L.info('SDP cache is fresh, not reloading.')
-            return(True)
-        sdpSearch = config.Config.CAP.sdpUri + '/services/search'
-        log.L.info('Using SDP endpoint %s' % sdpSearch)
-        request = Request(sdpSearch)
-        request.add_header('Content-Type', 'application/json')        
+    
+    def uriCacheFile(self, uri):
+        return(config.Config.CAP.sdpCacheDir + "/" + hashlib.sha256(uri.encode("utf-8")).hexdigest() + ".json")
+    
+    def downloadUri(self, uri):
+        sfile = self.uriCacheFile(uri)
+        if self.isFresh(uri):
+            log.L.info('SDP cache %s is fresh, not reloading.' % sfile)
+            cf = open(sfile, "rb")
+            return(cf.read())
+        log.L.info('Downloading SDP from %s' % uri)
+        request = Request(uri)
+        request.add_header('Content-Type', 'application/json')
         try:
             response = urlopen(request).read()
             jsonResp = json.loads(response.decode('utf-8'))
             if jsonResp and jsonResp['protocolVersion']:
+                sfile = self.uriCacheFile(uri)
                 try:
-                    cf = open(config.Config.CAP.sdpCacheFile, "wb")
+                    cf = open(sfile, "wb")
                     cf.write(response)
-                    return True
+                    return response
                 except (IOError, OSError):
-                    log.L.error("Cannot write SDP cache %s" % (config.Config.CAP.sdpCacheFile))
+                    log.L.error("Cannot write SDP cache %s" % (sfile))
                     sys.exit(2)
+            else:
+                print("aaaa")
         except Exception as err:
             log.L.error("Cannot fetch from SDP server!")
-            print(err)
+            log.L.error(err)
             sys.exit(2)
+        return True
 
-        return False
+    def get(self, urls=None, filter=None):
+        if not urls:
+            urls = { 'sdp': config.Config.CAP.sdpUri['sdp'] + '/services/search' }
+        json=[]
+        for id_ in urls:
+            j = self.downloadUri(urls[id_])
+            self.parseRemoteSdp(j, id_, urls[id_])
+            json.append(j)
+        self.parseLocalSdp()
     
-    def isFresh(self):
-        if os.path.isfile(config.Config.CAP.sdpCacheFile):
-            stat = os.stat(config.Config.CAP.sdpCacheFile)
+    def isFresh(self, uri):
+        sfile = self.uriCacheFile(uri)
+        if os.path.isfile(sfile):
+            stat = os.stat(sfile)
             if (time.time()-stat.st_mtime > config.Config.CAP.sdpCacheExpiry):
                 return(None)
             else:
@@ -58,25 +70,36 @@ class SDPList(object):
     def list(self):
         return(self.data.keys())
     
-    def getSDP(self, id_):
+    def getProviderSDP(self, id_):
         if id_ in self.data:
             return(self.data[id_])
         
-    def parse(self):
-        self.download()
-        try:
-            cf = open(config.Config.CAP.sdpCacheFile, "rb")
-            sdpf = cf.read()
-            cf.close()
-        except (IOError, OSError):
-            log.L.error("Cannot read SDP cache %s" % (config.Config.CAP.sdpCacheFile))
-            sys.exit(2)
-        self.data={}
-        allJson = json.loads(sdpf.decode('utf-8'))
+    def parseLocalSdp(self):
+        if (os.path.exists(config.CONFIG.SDPFILE)):
+            try:
+                jf = open(config.CONFIG.SDPFILE, "r")
+                localSdp = jf.read()
+                cf = open(config.CONFIG.PREFIX + "/etc/ca/certs/ca.cert.pem", "r")
+                localCa = cf.read()
+            except (IOError, OSError):
+                log.L.warning("Cannot read local SDP file %s" % (config.CONFIG.SDPFILE))
+            localJson = json.loads(localSdp)
+            localJson['provider']['certificates'] = {}
+            localJson['provider']['certificates']['cn'] = 'ignored'
+            localJson['provider']['certificates']['id'] = 0
+            localJson['provider']['certificates']['content'] = localCa
+            localJson['provider']['fqdn'] = 'local'
+            id_ = localJson["provider"]["id"]
+            self.data[id_]=localJson
+        
+    def parseRemoteSdp(self, sdp, fqdn, uri):
+        allJson = json.loads(sdp.decode('utf-8'))
         for prov in allJson['providers']:
             id_ = prov['provider']
             if id_ in allJson:
                 providerJson = allJson[id_]
+                providerJson['fqdn']=fqdn
+                providerJson['uri']=uri
             else:
                 providerJson = dict(
                     protocolVersion=1,                
@@ -87,6 +110,8 @@ class SDPList(object):
                         certificates={},
                         wallet='{walletaddress}',
                         terms='{providerterms}',
+                        fqdn=fqdn,
+                        uri=uri
                     ),                                
                     services=[],
                     )
@@ -124,18 +149,4 @@ class SDPList(object):
                     service["vpn"]=prov["vpn"]
                 self.data[id_]=providerJson
                 self.data[id_]["services"].append(service)
-        if (os.path.exists(config.CONFIG.SDPFILE)):
-            try:
-                jf = open(config.CONFIG.SDPFILE, "r")
-                localSdp = jf.read()
-                cf = open(config.CONFIG.PREFIX + "/etc/ca/certs/ca.cert.pem", "r")
-                localCa = cf.read()
-            except (IOError, OSError):
-                log.L.warning("Cannot read local SDP file %s" % (config.CONFIG.SDPFILE))
-            localJson = json.loads(localSdp)
-            localJson['provider']['certificates'] = {}
-            localJson['provider']['certificates']['cn'] = 'ignored'
-            localJson['provider']['certificates']['id'] = 0
-            localJson['provider']['certificates']['content'] = localCa
-            id_ = localJson["provider"]["id"]
-            self.data[id_]=localJson
+        

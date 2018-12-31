@@ -37,10 +37,10 @@ internal is internal port of dispatcher
 
 ### Recomended steps to use exit node
 Create configs and certificates (or copy your existing /opt/lthn/etc dir here.)
-Easiest way to create from scratch is probably to easy-deploy:
+Easiest way to create from scratch is probably to easy-deploy. Do not forget to allocate terminal for easy-deploy (-t -i):
 ```
  mkdir etc
- docker run --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+ docker run -t -i --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
    limosek/lethean-vpn:devel easy-deploy
 ```
@@ -69,16 +69,9 @@ List all services from SDP platform:
  docker run limosek/lethean-vpn:devel list
 ```
 
-Simple URI is constructed of [authid[:mgmtid]]@providerid:serviceid
-authid is 16 bytes hexa string which identifies payment. Keep in mind that first two letters of authid must be same as serviceid.
-mgmtid is 16 bytes hexa string which identifies this instance of client. Used by external tools to identify instance.
-
-More complex URI is still in development. By more complex URI, it will be possible to combine services and create enhanced privacy mode:
-
-URI1[[/URI2]/URI3] means "Connet to URI2, use it as proxy to connect to URI1". Can be chained more times. Latest URI will be connected first.
-URI1/{URI2,URI3,URI4} means  "Connect to URI2, URI3 and URI4 simultaneously and use it as round-robin set of proxies for connecting to URI1" 
-
 Connect to URI:
+See [here](CLIENT.md) for information about URI format
+
 ```
  docker run  -p 8186:8186 --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
 ```

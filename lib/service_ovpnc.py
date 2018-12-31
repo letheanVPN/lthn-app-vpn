@@ -55,6 +55,7 @@ class ServiceOvpnClient(ServiceOvpn):
         try:
             caf = open(cafile, "wb")
             caf.write(ca.encode())
+            caf.close()
         except (IOError, OSError):
             log.L.error("Cannot write ca file %s" % (cafile))
             sys.exit(1)
@@ -70,6 +71,20 @@ class ServiceOvpnClient(ServiceOvpn):
             self.cfg['endpoint'] = config.Config.CAP.serviceFqdn
         elif ('endpoint' not in self.cfg):
             self.cfg['endpoint'] = self.json['vpn'][0]['endpoint']
+        if (config.CONFIG.CAP.vpncStandalone):
+            mgmt_comment = '#'
+            authfile=self.dir + 'vpnc.auth'
+            try:
+                af = open(authfile, "w")
+                af.write(self.cfg["paymentid"])
+                af.write(self.cfg["paymentid"])
+                af.close()
+            except (IOError, OSError):
+                log.L.error("Cannot write auth file %s" % (authfile))
+                sys.exit(1)            
+        else:
+            mgmt_comment = ''
+            authfile=''
         if (config.CONFIG.CAP.httpsProxyHost):
             hproxy_comment = ''
             http_proxy = config.CONFIG.CAP.httpsProxyHost
@@ -87,6 +102,12 @@ class ServiceOvpnClient(ServiceOvpn):
             rgw_comment=''
         else:
             rgw_comment='#'
+        pull_filter=""
+        if (config.CONFIG.CAP.vpncBlockDns):
+            pull_filter += "pull-filter ignore dhcp-option\n"
+        if (config.CONFIG.CAP.vpncBlockRoute):
+            pull_filter += "pull-filter ignore route\n"
+            pull_filter += "pull-filter ignore route-gateway\n"
         self.cfg["tundev"] = config.Config.CAP.vpncTun
         self.cfg["mgmtport"] = config.Config.CAP.vpncMgmtPort
 

@@ -13,7 +13,7 @@ fi
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$PROVIDERID" ] && PROVIDERID=""
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
-[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2"
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2"
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="sync.lethean.io"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"
 [ -z "$CAPASS" ] && CAPASS=1234
@@ -107,11 +107,11 @@ fi
 ./configure.sh --prefix "$LTHNPREFIX" --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
 make install FORCE=1
 $LTHNPREFIX/bin/lvmgmt --generate-sdp \
-     --provider-type $PROVTYPE \
-     --provider-name EasyProvider \
+     --sdp-provider-type $PROVTYPE \
+     --sdp-provider-name EasyProvider \
      --wallet-address "$WALLET" \
      --sdp-service-crt $LTHNPREFIX/etc/ca/certs/ha.cert.pem \
-     --sdp-service-name proxy --sdp-service-id 1a --sdp-service-fqdn $ENDPOINT --sdp-service-port $PORT \
+     --sdp-service-name proxy --sdp-service-id 1a --sdp-service-endpoint $ENDPOINT --sdp-service-port $PORT \
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 10 --sdp-service-verifications 0
 

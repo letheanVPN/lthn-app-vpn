@@ -15,6 +15,33 @@ You can use --fork-on-connect to fork to the background after successfull connec
 There are two versions of dispatchers - v3 and v4. We changed names of headers due to letheanisation. If you want to connect to old (v3) dispatcher, use --compatibility v3.
 Client will not connect if compatibility level does not match!
 
+## Service URI format
+Service URI are used to identify services over providers. It is unique over the world. There are two types of URI - SDP based and FQDN based.
+While SDP based are fetched from central SDP server, FQDN based are fetched from local provider SDP server.
+
+### General simple URI syntax
+
+authid@provider/service
+
+ * provider can be providerid or domain name
+ * service can be serviceid or service name
+ * authid can be ommited so it will be auto-generated. Do not forget that first two characters of authid must be same as serviceid.
+
+If provider is fqdn and not providerid, client will fetch SDP from URL generated from DNS (fqdn prefixed by lthn):
+```
+  host -t txt lthn.doamain.name
+  
+  
+```
+
+### More complex URI (provider chaining)
+
+ * Using HTTP proxy: {authid1@provider1/service1}//proxy:port
+ * Basic chaining: Connect to provider2 and use it as backend to connect to service1: {authid1@provider1/service1}//{authid2@provider2/service2}
+ * More complex chaining (round-robin): {authid1@provider1/service1}//{authid2@provider2/service2,authid3@provider3/service3}
+
+
+
 ## Usage
 ```
 lthnvpnc help
@@ -22,19 +49,20 @@ usage: lthnvpnc [-l LEVEL] [--syslog] [-v] [-h] [-f CONFIGFILE] [-s SDPFILE]
                 [-p PIDFILE] [-A FILE] [-a FILE] [-lc FILE]
                 [--sdp-server-uri URL] [--sdp-wallet-address ADDRESS]
                 [--sdp-service-endpoint FQDN] [--sdp-service-port NUMBER]
-                [--sdp-service-proto NUMBER] [--sdp-service-id NUMBER]
+                [--sdp-service-proto PROTOCOL] [--sdp-service-id NUMBER]
                 [--provider-id PROVIDERID] [--ca ca.crt]
                 [--wallet-address ADDRESS] [--sdp-cache-file FILE]
                 [--sdp-cache-expiry SECONDS] [--compatibility Level]
-                [--vpnc-redirect-gateway Bool] [--vpnc-block-dns Bool]
                 [--vpnd-dns IP] [--vpnd-iprange IP] [--vpnd-mask MASK]
-                [--vpnd-reneg S] [--vpnd-tun IF] [--vpnc-tun IF]
-                [--vpnd-mgmt-port PORT] [--vpnc-mgmt-port PORT]
+                [--vpnd-reneg S] [--vpnd-tun IF] [--vpnd-mgmt-port PORT]
                 [--authid AUTHID] [--uniqueid UNIQUEID] [--stunnel-port PORT]
                 [--https-proxy-host HOST] [--https-proxy-port PORT]
                 [--proxy-port PORT] [--proxy-bind IP] [--connect-timeout S]
                 [--payment-timeout S] [--exit-on-no-payment Bool]
-                [--fork-on-connect Bool]
+                [--fork-on-connect Bool] [--vpnc-standalone Bool]
+                [--proxyc-standalone Bool] [--vpnc-tun IF]
+                [--vpnc-mgmt-port PORT] [--vpnc-block-route Bool]
+                [--vpnc-block-dns Bool]
                 {list|connect|help}
 
 Args that start with '--' (eg. -l) can also be set in a config file (specified
@@ -73,7 +101,7 @@ optional arguments:
                         Service FQDN or IP (default: None)
   --sdp-service-port NUMBER
                         Service port (default: None)
-  --sdp-service-proto NUMBER
+  --sdp-service-proto PROTOCOL
                         Service protocol (default: None)
   --sdp-service-id NUMBER
                         Service ID (default: None)
@@ -89,23 +117,16 @@ optional arguments:
   --compatibility Level
                         Compatibility level for remote node. Use v3 or v4
                         (default: v3)
-  --vpnc-redirect-gateway Bool
-                        Redirect gateway for VPN client (default: True)
-  --vpnc-block-dns Bool
-                        Block local DNS for VPN client (default: True)
   --vpnd-dns IP         Use and offer local DNS server for VPN clients
                         (default: None)
   --vpnd-iprange IP     IP Range for client IPs. Client will get /30 subnet
-                        from this range. (default: 172.31.0.0)
+                        from this range. (default: 10.11.0.0)
   --vpnd-mask MASK      IP mask for client IPs (default: 255.255.0.0)
   --vpnd-reneg S        Client has to renegotiate after this number of seconds
                         to check if paymentid is still active (default: 600)
   --vpnd-tun IF         Use specific tun device for server (default: tun0)
-  --vpnc-tun IF         Use specific tun device for client (default: tun1)
   --vpnd-mgmt-port PORT
                         Use specific port for local mgmt (default: 11192)
-  --vpnc-mgmt-port PORT
-                        Use specific port for local mgmt (default: 11193)
   --authid AUTHID       Authentication ID. Use "random" to generate. (default:
                         None)
   --uniqueid UNIQUEID   Unique ID of proxy. Use "random" to generate.
@@ -127,6 +148,19 @@ optional arguments:
   --fork-on-connect Bool
                         Fork after successful paid connection. Client will
                         fork into background. (default: None)
+  --vpnc-standalone Bool
+                        Create standalone openvn config that can be run
+                        outside of dispatcher. (default: None)
+  --proxyc-standalone Bool
+                        Create standalone haproxy config that can be run
+                        outside of dispatcher. (default: None)
+  --vpnc-tun IF         Use specific tun device for client (default: tun1)
+  --vpnc-mgmt-port PORT
+                        Use specific port for local mgmt (default: 11193)
+  --vpnc-block-route Bool
+                        Filter router changes from server (default: True)
+  --vpnc-block-dns Bool
+                        Filter router DNS server from server (default: True)
 
 Use -v option to more help info.
 Happy flying with better privacy!

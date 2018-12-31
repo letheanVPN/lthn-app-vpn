@@ -12,6 +12,8 @@ import socket
 import ipaddress
 import hashlib
 import base64
+import re
+import dns.resolver
 
 def timefmt(tme):
     return(time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(tme)))
@@ -96,7 +98,7 @@ def commonArgs(p):
     p.add_argument('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file.', default="none")
     p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
     p.add_argument('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
-    p.add_argument(       '--sdp-server-uri',         dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.lethean.io/v1')
+    p.add_argument(       '--sdp-server-uri',         dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.lethean.io')
     p.add_argument(       '--sdp-wallet-address',     dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
     p.add_argument(       '--sdp-service-endpoint',   dest='serviceFqdn', metavar='FQDN', required=None, help='Service FQDN or IP')
     p.add_argument(       '--sdp-service-port',       dest='servicePort', metavar='NUMBER', required=None, help='Service port')
@@ -105,20 +107,16 @@ def commonArgs(p):
     p.add_argument(       '--provider-id',            dest='providerid', metavar='PROVIDERID', required=None, default='<NOID>', help='ProviderID (public ed25519 key)')
     p.add_argument(       '--ca',                     dest='providerCa', metavar="ca.crt", required=None, default='<NOCA>', help='Set certificate authority file')
     p.add_argument(       '--wallet-address',         dest='walletAddr', metavar='ADDRESS', required=None, default='<NOADDR>', help='Provider wallet address')
-    p.add_argument(       '--sdp-cache-file',         dest='sdpCacheFile', metavar='FILE', required=None, default=config.CONFIG.PREFIX + '/var/sdps.json', help='SDP cache')
+    p.add_argument(       '--sdp-cache-dir',          dest='sdpCacheDir', metavar='DIR', required=None, default=config.CONFIG.PREFIX + '/var/', help='SDP cache dir')
     p.add_argument(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
     p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
-    p.add_argument(       '--vpnc-redirect-gateway',  dest='vpncRedirGw', metavar='Bool', required=None, default=True, help='Redirect gateway for VPN client')
-    p.add_argument(       '--vpnc-block-dns',         dest='vpncBlockDns', metavar='Bool', required=None, default=True, help='Block local DNS for VPN client')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
     p.add_argument(       '--vpnd-iprange',           dest='vpndIPRange', metavar='IP', required=None, default="10.11.0.0", help='IP Range for client IPs. Client will get /30 subnet from this range.')
     p.add_argument(       '--vpnd-mask',              dest='vpndIPMask', metavar='MASK', required=None, default="255.255.0.0", help='IP mask for client IPs')
     p.add_argument(       '--vpnd-reneg',             dest='vpndReneg', metavar='S', required=None, default=600, help='Client has to renegotiate after this number of seconds to check if paymentid is still active')
     p.add_argument(       '--vpnd-tun',               dest='vpndTun', metavar='IF', required=None, default="tun0", help='Use specific tun device for server')
-    p.add_argument(       '--vpnc-tun',               dest='vpncTun', metavar='IF', required=None, default="tun1", help='Use specific tun device for client')
     p.add_argument(       '--vpnd-mgmt-port',         dest='vpndMgmtPort', metavar='PORT', required=None, default="11192", help='Use specific port for local mgmt')
-    p.add_argument(       '--vpnc-mgmt-port',         dest='vpncMgmtPort', metavar='PORT', required=None, default="11193", help='Use specific port for local mgmt')
 
 
 def parseCommonArgs(parser, cfg, name):
@@ -147,6 +145,7 @@ def parseCommonArgs(parser, cfg, name):
     if (cfg.comp=="v3"):
         cfg.mgmtHeader="X-ITNS-MgmtID"
         cfg.authidHeader="X-ITNS-PaymentID"
+        cfg.sdpUri='https://sdp.staging.cloud.lethean.io'
     elif (cfg.comp=="v4" or cfg.comp=="v4b"):
         cfg.mgmtHeader="X-LTHN-MgmtID"
         cfg.authidHeader="X-LTHN-PaymentID"
@@ -155,6 +154,9 @@ def parseCommonArgs(parser, cfg, name):
         sys.exit(2)
     if cfg.sdpUri.endswith('/'):
         cfg.sdpUri = cfg.sdpUri[:-1]
+    if not cfg.sdpUri.endswith('/v1'):
+        cfg.sdpUri = cfg.sdpUri + '/v1'
+    cfg.sdpUri = {'sdp': cfg.sdpUri}
     
     # Initialise services
     services.SERVICES = services.Services()
@@ -174,3 +176,21 @@ def testLocalPort(bind, port, type=socket.SOCK_STREAM):
         sys.exit(1)
     sock.close()
     return result
+
+def parseProvider(provider):
+    p = re.search("\.", provider)
+    if (p):
+        answers = dns.resolver.query("lthn." + provider, 'TXT')
+        for rdata in answers:
+            for txt in rdata.strings:
+                variables = txt.decode("utf-8").split(";")
+                for v in variables:
+                    name, value = v.split("=")
+                    print(name)
+                    if (name=="version"):
+                        config.Config.CAP.comp = value
+                    if (name=="sdp"):
+                        print("aa")
+                        config.Config.CAP.sdpUri.append({fqdn: provider, uri: value})
+    else:
+        return(p)

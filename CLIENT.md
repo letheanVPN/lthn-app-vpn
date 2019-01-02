@@ -2,6 +2,25 @@
 This repository contains code needed to setup and run CLI client of the Lethean Virtual Private Network (VPN).
 If you are searching GUI client, please refer [here](https://github.com/LetheanMovement/lethean-gui)
 
+## Installation
+Use docker or native way. Docker info [here](README.md)
+
+### Linux native
+```
+./configure.sh --client
+make install
+```
+
+### Windows native
+We are working on install script for windows. 
+You can use cygwin to compile haproxy binaries. Use our easy-install-cygwin.cmd to easily install cygwin or use your own cygwin.
+
+#### haproxy
+You can use our easy-compile-haproxy-cygwin.sh script which has to be run inside of cygwin environment
+
+#### Openvpn
+You can use standard openvpn binaries for windows.
+
 ## Payments
 This client will not pay anything for you. It only helps to create local configs and connect to remote service. It will instruct you in audit.log, how to pay for service.
 It will wait until service is paid and checkes each 60 seconds if credit is still OK.
@@ -198,4 +217,3 @@ Your connection will be more expensive but you will get more privacy here. Happy
 lthnvpnc --fork-on-connect connect provider1:serviceid1 --proxy-port 7777 && \
 lthnvpnc connect provider2:serviceid2 --https-proxy-host 127.0.0.1 --https-proxy-port 7777
 ```
-

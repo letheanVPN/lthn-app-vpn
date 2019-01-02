@@ -10,7 +10,15 @@ LTHN_PREFIX=/opt/lthn/
 
 # General usage help
 usage() {
-   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet-address address] [--with-wallet-rpc-pass pass] [--with-wallet-rpc-user user] [--with-wallet-rpc-uri uri] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--with-providerid id --with-providerkey key] [--easy]"
+   echo 
+   echo "To configure server:"
+   echo $0 "--server  [--easy] [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet-address address] [--with-wallet-rpc-pass pass] [--with-wallet-rpc-user user] [--with-wallet-rpc-uri uri] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--with-providerid id --with-providerkey key]"
+   echo
+   echo "To configure client:"
+   echo $0 "--client [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix]"
+   echo
+   echo "To configure server and client:"
+   echo $0 "--client --server ..."
    echo
    exit
 }
@@ -273,6 +281,15 @@ while [[ $# -gt 0 ]]; do
         generate_ca=1
         generate_ini=1
         generate_dh=1
+        server=1
+        shift
+    ;;
+    --client)
+        client=1
+        shift
+    ;;
+    --server)
+        server=1
         shift
     ;;
     *)
@@ -282,6 +299,12 @@ while [[ $# -gt 0 ]]; do
     ;;
 esac
 done
+
+if [ -z "$client" ] && [ -z "$server" ]; then
+    echo "You must select which parts to configure".
+    $0 -h
+    exit 1
+fi
 
 bin_dir=${LTHN_PREFIX}/bin/
 sysconf_dir=${LTHN_PREFIX}/etc/
@@ -358,6 +381,10 @@ fi
 if [ -n "$install_service" ]; then
     mkdir -p build/etc/systemd/system
     cp conf/lthnvpnd.service build/etc/systemd/system/
+fi
+
+if [ -n "$client"  ]; then
+    touch build/etc/dispatcher.ini
 fi
 
 generate_env >env.mk

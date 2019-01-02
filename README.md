@@ -121,12 +121,16 @@ At least, use dedicated browser with anonymous mode enabled.
  Everything related to client part. More information [here](CLIENT.md)
  
 ### conf
- Example config files and config templates.
+ Example config files and configuration templates.
  
 ### server
  Code related to VPN server part. More information [here](SERVER.md)
 
 ### lib
  Library files
+
+### scripts
+ Various scripts and tools
+
 
  

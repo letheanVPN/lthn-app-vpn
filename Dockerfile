@@ -7,7 +7,7 @@ LABEL description="Letehan.io VPN server"
 
 ARG PROVIDERID=""
 ARG PROVIDERKEY=""
-ARG DAEMON_BIN_URL="https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2"
+ARG DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2"
 ARG DAEMON_HOST="sync.lethean.io"
 ARG WALLETFILE="vpn"
 ARG WALLETPASS="abcd1234"
@@ -23,7 +23,7 @@ ARG ZABBIX_META="LETHEANNODE"
 ARG HTTP_PROXY="${HTTP_PROXY}"
 ARG HTTPS_PROXY="${HTTPS_PROXY}"
 ARG NO_PROXY=""
-ARG PUBLIC_BUILD=""
+ARG PUBLIC_BUILD="y"
 
 ENV LTHNPREFIX="/opt/lthn"
 ENV PORT="$PORT"
@@ -71,7 +71,7 @@ RUN chown -R lthn /usr/src/; \
   chmod +x /usr/src/lethean-vpn/install.sh
 
 USER lthn
-RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --easy
+RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --client
 RUN make install
 RUN if [ -n "$PUBLIC_BUILD" ]; then \
       rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \

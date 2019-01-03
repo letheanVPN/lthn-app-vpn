@@ -96,16 +96,6 @@ else
   git checkout $BRANCH
 fi
 
-if ! [ -f $WALLETFILE.address.txt ]; then
-  install_wallet
-fi
-WALLET=$(cat $WALLETFILE/vpn.address.txt)
-
-if [ -z "$DAEMON_HOST" ]; then
-  sysctl enable letheand
-  sysctl start letheand
-fi
-
 if [ -n "$ZABBIX_SERVER" ]; then
   install_zabbix
 fi
@@ -114,8 +104,25 @@ pip3 install -r requirements.txt
 if [ -n "$PROVIDERID" ]; then
   provideropts="--with-providerid $PROVIDERID --with-providerkey $PROVIDERKEY"
 fi
+
+# First conf, just create directories
+./configure.sh --prefix "$LTHNPREFIX" --client
+make install FORCE=1
+
+if ! [ -f ${WALLETFILE}.address.txt ]; then
+  install_wallet
+fi
+WALLET=$(cat ${WALLETFILE}.address.txt)
+
+# Second conf with all params
 ./configure.sh --prefix "$LTHNPREFIX" --easy --with-wallet-address "$WALLET" --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts
 make install FORCE=1
+
+if [ -z "$DAEMON_HOST" ]; then
+  sysctl enable letheand
+  sysctl start letheand
+fi
+
 $LTHNPREFIX/bin/lvmgmt --generate-sdp \
      --sdp-provider-type $PROVTYPE \
      --sdp-provider-name EasyProvider \

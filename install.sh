@@ -96,7 +96,6 @@ if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/index.txt ]; then
             cp -R build/ca/* $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/
         else
             echo "CA directory $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/ not prepared! You should generate by configure or use your own CA!"
-            exit 3
         fi
 fi
 

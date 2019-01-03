@@ -79,7 +79,7 @@ easy-deploy)
     lethean-wallet-cli --mnemonic-language English --generate-new-wallet "$CONF/$WALLETFILE" --daemon-host $DAEMON_HOST \
        --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit \
          || { errorExit 2 "Cannot create Wallet file! "; }
-    WALLET=$(cat "$CONF/$WALLETFILE.address.txt")
+    WALLET=$(cat "$CONF/${WALLETFILE}.address.txt")
     ./configure.sh --prefix "/opt/lthn" --runas-user lthn --runas-group lthn --easy --with-wallet-address "$WALLET" \
        --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts \
          || { errorExit 3 "Cannot configure! Something is wrong."; }

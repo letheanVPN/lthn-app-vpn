@@ -15,6 +15,7 @@ fi
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
 [ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2"
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="sync.lethean.io"
+[ -z "$WALLETFILE" ] && WALLETFILE="$LTHNPREFIX/etc/vpn"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"
 [ -z "$CAPASS" ] && CAPASS=1234
 [ -z "$CACN" ] && CACN=ITNSFakeNode
@@ -40,6 +41,11 @@ sysctl(){
 }
 
 install_wallet(){
+  if [ -z "$DAEMON_HOST" ]; then
+    DAEMON_ARG=""
+  else
+    DAEMON_ARG="--daemon-host $DAEMON_HOST"
+  fi
   DAEMONBZ2=$(basename $DAEMON_BIN_URL)
   DAEMONDIR=$(basename $DAEMON_BIN_URL .tar.bz2)
   sudo mkdir -p $LTHNPREFIX/bin /etc/systemd/system && \
@@ -50,9 +56,8 @@ install_wallet(){
   sudo cp conf/letheand.env /etc/default/letheand && \
   sudo cp conf/lethean-wallet-vpn-rpc.service /etc/systemd/system/ && \
   cp conf/lethean-wallet-vpn-rpc.env wallet.env && \
-  $LTHNPREFIX/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet $HOME/vpn --daemon-host $DAEMON_HOST --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
-  echo LETHEANVPNRPC_ARGS="--vpn-rpc-bind-port 14660 --wallet-file $HOME/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password '$WALLETPASS' --log-file $HOME/wallet.log" >>wallet.env && \
-  echo cd $HOME >>wallet.env && \
+  $LTHNPREFIX/bin/lethean-wallet-cli --mnemonic-language English --generate-new-wallet $WALLETFILE $DAEMON_ARG --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit && \
+  echo LETHEANVPNRPC_ARGS="--vpn-rpc-bind-port 14660 --wallet-file $WALLETFILE $DAEMON_ARG --rpc-login 'dispatcher:SecretPass' --password '$WALLETPASS' --log-file $HOME/wallet.log" >>wallet.env && \
   sudo cp wallet.env /etc/default/lethean-wallet-vpn-rpc
   sudo sed -i "s^User=lthn^User=$USER^" /etc/systemd/system/letheand.service
   sudo sed -i "s^User=lthn^User=$USER^" /etc/systemd/system/lethean-wallet-vpn-rpc.service
@@ -91,10 +96,15 @@ else
   git checkout $BRANCH
 fi
 
-if ! [ -f $HOME/vpn.address.txt ]; then
+if ! [ -f $WALLETFILE.address.txt ]; then
   install_wallet
 fi
-WALLET=$(cat $HOME/vpn.address.txt)
+WALLET=$(cat $WALLETFILE/vpn.address.txt)
+
+if [ -z "$DAEMON_HOST" ]; then
+  sysctl enable letheand
+  sysctl start letheand
+fi
 
 if [ -n "$ZABBIX_SERVER" ]; then
   install_zabbix

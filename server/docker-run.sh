@@ -76,10 +76,10 @@ EOF
 
 case $1 in
 easy-deploy)
-    lethean-wallet-cli --mnemonic-language English --generate-new-wallet $CONF/vpn --daemon-host $DAEMON_HOST \
+    lethean-wallet-cli --mnemonic-language English --generate-new-wallet "$CONF/$WALLETFILE" --daemon-host $DAEMON_HOST \
        --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit \
          || { errorExit 2 "Cannot create Wallet file! "; }
-    WALLET=$(cat $CONF/vpn.address.txt)
+    WALLET=$(cat "$CONF/$WALLETFILE.address.txt")
     ./configure.sh --prefix "/opt/lthn" --runas-user lthn --runas-group lthn --easy --with-wallet-address "$WALLET" \
        --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass SecretPass $provideropts \
          || { errorExit 3 "Cannot configure! Something is wrong."; }
@@ -113,11 +113,16 @@ lthnvpnd|run)
     fi
     echo "Starting squid -f $CONF/squid.conf" >&2
     squid -f $CONF/squid.conf
-    if [ -f $CONF/vpn ]; then
-      lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file $CONF/vpn --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file /var/log/wallet.log &
+    if [ -z "$DAEMON_HOST" ]; then
+        echo "Starting lethean daemon..." >&2
+        mkdir -p $CONF/letheand
+        letheand --data-dir $CONF/letheand --detach
+    fi
+    if [ -f "$CONF/$WALLETFILE" ]; then
+      lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLETFILE" --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file /var/log/wallet.log &
       sleep 4
     else
-      echo "Wallet is not inside container." >&2
+      echo "Wallet file $CONF/$WALLETFILE is not inside container." >&2
     fi
     unset HTTP_PROXY
     unset http_proxy    
@@ -128,6 +133,13 @@ lthnvpnd|run)
     done
     echo "Starting dispatcher" >&2
     exec lthnvpnd --syslog "$@"
+    ;;
+
+letheand)
+    echo "Starting lethean daemon..." >&2
+    mkdir -p $CONF/letheand
+    shift
+    letheand --data-dir $CONF/letheand "$@"
     ;;
 
 connect)

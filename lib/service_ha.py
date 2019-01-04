@@ -23,7 +23,10 @@ class ServiceHa(Service):
         if (os.path.isfile(self.pidfile)):
             os.remove(self.pidfile)
         os.chdir(self.dir)
-        log.L.info("Run service %s (%s)" % (self.id, cmd))
+        log.A.audit(log.A.START, log.A.SERVICE, cmd=" ".join(cmd), serviceid=self.id)
+        if (config.Config.CAP.proxycStandalone):
+            command = cmd[0]
+            os.execv(command, cmd)
         self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=None, preexec_fn=os.setsid)
         log.L.info("Waiting for pid")
         i=0

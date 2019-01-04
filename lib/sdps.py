@@ -73,6 +73,8 @@ class SDPList(object):
     def getProviderSDP(self, id_):
         if id_ in self.data:
             return(self.data[id_])
+        else:
+            return None
         
     def parseLocalSdp(self):
         if (os.path.exists(config.CONFIG.SDPFILE)):
@@ -95,27 +97,22 @@ class SDPList(object):
     def parseRemoteSdp(self, sdp, fqdn, uri):
         allJson = json.loads(sdp.decode('utf-8'))
         for prov in allJson['providers']:
-            id_ = prov['provider']
-            if id_ in allJson:
-                providerJson = allJson[id_]
-                providerJson['fqdn']=fqdn
-                providerJson['uri']=uri
-            else:
-                providerJson = dict(
-                    protocolVersion=1,                
-                    provider=dict(
-                        id='{providerid}',
-                        name='',
-                        nodeType='{nodetype}',
-                        certificates={},
-                        wallet='{walletaddress}',
-                        terms='{providerterms}',
-                        fqdn=fqdn,
-                        uri=uri
-                    ),                                
-                    services=[],
-                    )
-            providerJson['provider']['id'] = id_
+            pid = prov['provider']
+            providerJson = dict(
+                protocolVersion=1,                
+                provider=dict(
+                    id='{providerid}',
+                    name='',
+                    nodeType='{nodetype}',
+                    certificates={},
+                    wallet='{walletaddress}',
+                    terms='{providerterms}',
+                    fqdn=fqdn,
+                    uri=uri
+                ),                                
+                services=[],
+                )
+            providerJson['provider']['id'] = pid
             providerJson['provider']['name'] = prov['providerName']
             providerJson['provider']['wallet'] = prov['providerWallet']
             ca = base64.b64decode(prov['certArray'][0]['certContent']).decode('utf-8')
@@ -124,29 +121,26 @@ class SDPList(object):
             providerJson['provider']['certificates']['id'] = 0
             providerJson['provider']['certificates']['content'] = ca
             sid = prov["id"]
-            newservice = True
-            for service in providerJson["services"]:
-                if (service['id'] == sid):
-                    newservice = None
-            if newservice:
-                log.L.info("Adding service %s:%s to SDP list" % (id_, prov['id']))
-                service=dict(
-                    id=sid,
-                    type=prov["type"],
-                    name=prov["name"],
-                    allowRefunds=prov["allowRefunds"],
-                    firstVerificationsNeeded=prov["firstVerificationsNeeded"],
-                    subsequentVerificationsNeeded=prov["subsequentVerificationsNeeded"],
-                    downloadSpeed=prov["downloadSpeed"],
-                    uploadSpeed=prov["uploadSpeed"],
-                    firstPrePaidMinutes=prov["firstPrePaidMinutes"],
-                    subsequentPrePaidMinutes=prov["subsequentPrePaidMinutes"],
-                    cost=prov["cost"]
-                )
-                if prov["type"]=="proxy":
-                    service["proxy"]=prov["proxy"]
-                else:
-                    service["vpn"]=prov["vpn"]
-                self.data[id_]=providerJson
-                self.data[id_]["services"].append(service)
-        
+            stype = prov["type"]
+            log.L.info("Adding service type %s %s/%s to SDP list" % (stype, pid, sid))
+            service=dict(
+                id=sid,
+                type=prov["type"],
+                name=prov["name"],
+                allowRefunds=prov["allowRefunds"],
+                firstVerificationsNeeded=prov["firstVerificationsNeeded"],
+                subsequentVerificationsNeeded=prov["subsequentVerificationsNeeded"],
+                downloadSpeed=prov["downloadSpeed"],
+                uploadSpeed=prov["uploadSpeed"],
+                firstPrePaidMinutes=prov["firstPrePaidMinutes"],
+                subsequentPrePaidMinutes=prov["subsequentPrePaidMinutes"],
+                cost=prov["cost"]
+            )
+            if prov["type"]=="proxy":
+                service["proxy"]=prov["proxy"]
+            else:
+                service["vpn"]=prov["vpn"]
+            if pid not in self.data:
+                self.data[pid]=providerJson
+            self.data[pid]["services"].append(service)
+                    

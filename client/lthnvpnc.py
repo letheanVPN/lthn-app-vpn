@@ -7,6 +7,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib'
 
 import getopt
 import log
+import ed25519
+import jsonpickle
 import logging
 import logging.config
 import config
@@ -38,24 +40,15 @@ def parseUri(cfg, uri):
         cfg.providerid = util.parseProvider(p.group(2))
         cfg.serviceId = p.group(3)
     else:
-        # authid@providerid/serviceid
-        p = re.search("(.*)@(.*)/(.*)", uri)
+        p = re.search("(.*)/(.*)", uri)
         if (p):
-            cfg.authId = p.group(1)
+            cfg.authId = "_random_"
             cfg.uniqueId = "_random_"
-            cfg.providerid = p.group(2)
-            cfg.serviceId = p.group(3)
+            cfg.providerid = p.group(1)
+            cfg.serviceId = p.group(2)
         else:
-            # providerid/serviceid
-            p = re.search("(.*)/(.*)", uri)
-            if (p):
-                cfg.authId = "_random_"
-                cfg.uniqueId = "_random_"
-                cfg.providerid = p.group(1)
-                cfg.serviceId = p.group(2)
-            else:
-                log.L.error("Bad URI %s" % (uri))
-                return(None)
+            log.L.error("Bad URI %s" % (uri))
+            return(None)
     if (cfg.authId != "_random_" and cfg.authId[:2] != cfg.serviceId):
         log.L.error("Authid must start with serviceid!")
         return(None)
@@ -72,9 +65,9 @@ def loadService(pid, sid):
         log.L.error("You must specify serviceid and providerid!")
         return(None)
     else:
-        if sdps.SDPS.getProviderSDP(pid):
-            s = sdps.SDPS.getProviderSDP(pid)
-            services.SERVICES.loadClient(s)
+        s = sdps.SDPS.getProviderSDP(pid)
+        if s:
+            services.SERVICES.loadClient(s, sid)
             services.SERVICES.mgmt.disable()
             services.SERVICES.http.disable()
             if services.SERVICES.get(sid):
@@ -162,13 +155,8 @@ def main(argv):
             sid.cfg["paymentid"] = cfg.authId
             sdp = sdps.SDPS.getProviderSDP(cfg.providerid)
             atexit.register(sid.stop)
-            if sid.getType()=="vpn" and cfg.vpncStandalone:
-                print("aaa")
-            elif sid.getType()=="proxy" and cfg.proxycStandalone:
-                print("bbb")
-            else:
-                sid.run()
-                sid.connect(sdp)   
+            sid.run()
+            sid.connect(sdp)   
                       
     elif (cfg.L):
         print("ProviderId:ServiceId,serviceType,ProviderName,ServiceName")

@@ -183,6 +183,7 @@ You can use more env variables to tune parameters. See script header for availab
 [ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/640/lethean-cli-linux-64bit-letheanize-617a36c.tar.bz2"
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="sync.lethean.io"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"
+[ -z "$WALLETFILE" ] && WALLETFILE="$LTHNPREFIX/etc/vpn"
 [ -z "$CAPASS" ] && CAPASS=1234
 [ -z "$CACN" ] && CACN=ITNSFakeNode
 [ -z "$ENDPOINT" ] && ENDPOINT="1.2.3.4"

@@ -11,6 +11,7 @@ import sys
 from urllib.error import HTTPError
 from urllib.request import Request
 from urllib.request import urlopen
+import config
 
 class SDP(object):
     configFile = None
@@ -101,19 +102,19 @@ class SDP(object):
 
         validNodeTypes = ['residential', 'commercial', 'government']
         if (self.data['provider']['nodeType'] not in validNodeTypes):
-            if not self.setNodeType(cap.nodeType):
+            if not self.setNodeType(config.CONFIG.CAP.serviceType):
                 return False
 
         if (len(self.data['provider']['id']) != 64 or not re.match(r'[a-zA-Z0-9]', self.data['provider']['id'])):
-            if not self.setProviderId(cap.providerid):
+            if not self.setProviderId(config.CONFIG.CAP.providerid):
                 return False
         
         if(not self.data['provider']['name'] or len(self.data['provider']['name']) > 16):
-            if not self.setProviderName(cap.providerName):
+            if not self.setProviderName(config.CONFIG.CAP.providerName):
                 return False
 
         if (not self.data['provider']['wallet'] or len(self.data['provider']['wallet']) != 97):
-            if not self.setWalletAddr(cap.walletAddr):
+            if not self.setWalletAddr(config.CONFIG.CAP.walletAddr):
                 return False
 
         if (not self.data['provider']['terms'] or len(self.data['provider']['terms']) > 50000):
@@ -276,7 +277,7 @@ class SDP(object):
         self.dataLoaded=True
         return(True)
         
-    def load(self, config, prefix=None):
+    def load(self, cfgf, prefix=None):
         if self.dataLoaded:
             return
 
@@ -288,7 +289,7 @@ class SDP(object):
                 self.certsDir = None
 
         if (self.configFile is None):
-            self.configFile = config
+            self.configFile = cfgf
         try:
             if (self.configFile != None):
                 f = open(self.configFile, 'r')

@@ -2,6 +2,8 @@
 
 export PATH=/opt/lthn/bin:/sbin:/usr/sbin:$PATH
 export CONF=/opt/lthn/etc/
+export HOME=/home/lthn
+export LMDB=/home/lthn/.intensecoin/lmdb
 
 errorExit(){
     echo "$2" >&2
@@ -15,6 +17,38 @@ cat >/opt/lthn/etc/dispatcher.ini <<EOF
 [global]
 ; 
 EOF
+    fi
+}
+
+prepareRsyncConf(){
+    if ! [ -f $CONF/rsyncd.conf ]; then
+      cat >$CONF/rsyncd.conf <<EOF
+ [lmdb]
+    path = $LMDB
+    comment = Lethean Blockchain
+    read only = yes
+EOF
+fi
+}
+
+prepareLmdb(){
+  if ! [ -d "$LMDB" ]; then
+    echo "Fetching LMDB data..." >&2
+    mkdir -p $LMDB && \
+     cd $LMDB && \
+     zsync "$ZSYNC_URL" || errorExit 4 "Cannot fetch LMDB data!"
+  else
+    echo "LMDB data already exists. Skipping fetching." >&2
+  fi
+}
+
+runDaemon(){
+    if [ -t 0 ] ; then
+        prepareLmdb
+        echo "Starting lethean daemon..." >&2
+        letheand "$@"
+    else
+        errorExit 3 "You must allocate TTY to run letheand! Use -t option"
     fi
 }
 
@@ -114,9 +148,7 @@ lthnvpnd|run)
     echo "Starting squid -f $CONF/squid.conf" >&2
     squid -f $CONF/squid.conf
     if [ -z "$DAEMON_HOST" ]; then
-        echo "Starting lethean daemon..." >&2
-        mkdir -p $CONF/letheand
-        letheand --data-dir $CONF/letheand --detach
+        runDaemon
     fi
     if [ -f "$CONF/$WALLETFILE" ]; then
       lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLETFILE" --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file /var/log/wallet.log &
@@ -135,11 +167,21 @@ lthnvpnd|run)
     exec lthnvpnd --syslog "$@"
     ;;
 
+zsync-make)
+    if [ -d "$LMDB" ]; then
+        cd $LMDB && zsyncmake -u "$ZSYNC_URL" data.mdb
+    else
+        errorExit 2 "LMDB database does not exist!"
+    fi
+    ;;
+
+zsync)
+    prepareLmdb
+    ;;
+
 letheand)
-    echo "Starting lethean daemon..." >&2
-    mkdir -p $CONF/letheand
     shift
-    letheand --data-dir $CONF/letheand "$@"
+    runDaemon "$@"
     ;;
 
 connect)

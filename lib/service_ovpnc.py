@@ -76,8 +76,8 @@ class ServiceOvpnClient(ServiceOvpn):
             authfile=self.dir + 'vpnc.auth'
             try:
                 af = open(authfile, "w")
-                af.write(self.cfg["paymentid"])
-                af.write(self.cfg["paymentid"])
+                af.write(self.cfg["paymentid"] + "\n")
+                af.write(self.cfg["paymentid"] + "\n")
                 af.close()
             except (IOError, OSError):
                 log.L.error("Cannot write auth file %s" % (authfile))
@@ -98,7 +98,7 @@ class ServiceOvpnClient(ServiceOvpn):
             log.L.warning("block-outside-dns not supported yet.")
         else:
             bdns_comment='#'
-        if (config.CONFIG.CAP.vpncRedirGw):
+        if (config.CONFIG.CAP.vpncBlockRoute):
             rgw_comment=''
         else:
             rgw_comment='#'
@@ -127,7 +127,10 @@ class ServiceOvpnClient(ServiceOvpn):
                           mgmt_header=config.Config.CAP.mgmtHeader,
                           mgmt_sock="127.0.0.1 %s" % self.cfg["mgmtport"],
                           rgw_comment=rgw_comment,
-                          bdns_comment=bdns_comment
+                          bdns_comment=bdns_comment,
+                          auth_file=authfile,
+                          pull_filters=pull_filter,
+                          mgmt_comment=mgmt_comment
                           )
         try:
             cf = open(self.cfgfile, "wb")

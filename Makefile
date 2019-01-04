@@ -13,6 +13,7 @@ env.mk:
 	
 
 install: env.mk
+	chmod +x install.sh
 	INSTALL_PREFIX=$(INSTALL_PREFIX) \
 	FORCE=$(FORCE) \
 	LTHN_PREFIX=$(LTHN_PREFIX) \
@@ -24,8 +25,16 @@ install: env.mk
 	OPENSSL_BIN=$(OPENSSL_BIN) \
 	LTHN_USER=$(LTHN_USER) \
 	LTHN_GROUP=$(LTHN_GROUP) \
+	CLIENT=$(CLIENT) \
+	SERVER=$(SERVER) \
 	./install.sh
 	
+install-client:
+	@$(MAKE) install CLIENT=y
+	
+install-server:
+	@$(MAKE) install SERVER=y
+
 clean:
 	@echo Note this cleans only build directory. If you want to uninstall package, do it manually by removing files from install location.
 	@echo Your last install dir is $(LTHN_PREFIX)

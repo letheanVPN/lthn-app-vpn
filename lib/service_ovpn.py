@@ -19,7 +19,10 @@ class ServiceOvpn(Service):
         os.chdir(self.dir)
         if (os.path.isfile(self.pidfile)):
             os.remove(self.pidfile)
-        log.L.info("Run service %s (%s)" % (self.id, cmd))
+        log.A.audit(log.A.START, log.A.SERVICE, cmd=" ".join(cmd), serviceid=self.id)
+        if (config.Config.CAP.vpncStandalone):
+            command = cmd[0]
+            os.execv(command, cmd)
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         log.L.info("Waiting for pid")
         i=0

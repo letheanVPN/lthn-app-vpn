@@ -193,4 +193,4 @@ def parseProvider(provider):
                         print("aa")
                         config.Config.CAP.sdpUri.append({fqdn: provider, uri: value})
     else:
-        return(p)
+        return(provider)

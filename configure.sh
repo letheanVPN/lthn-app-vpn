@@ -86,7 +86,9 @@ summary() {
     echo "Data dir:     $data_dir"
     echo "Temp dir:     $tmp_dir"
     echo "Run as user:  $LTHN_USER"
-    echo "Run as group:  $LTHN_GROUP"
+    echo "Run as group: $LTHN_GROUP"
+    echo "Server:       $server"
+    echo "Client:       $client"
     echo
 }
 
@@ -146,6 +148,8 @@ HAPROXY_BIN=$HAPROXY_BIN
 OPENSSL_BIN=$OPENSSL_BIN
 LTHN_USER=$LTHN_USER
 LTHN_GROUP=$LTHN_GROUP
+SERVER=$server
+CLIENT=$client
 
 EOF
 }

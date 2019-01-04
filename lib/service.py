@@ -84,7 +84,7 @@ class Service(object):
         print()
         
     def run(self):
-        log.A.audit(log.A.START, log.A.SERVICE, self.name)
+        log.L.info("Starting service %s[%s]" % (self.name, self.id))
 
     def stop(self):
         if (self.mgmtfile is not None and os.path.exists(self.mgmtfile)):
@@ -93,8 +93,7 @@ class Service(object):
             os.remove(self.pidfile)
         if self.process:
             self.process.kill()
-        log.L.warning("Stopped service %s[%s]" % (self.name, self.id))
-        log.A.audit(log.A.STOP, log.A.SERVICE, self.name)
+        log.L.info("Stopped service %s[%s]" % (self.name, self.id))
         
     def getCost(self):
         return(self.cost)

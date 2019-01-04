@@ -24,7 +24,7 @@ There is directory which needs to be mounted to host: /opt/lthn/etc . If you wan
 
 ### General usage
 ```
- docker run -p expose:internal \
+ ENV1=value [ENV2=value2] docker run -p expose:internal \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
    limosek/lethean-vpn:devel [cmd [args]]
@@ -34,13 +34,15 @@ localetc is local directory to store configs
 locallog is local directory to store logs
 expose is port to expose to outside
 internal is internal port of dispatcher
+ENV variables can be used to tune some parameters. See automated install [here](SERVER.md)
 
 ### Recomended steps to use exit node
 Create configs and certificates (or copy your existing /opt/lthn/etc dir here.)
 Easiest way to create from scratch is probably to easy-deploy. Do not forget to allocate terminal for easy-deploy (-t -i):
 ```
  mkdir etc
- docker run -t -i --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+ docker run -t -i \
+   --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
    limosek/lethean-vpn:devel easy-deploy
 ```
@@ -78,6 +80,26 @@ See [here](CLIENT.md) for information about URI format
 Test proxy:
 ```
 curl -x http://localhost:8186 -L https://lethean.io/
+```
+
+### Recomended steps to use lethean daemon
+By default, docker image assumes that you want to use remote daemon provided by Lethean. If you want to run your own daemon, you can instruct docker
+by setting DAEMON_HOST to empty string. But you need to store blockchain outside of the wallet:
+
+```
+DAEMON_HOST='' docker run \
+   --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+   --mount type=bind,source=$(pwd)/bcdata,target=/home/lthn \
+  limosek/lethean-vpn:devel 
+```
+
+You can even use our docker image to run standalone daemon.
+If blockchain dir is empty, docker image will pull actual data using zsync which is very fast.
+```
+docker run -t \
+   --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
+   --mount type=bind,source=$(pwd)/bcdata,target=/home/lthn \
+  limosek/lethean-vpn:devel letheand
 ```
 
 ## FAQ

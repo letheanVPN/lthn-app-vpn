@@ -24,6 +24,7 @@ ARG HTTP_PROXY="${HTTP_PROXY}"
 ARG HTTPS_PROXY="${HTTPS_PROXY}"
 ARG NO_PROXY=""
 ARG PUBLIC_BUILD="y"
+ARG ZSYNC_URL="https://monitor.lethean.io/lmdb.zsync"
 
 ENV LTHNPREFIX="/opt/lthn"
 ENV PORT="$PORT"
@@ -36,13 +37,14 @@ ENV ZABBIX_HOSTNAME="$ZABBIX_HOSTNAME"
 ENV ZABBIX_META="$ZABBIX_META"
 ENV ENDPOINT="$ENDPOINT"
 ENV PROVTYPE="$PROVTYPE"
+ENV ZSYNC_URL="$ZSYNC_URL"
 
 ENTRYPOINT ["/entrypiont-lethean-vpn.sh"]
 CMD ["run"]
 
 RUN useradd -ms /bin/bash lthn; \
   apt-get update; \
-  apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel; \
+  apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync; \
   echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers; \
   mkdir /usr/src/lethean-vpn; \
   chown -R lthn /usr/src/lethean-vpn
@@ -61,9 +63,9 @@ RUN sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME/" /etc/zabbix/zabbix_agent
 
 USER lthn
 COPY ./requirements.txt /usr/src/lethean-vpn/
-RUN pip3 install --user -r /usr/src/lethean-vpn/requirements.txt
 
 USER root
+RUN pip3 install -r /usr/src/lethean-vpn/requirements.txt
 COPY ./ /usr/src/lethean-vpn/
 COPY ./server/docker-run.sh /entrypiont-lethean-vpn.sh
 RUN chown -R lthn /usr/src/; \
@@ -72,7 +74,7 @@ RUN chown -R lthn /usr/src/; \
 
 USER lthn
 RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --client
-RUN make install
+RUN make install SERVER=1 CLIENT=1
 RUN if [ -n "$PUBLIC_BUILD" ]; then \
       rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \
         /opt/lthn/var/* \

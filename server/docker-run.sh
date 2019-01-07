@@ -32,11 +32,13 @@ fi
 }
 
 prepareLmdb(){
-  if ! [ -d "$LMDB" ]; then
+  if ! [ -d "$LMDB" ] || [ "$1" = "force" ]; then
     echo "Fetching LMDB data..." >&2
     mkdir -p $LMDB && \
      cd $LMDB && \
-     zsync "$ZSYNC_URL" || errorExit 4 "Cannot fetch LMDB data!"
+     rm -f data.mdb.zsync && \
+     wget "$ZSYNC_URL" && \
+      zsync data.mdb.zsync || errorExit 4 "Cannot fetch LMDB data!"
   else
     echo "LMDB data already exists. Skipping fetching." >&2
   fi
@@ -169,14 +171,15 @@ lthnvpnd|run)
 
 zsync-make)
     if [ -d "$LMDB" ]; then
-        cd $LMDB && zsyncmake -u "$ZSYNC_URL" data.mdb
+        cd $LMDB && zsyncmake -v -b 32768 -f data.mdb -u "$ZSYNC_DATA_URL" data.mdb
     else
         errorExit 2 "LMDB database does not exist!"
     fi
     ;;
 
-zsync)
-    prepareLmdb
+sync-bc)
+    shift
+    prepareLmdb force
     ;;
 
 letheand)
@@ -211,7 +214,15 @@ sh|bash)
     ;;
 
 *)
-    echo "Bad command."
+    echo "Bad command. Use one of:"
+    echo "run [args] to run dispatcher"
+    echo "list [args] to list available services"
+    echo "connect uri [args] to run client"
+    echo "letheand [args] to run letheand"
+    echo "easy-deploy [args] to easy deploy node"
+    echo "upload-sdp [args] to upload SDP"
+    echo "sync-bc to fast sync blockhain data from server."
+    echo "sh to go into shell" 
     exit 2
     ;;
 esac

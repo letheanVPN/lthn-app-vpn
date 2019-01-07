@@ -7,7 +7,7 @@ LABEL description="Letehan.io VPN server"
 
 ARG PROVIDERID=""
 ARG PROVIDERKEY=""
-ARG DAEMON_BIN_URL="https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2"
+ARG DAEMON_BIN_URL="https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2"
 ARG DAEMON_HOST="sync.lethean.io"
 ARG WALLETFILE="vpn"
 ARG WALLETPASS="abcd1234"
@@ -24,7 +24,8 @@ ARG HTTP_PROXY="${HTTP_PROXY}"
 ARG HTTPS_PROXY="${HTTPS_PROXY}"
 ARG NO_PROXY=""
 ARG PUBLIC_BUILD="y"
-ARG ZSYNC_URL="https://monitor.lethean.io/lmdb.zsync"
+ARG ZSYNC_URL="https://monitor.lethean.io/bc/data.mdb.zsync"
+ARG ZSYNC_DATA_URL="http://monitor.lethean.io/bc/data.mdb"
 
 ENV LTHNPREFIX="/opt/lthn"
 ENV PORT="$PORT"
@@ -38,6 +39,7 @@ ENV ZABBIX_META="$ZABBIX_META"
 ENV ENDPOINT="$ENDPOINT"
 ENV PROVTYPE="$PROVTYPE"
 ENV ZSYNC_URL="$ZSYNC_URL"
+ENV ZSYNC_DATA_URL="$ZSYNC_DATA_URL"
 
 ENTRYPOINT ["/entrypiont-lethean-vpn.sh"]
 CMD ["run"]

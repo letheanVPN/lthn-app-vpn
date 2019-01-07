@@ -33,14 +33,21 @@ fi
 
 prepareLmdb(){
   if ! [ -d "$LMDB" ] || [ "$1" = "force" ]; then
-    echo "Fetching LMDB data..." >&2
-    mkdir -p $LMDB && \
-     cd $LMDB && \
-     rm -f data.mdb.zsync && \
-     wget "$ZSYNC_URL" && \
-      zsync data.mdb.zsync || errorExit 4 "Cannot fetch LMDB data!"
+    echo "Fetching Blockchain data..." >&2
+    mkdir -p $LMDB && cd $LMDB || errorExit 4 "Cannot create $LMDB dir!"
+     rm -f data.mdb.zsync
+     wget "$ZSYNC_URL" && zsync data.mdb.zsync
+     if ! [ -f data.mdb ]; then
+        errorExit 4 "Cannot fetch Blockchain data!"
+     fi
+     localsum=$(sha256sum data.mdb | cut -d ' ' -f 1)
+     remotesum=$(wget -O- $ZSYNC_DATA_SHA)
+     if [ "$localsum" != "$remotesum" ]; then
+        errorExit 4 "Blockchain data corrupted!"
+     fi
+     echo "Blockchain data downloaded!" >&2
   else
-    echo "LMDB data already exists. Skipping fetching." >&2
+    echo "Blockchain data already exists. Skipping fetching." >&2
   fi
 }
 
@@ -136,6 +143,7 @@ upload-sdp)
     ;;
 
 lthnvpnd|run)
+    cd /opt/lthn/var
     testServerConf
     if ! [ -f $CONF/zabbix_agentd.conf.conf ]; then
       prepareZabbix || { errorExit 2 "Cannot create $CONF/zabbix_agentd.conf! "; }
@@ -153,6 +161,7 @@ lthnvpnd|run)
         runDaemon
     fi
     if [ -f "$CONF/$WALLETFILE" ]; then
+      rm -f lethean-wallet-vpn-rpc*.login
       lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLETFILE" --daemon-host $DAEMON_HOST --rpc-login 'dispatcher:SecretPass' --password "$WALLETPASS" --log-file /var/log/wallet.log &
       sleep 4
     else
@@ -171,7 +180,9 @@ lthnvpnd|run)
 
 zsync-make)
     if [ -d "$LMDB" ]; then
-        cd $LMDB && zsyncmake -v -b 32768 -f data.mdb -u "$ZSYNC_DATA_URL" data.mdb
+        cd $LMDB
+        zsyncmake -v -b 262144 -f data.mdb -u "$ZSYNC_DATA_URL" data.mdb
+        sha256sum data.mdb | cut -d ' ' -f 1 >data.mdb.sha256
     else
         errorExit 2 "LMDB database does not exist!"
     fi

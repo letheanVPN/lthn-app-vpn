@@ -26,6 +26,7 @@ ARG NO_PROXY=""
 ARG PUBLIC_BUILD="y"
 ARG ZSYNC_URL="https://monitor.lethean.io/bc/data.mdb.zsync"
 ARG ZSYNC_DATA_URL="http://monitor.lethean.io/bc/data.mdb"
+ARG ZSYNC_DATA_SHA="http://monitor.lethean.io/bc/data.mdb.sha256"
 
 ENV LTHNPREFIX="/opt/lthn"
 ENV PORT="$PORT"

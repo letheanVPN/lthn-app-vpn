@@ -117,7 +117,8 @@ def commonArgs(p):
     p.add_argument(       '--vpnd-reneg',             dest='vpndReneg', metavar='S', required=None, default=600, help='Client has to renegotiate after this number of seconds to check if paymentid is still active')
     p.add_argument(       '--vpnd-tun',               dest='vpndTun', metavar='IF', required=None, default="tun0", help='Use specific tun device for server')
     p.add_argument(       '--vpnd-mgmt-port',         dest='vpndMgmtPort', metavar='PORT', required=None, default="11192", help='Use specific port for local mgmt')
-
+    p.add_argument(       '--vpnc-standalone',        dest='vpncStandalone', metavar='Bool', required=None, help='Create standalone openvn config that can be run outside of dispatcher.')
+    p.add_argument(       '--proxyc-standalone',      dest='proxycStandalone', metavar='Bool', required=None, help='Create standalone haproxy config that can be run outside of dispatcher.')
 
 def parseCommonArgs(parser, cfg, name):
     if (cfg.lc):

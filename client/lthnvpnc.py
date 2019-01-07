@@ -96,8 +96,6 @@ def main(argv):
     p.add_argument('--payment-timeout', dest='paymentTimeout', metavar='S', required=None, default=1200, help='Timeout for payment to service.')
     p.add_argument('--exit-on-no-payment', dest='exitNoPayment', metavar='Bool', required=None, default=None, help='Exit after payment is gone.')
     p.add_argument('--fork-on-connect', dest='forkOnConnect', metavar='Bool', required=None, default=None, help='Fork after successful paid connection. Client will fork into background.')
-    p.add_argument('--vpnc-standalone',        dest='vpncStandalone', metavar='Bool', required=None, help='Create standalone openvn config that can be run outside of dispatcher.')
-    p.add_argument('--proxyc-standalone',      dest='proxycStandalone', metavar='Bool', required=None, help='Create standalone haproxy config that can be run outside of dispatcher.')
     p.add_argument('--vpnc-tun',               dest='vpncTun', metavar='IF', required=None, default="tun1", help='Use specific tun device for client')
     p.add_argument('--vpnc-mgmt-port',         dest='vpncMgmtPort', metavar='PORT', required=None, default="11193", help='Use specific port for local mgmt')
     p.add_argument('--vpnc-block-route',       dest='vpncBlockRoute', metavar='Bool', required=None, default=True, help='Filter router changes from server')

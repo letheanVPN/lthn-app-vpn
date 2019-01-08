@@ -184,7 +184,15 @@ class SDP(object):
         return True
     
     def getCertificates(self):
-        return(self.data['provider']['certificates']['content'])
+        certStart = "-----BEGIN CERTIFICATE-----"
+        certEnd = "-----END CERTIFICATE-----"
+        ca = self.data['provider']['certificates'][0]['content']
+        p = re.search(certStart + '(.*)' + certEnd,ca)
+        if (p):
+            ca = certStart + '\n' + p.group(1) + '\n' + certEnd
+            return(ca)
+        else:
+            return None
     
     def getProviderId(self):
         return(self.data['provider']['id'])

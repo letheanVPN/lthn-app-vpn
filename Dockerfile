@@ -12,26 +12,51 @@ ARG PORT="8080"
 ARG ZSYNC_URL="https://monitor.lethean.io/bc/data.mdb.zsync"
 ARG ZSYNC_DATA_URL="http://monitor.lethean.io/bc/data.mdb"
 ARG ZSYNC_DATA_SHA="http://monitor.lethean.io/bc/data.mdb.sha256"
-
 ENV LTHNPREFIX="/opt/lthn"
+
+# Daemon host. Set to empty string to use local daemon with complete copy of blockchain.
 ENV DAEMON_HOST="$DAEMON_HOST"
 
+# Wallet file. It is relative to etc directory.
 ENV WALLET_FILE="vpn"
+
+# If you want to use external wallet, set this to RPC of external wallet host
 ENV WALLET_RPC_URI=""
+
+# Wallet password. Default is to generate random password
 ENV WALLET_PASSWORD=""
+
+# Wallet RPC password. Default is to generate random password. Username used by dispatcher is 'dispatcher'
 ENV WALLET_RPC_PASSWORD=""
+
+# To restore wallet from this height. Only applicable for local wallet.
 ENV WALLET_RESTORE_HEIGHT=349516
 
+# CA password. Default to generate random password
 ENV CA_PASSWORD=""
+
+# Common Name for CN
 ENV CA_CN="LTHNEasyDeploy"
 
+# If you already have providerid. In other case, autogenerate
 ENV PROVIDER_ID=""
+
+# If you already have providerkey. In other case, autogenerate
 ENV PROVIDER_KEY=""
+
+# Provider name
 ENV PROVIDER_NAME="EasyProvider"
+
+# Provider type
 ENV PROVIDER_TYPE="residential"
+
+# Service endpoint. You need to change this in SDP later
 ENV ENDPOINT="127.0.0.1"
+
+# Service port
 ENV PORT="$PORT"
 
+# Zabbix parameters
 ENV ZABBIX_SERVER="zabbix"
 ENV ZABBIX_HOSTNAME="lethean-vpn"
 ENV ZABBIX_META="LETHEANNODE"

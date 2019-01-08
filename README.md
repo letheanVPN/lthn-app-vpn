@@ -28,13 +28,73 @@ There is directory which needs to be mounted to host: /opt/lthn/etc . If you wan
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
    limosek/lethean-vpn:devel [cmd [args]]
+
 ```
-where cmd can be run,easy-deploy or sh
+where cmd can be:
+```
+run [args] to run dispatcher
+list [args] to list available services
+connect uri [args] to run client
+letheand [args] to run letheand
+easy-deploy [args] to easy deploy node
+upload-sdp [args] to upload SDP
+sync-bc to fast sync blockhain data from server.
+wallet-rpc [args] to run wallet-rpc-daemon
+wallet-cli [args] to run wallet-cli
+sh to go into shell
+
+```
+
 localetc is local directory to store configs
 locallog is local directory to store logs
 expose is port to expose to outside
 internal is internal port of dispatcher
-ENV variables can be used to tune some parameters. See automated install [here](SERVER.md)
+
+ENV variables which you can use:
+```
+# Daemon host. Set to empty string to use local daemon with complete copy of blockchain.
+ENV DAEMON_HOST="$DAEMON_HOST"
+
+# Wallet file. It is relative to etc directory.
+ENV WALLET_FILE="vpn"
+
+# If you want to use external wallet, set this to RPC of external wallet host
+ENV WALLET_RPC_URI=""
+
+# Wallet password. Default is to generate random password
+ENV WALLET_PASSWORD=""
+
+# Wallet RPC password. Default is to generate random password. Username used by dispatcher is 'dispatcher'
+ENV WALLET_RPC_PASSWORD=""
+
+# To restore wallet from this height. Only applicable for local wallet.
+ENV WALLET_RESTORE_HEIGHT=349516
+
+# CA password. Default to generate random password
+ENV CA_PASSWORD=""
+
+# Common Name for CN
+ENV CA_CN="LTHNEasyDeploy"
+
+# If you already have providerid. In other case, autogenerate
+ENV PROVIDER_ID=""
+
+# If you already have providerkey. In other case, autogenerate
+ENV PROVIDER_KEY=""
+
+# Provider name
+ENV PROVIDER_NAME="EasyProvider"
+
+# Provider type
+ENV PROVIDER_TYPE="residential"
+
+# Service endpoint. You need to change this in SDP later
+ENV ENDPOINT="127.0.0.1"
+
+# Service port
+ENV PORT="$PORT"
+
+```
 
 ### Recomended steps to use exit node
 Create configs and certificates (or copy your existing /opt/lthn/etc dir here.)
@@ -45,7 +105,9 @@ Easiest way to create from scratch is probably to easy-deploy. Do not forget to 
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
    limosek/lethean-vpn:devel easy-deploy
+
 ```
+
 After easy-deploy, all config files will be stored in your local etc directory. 
 You can edit sdp.json, dispatcher.ini and other things to respect your needs.
 To upload your local SDP, use 
@@ -53,6 +115,7 @@ To upload your local SDP, use
  docker run --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
    limosek/lethean-vpn:devel upload-sdp
+
 ```
 
 Than to run dispatcher:
@@ -60,6 +123,7 @@ Than to run dispatcher:
  docker run -p 8080:8080 --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
    limosek/lethean-vpn:devel
+
 ```
 
 ### Recomended steps to use client

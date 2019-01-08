@@ -44,15 +44,17 @@ prepareLmdb(){
      if ! [ -f data.mdb ]; then
         errorExit 4 "Cannot fetch Blockchain data!"
      fi
-     echo "Testing blockchain file for consistency..." >&2
-     localsum=$(sha256sum data.mdb | cut -d ' ' -f 1)
-     remotesum=$(wget -O- $ZSYNC_DATA_SHA)
-     if [ "$localsum" != "$remotesum" ]; then
-        errorExit 4 "Blockchain data corrupted!"
-     fi
+     if [ -n "$ZSYNC_DATA_SHA" ]; then
+        echo "Testing blockchain file for consistency..." >&2
+        localsum=$(sha256sum data.mdb | cut -d ' ' -f 1)
+        remotesum=$(wget -O- $ZSYNC_DATA_SHA)
+        if [ "$localsum" != "$remotesum" ]; then
+            errorExit 4 "Blockchain data corrupted!"
+        fi
+    fi
      echo "Blockchain data downloaded!" >&2
   else
-    echo "Blockchain data already exists. Skipping fetching." >&2
+    echo "Blockchain data already exists. Skipping fetch." >&2
   fi
 }
 
@@ -64,6 +66,33 @@ runDaemon(){
     else
         errorExit 3 "You must allocate TTY to run letheand! Use -t option"
     fi
+}
+
+runWalletRpc(){
+    cd /opt/lthn/var
+    if [ -z "$WALLET_RPC_URI" ]; then
+      echo "Starting Wallet RPC server with $CONF/$WALLET_FILE." >&2
+      rm -f lethean-wallet-vpn-rpc*.login
+      lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLET_FILE" --daemon-host "$DAEMON_HOST" --rpc-login "dispatcher:$WALLET_RPC_PASSWORD" --password "$WALLET_PASSWORD" --log-file /var/log/wallet.log &
+      sleep 4
+      WALLET_RPC_URI="http://localhost:14660"
+    else
+      echo "Wallet is outside of container ($WALLET_RPC_URI)." >&2
+    fi    
+}
+
+runWalletCli(){
+    cd /opt/lthn/var
+    if ! [ -t 0 ] ; then
+        errorExit 3 "You must allocate TTY to run letheand! Use -t option"
+    fi
+    if [ -z "$WALLET_RPC_URI" ]; then
+      echo "Starting Wallet cli with $CONF/$WALLET_FILE." >&2
+      lethean-wallet-cli --wallet-file "$CONF/$WALLET_FILE" --daemon-host "$DAEMON_HOST" --password "$WALLET_PASSWORD"
+      sleep 4
+    else
+      echo "Wallet is outside of container ($WALLET_RPC_URI)." >&2
+    fi    
 }
 
 testServerConf(){
@@ -212,17 +241,9 @@ lthnvpnd|run)
     if [ -z "$DAEMON_HOST" ]; then
         runDaemon
     fi
-    if [ -z "$WALLET_RPC_URI" ]; then
-      echo "Starting Wallet RPC server with $CONF/$WALLET_FILE." >&2
-      rm -f lethean-wallet-vpn-rpc*.login
-      lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLET_FILE" --daemon-host $DAEMON_HOST --rpc-login "dispatcher:$WALLET_RPC_PASSWORD" --password "$WALLET_PASSWORD" --log-file /var/log/wallet.log &
-      sleep 4
-      WALLET_RPC_URI="http://localhost:14660"
-    else
-      echo "Wallet is outside of container ($WALLET_RPC_URI)." >&2
-    fi
+    runWalletRpc
     unset HTTP_PROXY
-    unset http_proxy    
+    unset http_proxy
     shift
     while ! curl "$WALLET_RPC_URI" >/dev/null 2>/dev/null; do
         echo "Waiting for walet rpc server."
@@ -230,6 +251,16 @@ lthnvpnd|run)
     done
     echo "Starting dispatcher" >&2
     exec lthnvpnd --wallet-rpc-uri "$WALLET_RPC_URI" --syslog "$@"
+    ;;
+
+wallet-rpc)
+    shift
+    runWalletRpc "$@"
+    ;;
+
+wallet-cli)
+    shift
+    runWalletCli "$@"
     ;;
 
 zsync-make)
@@ -287,6 +318,8 @@ sh|bash)
     echo "easy-deploy [args] to easy deploy node"
     echo "upload-sdp [args] to upload SDP"
     echo "sync-bc to fast sync blockhain data from server."
+    echo "wallet-rpc [args] to run wallet-rpc-daemon"
+    echo "wallet-cli [args] to run wallet-cli"
     echo "sh to go into shell" 
     exit 2
     ;;

@@ -7,6 +7,7 @@ import log
 import time
 import select
 import authids
+import sessions
 from subprocess import Popen
 from subprocess import PIPE
 from service_ovpn import ServiceOvpn
@@ -60,7 +61,7 @@ class ServiceOvpnServer(ServiceOvpn):
         if (username == password and authids.AUTHIDS.get(username)):
             self.mgmtWrite("client-auth %s %s\r\n" % (cid, kid))
             self.mgmtWrite("END\r\n")
-            sessions.SESSIONS.add(username, untrusted_ip, untrusted_port, method=method, uri=uri, proto=proto, id="%s:%s" % (cid, kid))
+            sessions.SESSIONS.add(username, untrusted_ip, untrusted_port, proto=self.cfg['proto'], id="%s:%s" % (cid, kid))
         else:
             log.L.warning("Bad authentication from remote IP %s and authid %s" % (untrusted_ip, username))
             self.mgmtWrite("client-deny %s %s \"Bad auth\"\r\n" % (cid, kid))

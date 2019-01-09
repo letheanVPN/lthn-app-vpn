@@ -60,9 +60,8 @@ class ServiceOvpnServer(ServiceOvpn):
         if (username == password and authids.AUTHIDS.get(username)):
             self.mgmtWrite("client-auth %s %s\r\n" % (cid, kid))
             self.mgmtWrite("END\r\n")
-            log.A.audit(log.A.SESSION, log.A.ADD, paymentid=username, srcip=untrusted_ip, srcport=untrusted_port, serviceid=self.getId())
+            sessions.SESSIONS.add(username, untrusted_ip, untrusted_port, method=method, uri=uri, proto=proto, id="%s:%s" % (cid, kid))
         else:
-            log.A.audit(log.A.SESSION, log.A.NPAYMENT, paymentid=username, srcip=untrusted_ip, srcport=untrusted_port, serviceid=self.getId())
             log.L.warning("Bad authentication from remote IP %s and authid %s" % (untrusted_ip, username))
             self.mgmtWrite("client-deny %s %s \"Bad auth\"\r\n" % (cid, kid))
     

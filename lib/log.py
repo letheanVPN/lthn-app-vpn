@@ -67,8 +67,45 @@ class Audit(object):
             cmd = repr(cmd)
         if msg:
             msg = repr(msg)
-
-        txt = '"%s",%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"' % (action, type, obj, serviceid, cmd, lthn, wallet, paymentid, srcip, srcport, dstip, dstport, method, uri, msg)
+            
+        
+        json={
+            'action': action,
+            'type': type
+            }
+        if obj:
+            json['obj'] = obj
+        if lthn:
+            json['lthn'] = lthn
+        if wallet:
+            json['wallet'] = wallet
+        if paymentid:
+            json['paymentid'] = paymentid
+        if sessionid:
+            json['sessionid'] = sessionid
+        if srcip:
+            json['srcip'] = srcip
+        if dstip:
+            json['dstip'] = dstip
+        if srcport:
+            json['srcport'] = srcport
+        if dstport:
+            json['dstport'] = dstport
+        if msg:
+            json['msg'] = msg
+        if method:
+            json['method'] = method
+        if uri:
+            json['uri'] = uri
+        if serviceid:
+            json['serviceid'] = serviceid
+        if cmd:
+            json['cmd'] = cmd
+        if (config.Config.CAP.aj):
+            txt = util.valuesToJson(json)
+        else:
+            txt = util.valuesToString(json,'=',',','')
+            
         return(self.logger.info(txt))
 
 L = None

@@ -18,11 +18,11 @@ import dns.resolver
 def timefmt(tme):
     return(time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(tme)))
 
-def valuesToString(values):
+def valuesToString(values, eq=':', sep=' ', nl="\n"):
     str=""
     for k in values.keys():
-        str = str + "%s:%s " % (k,values[k])
-    return(str+"\n")
+        str = str + "%s%s%s%s" % (k, eq, values[k], sep)
+    return(str+nl)
 
 def valuesToJson(values):
     str=json.dumps(values)
@@ -97,6 +97,7 @@ def commonArgs(p):
     p.add_argument('-p', '--pid',                     dest='p', metavar='PIDFILE', required=None, default=config.Config.PIDFILE, help='PID file')
     p.add_argument('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file.', default="none")
     p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
+    p.add_argument(      '--audit-log-json',          dest='aj', action='store_const', const='aj', metavar='Bool', help='Audit log to JSON', default=None)
     p.add_argument('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
     p.add_argument(       '--sdp-server-uri',         dest='sdpUri', metavar='URL', required=None, help='SDP server(s)', default='https://sdp.lethean.io')
     p.add_argument(       '--sdp-wallet-address',     dest='sdpWallet', metavar='ADDRESS', required=None, help='SDP server wallet address', default='iz4xKrEdzsF5dP7rWaxEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJPnHWyRctmsPiX5Xcd3B61aDeas')
@@ -117,8 +118,8 @@ def commonArgs(p):
     p.add_argument(       '--vpnd-reneg',             dest='vpndReneg', metavar='S', required=None, default=600, help='Client has to renegotiate after this number of seconds to check if paymentid is still active')
     p.add_argument(       '--vpnd-tun',               dest='vpndTun', metavar='IF', required=None, default="tun0", help='Use specific tun device for server')
     p.add_argument(       '--vpnd-mgmt-port',         dest='vpndMgmtPort', metavar='PORT', required=None, default="11192", help='Use specific port for local mgmt')
-    p.add_argument(       '--vpnc-standalone',        dest='vpncStandalone', metavar='Bool', required=None, help='Create standalone openvn config that can be run outside of dispatcher.')
-    p.add_argument(       '--proxyc-standalone',      dest='proxycStandalone', metavar='Bool', required=None, help='Create standalone haproxy config that can be run outside of dispatcher.')
+    p.add_argument(       '--vpnc-standalone',        dest='vpncStandalone', action='store_const', const='vpncStandalone', metavar='Bool', required=None, help='Create standalone openvn config that can be run outside of dispatcher.')
+    p.add_argument(       '--proxyc-standalone',      dest='proxycStandalone',  action='store_const', const='proxycStandalone', metavar='Bool', required=None, help='Create standalone haproxy config that can be run outside of dispatcher.')
 
 def parseCommonArgs(parser, cfg, name):
     if (cfg.lc):

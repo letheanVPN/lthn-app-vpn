@@ -117,6 +117,7 @@ class ServiceOvpnClient(ServiceOvpn):
                           ip=self.cfg['endpoint'],
                           f_ca=ca,
                           tundev=self.cfg["tundev"],
+                          tunnode=config.Config.PREFIX + '/dev/net/tun',
                           reneg=60,
                           mtu=1400,
                           mssfix=1300,

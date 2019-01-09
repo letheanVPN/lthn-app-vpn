@@ -15,13 +15,10 @@ errorExit(){
     exit $1
 }
 
-prepareClientConf(){
-    if ! [ -f /opt/lthn/etc/dispatcher.ini ]; then
-cat >/opt/lthn/etc/dispatcher.ini <<EOF
-[global]
-; 
-EOF
-    fi
+prepareConf(){
+    cd /usr/src/lethean-vpn
+    ./configure.sh --runas-user lthn --runas-group lthn --client
+    make install CLIENT=1 || { errorExit 2 "Cannot prepare $CONF! "; }
 }
 
 prepareRsyncConf(){
@@ -219,6 +216,10 @@ easy-deploy)
     echo >&2
     ;;
 
+prepare-conf)
+    prepareConf
+    ;;
+
 upload-sdp)
     /opt/lthn/bin/lvmgmt --upload-sdp
     ;;
@@ -284,13 +285,17 @@ letheand)
     ;;
 
 connect|lthnvpnc)
-    prepareClientConf || { errorExit 2 "Cannot create $CONF/dispatcher.ini! "; }
+    if ! [ -f "$CONF/ha_info.http" ] || ! [ -f "$CONF/dispatcher.ini" ]; then
+        prepareConf
+    fi
     shift
     exec lthnvpnc connect "$@"
     ;;
 
 list)
-    prepareClientConf || { errorExit 2 "Cannot create $CONF/dispatcher.ini! "; }
+    if ! [ -f "$CONF/ha_info.http" ] || ! [ -f "$CONF/dispatcher.ini" ]; then
+        prepareConf
+    fi
     shift
     exec lthnvpnc list "$@"
     ;;
@@ -316,6 +321,7 @@ sh|bash)
     echo "connect uri [args] to run client"
     echo "letheand [args] to run letheand"
     echo "easy-deploy [args] to easy deploy node"
+    echo "prepare-conf [args] to prepare new conf dir"
     echo "upload-sdp [args] to upload SDP"
     echo "sync-bc to fast sync blockhain data from server."
     echo "wallet-rpc [args] to run wallet-rpc-daemon"

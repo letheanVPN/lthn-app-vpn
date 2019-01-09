@@ -89,6 +89,7 @@ RUN sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME/" /etc/zabbix/zabbix_agent
 
 USER root
 COPY ./ /usr/src/lethean-vpn/
+RUN rm -rf /usr/src/lethean-vpn/build/
 RUN pip3 install -r /usr/src/lethean-vpn/requirements.txt
 COPY ./server/docker-run.sh /entrypiont-lethean-vpn.sh
 RUN chown -R lthn /usr/src/; \

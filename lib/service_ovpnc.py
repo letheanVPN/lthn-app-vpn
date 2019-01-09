@@ -76,8 +76,8 @@ class ServiceOvpnClient(ServiceOvpn):
             authfile=self.dir + 'vpnc.auth'
             try:
                 af = open(authfile, "w")
-                af.write(self.cfg["paymentid"] + "\n")
-                af.write(self.cfg["paymentid"] + "\n")
+                af.write(self.cfg["paymentid"].upper() + "\n")
+                af.write(self.cfg["paymentid"].upper() + "\n")
                 af.close()
             except (IOError, OSError):
                 log.L.error("Cannot write auth file %s" % (authfile))
@@ -99,9 +99,9 @@ class ServiceOvpnClient(ServiceOvpn):
         else:
             bdns_comment='#'
         if (config.CONFIG.CAP.vpncBlockRoute):
-            rgw_comment=''
-        else:
             rgw_comment='#'
+        else:
+            rgw_comment=''
         pull_filter=""
         if (config.CONFIG.CAP.vpncBlockDns):
             pull_filter += "pull-filter ignore dhcp-option\n"

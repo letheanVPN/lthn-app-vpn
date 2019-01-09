@@ -45,10 +45,10 @@ class ServiceOvpnServer(ServiceOvpn):
                 break
             p = re.search(">CLIENT:ENV,username=(.*)", msg)
             if (p):
-                username = p.group(1).strip()
+                username = p.group(1).strip().upper()
             p = re.search(">CLIENT:ENV,password=(.*)", msg)
             if (p):
-                password = p.group(1).strip()
+                password = p.group(1).strip().upper()
             p = re.search(">CLIENT:ENV,untrusted_ip=(.*)", msg)
             if (p):
                 untrusted_ip = p.group(1).strip()
@@ -63,6 +63,7 @@ class ServiceOvpnServer(ServiceOvpn):
             log.A.audit(log.A.SESSION, log.A.ADD, paymentid=username, srcip=untrusted_ip, srcport=untrusted_port, serviceid=self.getId())
         else:
             log.A.audit(log.A.SESSION, log.A.NPAYMENT, paymentid=username, srcip=untrusted_ip, srcport=untrusted_port, serviceid=self.getId())
+            log.L.warning("Bad authentication from remote IP %s and authid %s" % (untrusted_ip, username))
             self.mgmtWrite("client-deny %s %s \"Bad auth\"\r\n" % (cid, kid))
     
     def createConfig(self):

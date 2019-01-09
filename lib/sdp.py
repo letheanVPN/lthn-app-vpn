@@ -264,7 +264,7 @@ class SDP(object):
         self.load(None)
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=3)
         json = jsonpickle.encode(self.data, unpicklable=False)
-        log.L.info('Encoded SDP JSON: %s' % json)
+        log.L.debug('Encoded SDP JSON: %s' % json)
         return json
 
     def save(self, cfg):
@@ -357,9 +357,9 @@ class SDP(object):
             response = urlopen(request).read()
             jsonResp = json.loads(response.decode('utf-8'))
             if jsonResp and jsonResp['status'] == '0':
-                print('SDP upload succeeded!')
+                log.L.warning('SDP upload succeeded!')
             else:
-                print('SDP upload server response: %s' % response)
+                log.L.error('SDP upload server response: %s' % response)
             return True
         except HTTPError as err:
             error_message = err.read()

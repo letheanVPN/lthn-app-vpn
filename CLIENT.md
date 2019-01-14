@@ -21,6 +21,22 @@ You can use our easy-compile-haproxy-cygwin.sh script which has to be run inside
 #### Openvpn
 You can use standard openvpn binaries for windows.
 
+## List services
+You can list available services with list command. If you want to use [provider SDP]:(DNSSDP.md), use FQDN of provider.
+```
+lthnvpnc list [fqdn] [fqdn] ...
+
+```
+
+## Connect to service
+```
+lthnvpnc connect URI
+# Legacy connect
+lthnvpnc connect 7b08c778af3baaa32185d7cc804b0aaaaac05c9149613dc149dff5f30c8cd989/1a 
+# fqdn connect (uses DNS TXT record)
+lthnvpnc connect some.whe.re/1a 
+```
+
 ## Payments
 This client will not pay anything for you. It only helps to create local configs and connect to remote service. It will instruct you in audit.log, how to pay for service.
 It will wait until service is paid and checkes each 60 seconds if credit is still OK.
@@ -46,12 +62,7 @@ authid@provider/service
  * service can be serviceid or service name
  * authid can be ommited so it will be auto-generated. Do not forget that first two characters of authid must be same as serviceid.
 
-If provider is fqdn and not providerid, client will fetch SDP from URL generated from DNS (fqdn prefixed by lthn):
-```
-  host -t txt lthn.doamain.name
-  
-  
-```
+If provider is fqdn and not providerid, client will use [DNS](DNSSDP.md) to get info about SDP and provider. 
 
 ### More complex URI (provider chaining)
 
@@ -65,21 +76,21 @@ If provider is fqdn and not providerid, client will fetch SDP from URL generated
 ```
 lthnvpnc help
 usage: lthnvpnc [-l LEVEL] [--syslog] [-v] [-h] [-f CONFIGFILE] [-s SDPFILE]
-                [-p PIDFILE] [-A FILE] [-a FILE] [-lc FILE]
+                [-p PIDFILE] [-A FILE] [-a FILE] [--audit-log-json] [-lc FILE]
                 [--sdp-server-uri URL] [--sdp-wallet-address ADDRESS]
                 [--sdp-service-endpoint FQDN] [--sdp-service-port NUMBER]
                 [--sdp-service-proto PROTOCOL] [--sdp-service-id NUMBER]
                 [--provider-id PROVIDERID] [--ca ca.crt]
-                [--wallet-address ADDRESS] [--sdp-cache-file FILE]
+                [--wallet-address ADDRESS] [--sdp-cache-dir DIR]
                 [--sdp-cache-expiry SECONDS] [--compatibility Level]
                 [--vpnd-dns IP] [--vpnd-iprange IP] [--vpnd-mask MASK]
                 [--vpnd-reneg S] [--vpnd-tun IF] [--vpnd-mgmt-port PORT]
-                [--authid AUTHID] [--uniqueid UNIQUEID] [--stunnel-port PORT]
+                [--vpnc-standalone] [--proxyc-standalone] [--authid AUTHID]
+                [--uniqueid UNIQUEID] [--stunnel-port PORT]
                 [--https-proxy-host HOST] [--https-proxy-port PORT]
                 [--proxy-port PORT] [--proxy-bind IP] [--connect-timeout S]
                 [--payment-timeout S] [--exit-on-no-payment Bool]
-                [--fork-on-connect Bool] [--vpnc-standalone Bool]
-                [--proxyc-standalone Bool] [--vpnc-tun IF]
+                [--fork-on-connect Bool] [--vpnc-tun IF]
                 [--vpnc-mgmt-port PORT] [--vpnc-block-route Bool]
                 [--vpnc-block-dns Bool]
                 {list|connect|help}
@@ -109,9 +120,10 @@ optional arguments:
                         Authids db file. (default: none)
   -a FILE, --audit-log FILE
                         Audit log file (default: /opt/lthn//var/log/audit.log)
+  --audit-log-json      Audit log to JSON (default: None)
   -lc FILE, --logging-conf FILE
                         Logging config file (default: None)
-  --sdp-server-uri URL  SDP server(s) (default: https://sdp.lethean.io/v1)
+  --sdp-server-uri URL  SDP server(s) (default: https://sdp.lethean.io)
   --sdp-wallet-address ADDRESS
                         SDP server wallet address (default: iz4xKrEdzsF5dP7rWa
                         xEUT4sdaDVFbXTnD3Y9vXK5EniBFujLVp6fiAMMLEpoRno3VUccxJP
@@ -129,8 +141,7 @@ optional arguments:
   --ca ca.crt           Set certificate authority file (default: <NOCA>)
   --wallet-address ADDRESS
                         Provider wallet address (default: <NOADDR>)
-  --sdp-cache-file FILE
-                        SDP cache (default: /opt/lthn//var/sdps.json)
+  --sdp-cache-dir DIR   SDP cache dir (default: /opt/lthn//var/)
   --sdp-cache-expiry SECONDS
                         SDP cache expiry in seconds (default: 300)
   --compatibility Level
@@ -146,6 +157,10 @@ optional arguments:
   --vpnd-tun IF         Use specific tun device for server (default: tun0)
   --vpnd-mgmt-port PORT
                         Use specific port for local mgmt (default: 11192)
+  --vpnc-standalone     Create standalone openvn config that can be run
+                        outside of dispatcher. (default: None)
+  --proxyc-standalone   Create standalone haproxy config that can be run
+                        outside of dispatcher. (default: None)
   --authid AUTHID       Authentication ID. Use "random" to generate. (default:
                         None)
   --uniqueid UNIQUEID   Unique ID of proxy. Use "random" to generate.
@@ -167,12 +182,6 @@ optional arguments:
   --fork-on-connect Bool
                         Fork after successful paid connection. Client will
                         fork into background. (default: None)
-  --vpnc-standalone Bool
-                        Create standalone openvn config that can be run
-                        outside of dispatcher. (default: None)
-  --proxyc-standalone Bool
-                        Create standalone haproxy config that can be run
-                        outside of dispatcher. (default: None)
   --vpnc-tun IF         Use specific tun device for client (default: tun1)
   --vpnc-mgmt-port PORT
                         Use specific port for local mgmt (default: 11193)

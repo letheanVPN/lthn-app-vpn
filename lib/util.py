@@ -182,17 +182,39 @@ def testLocalPort(bind, port, type=socket.SOCK_STREAM):
 def parseProvider(provider):
     p = re.search("\.", provider)
     if (p):
-        answers = dns.resolver.query("lthn." + provider, 'TXT')
-        for rdata in answers:
+        try:
+            log.L.debug("Getting DNS TXT record at %s" % (provider))
+            answers = dns.resolver.query(provider, 'TXT')
+        except dns.exception.DNSException as e:
+            log.L.error(e)
+            return(None)
+
+        for rdata in answers.rrset:
             for txt in rdata.strings:
-                variables = txt.decode("utf-8").split(";")
+                txt = txt.decode("utf-8")
+                variables = txt.split(";")
+                ver = variables[0]
+                name, value = ver.split("=")
+                if (name != "lv"):
+                    log.L.debug("Ignoring DNS TXT record %s" % (txt))
+                    continue
+                if (name == "lv" and value != config.Config.CAP.comp):
+                    log.L.debug("Ignoring DNS TXT record with bad version %s" % (txt))
+                    continue
+                log.L.debug("Processing DNS TXT record %s" % (txt))
                 for v in variables:
                     name, value = v.split("=")
-                    print(name)
-                    if (name=="version"):
-                        config.Config.CAP.comp = value
+                    if (name=="lv"):
+                        continue
                     if (name=="sdp"):
-                        print("aa")
-                        config.Config.CAP.sdpUri.append({fqdn: provider, uri: value})
+                        log.L.info("Adding SDP %s" % (value))
+                        config.Config.CAP.sdpUri[provider] = value
+                    if (name=="id"):
+                        log.L.info("Adding providerid %s" % (value))
+                        pid = value
+        if pid:
+            return(pid)
+        else:
+            return(provider)
     else:
-        return(provider)
+        return(provider.upper())

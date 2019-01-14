@@ -6,6 +6,7 @@ import log
 import os
 from sdp import SDP
 import sys
+from os.path import expanduser
 
 class Config(object):
     """Configuration container"""
@@ -33,6 +34,8 @@ class Config(object):
     def __init__(self, action="read", services=None):
         if (os.getenv('LTHN_PREFIX')):
             type(self).PREFIX = os.getenv('LTHN_PREFIX')
+        if os.name == 'nt':
+            type(self).PREFIX = expanduser("~") + "/lthn"
         
         type(self).OPENVPN_BIN = "/usr/sbin/openvpn"
         type(self).HAPROXY_BIN = "/usr/sbin/haproxy"

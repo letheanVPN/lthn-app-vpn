@@ -60,3 +60,8 @@ docker-shell:
 	  --mount type=bind,source=$$(pwd)/build/etc,target=/opt/lthn/etc \
    	  --mount type=bind,source=$$(pwd)/build/bcdata,target=/home/lthn \
 	  lethean/lethean-vpn:devel sh
+
+lthnvpnc:
+	pyinstaller -p lib -p 'C:\Python37\Lib\site-packages' client/lthnvpnc.py
+
+	

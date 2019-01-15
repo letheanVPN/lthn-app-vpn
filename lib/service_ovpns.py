@@ -102,6 +102,10 @@ class ServiceOvpnServer(ServiceOvpn):
             mgmtport = self.cfg["mgmtport"]
         else:
             mgmtport = config.Config.CAP.vpndMgmtPort
+        if (config.Config.CAP.duplicateCN):
+            duplicate_cn = 'duplicate-cn'
+        else:
+            duplicate_cn = ''
         if (config.Config.CAP.servicePort):
             self.cfg['port'] = config.Config.CAP.servicePort
         elif ('port' not in self.cfg):
@@ -152,7 +156,8 @@ class ServiceOvpnServer(ServiceOvpn):
                           reneg=config.Config.CAP.vpndReneg,
                           mtu=1400,
                           mssfix=1300,
-                          push_dns=dns
+                          push_dns=dns,
+                          duplicate_cn=duplicate_cn
                           )
         try:
             cf = open(self.cfgfile, "wb")

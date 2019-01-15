@@ -112,6 +112,7 @@ def commonArgs(p):
     p.add_argument(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
     p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
+    p.add_argument(       '--vpnd-more-user-sessions',dest='duplicateCN', metavar='bool', action='store_const', const='duplicateCN', required=None, default=None, help='If true, user can connect multiple sessions with one paymentid.')
     p.add_argument(       '--vpnd-iprange',           dest='vpndIPRange', metavar='IP', required=None, default="10.11.0.0", help='IP Range for client IPs. Client will get /30 subnet from this range.')
     p.add_argument(       '--vpnd-ipmask',            dest='vpndIPMask', metavar='MASK', required=None, default="255.255.0.0", help='IP mask for client IPs')
     p.add_argument(       '--vpnd-ip6range',          dest='vpndIP6Range', metavar='IP6', required=None, default=None, help='IP6 Range for client IPs. Client will get /30 subnet from this range.')

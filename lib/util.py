@@ -112,14 +112,15 @@ def commonArgs(p):
     p.add_argument(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
     p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
-    p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
     p.add_argument(       '--vpnd-iprange',           dest='vpndIPRange', metavar='IP', required=None, default="10.11.0.0", help='IP Range for client IPs. Client will get /30 subnet from this range.')
-    p.add_argument(       '--vpnd-mask',              dest='vpndIPMask', metavar='MASK', required=None, default="255.255.0.0", help='IP mask for client IPs')
+    p.add_argument(       '--vpnd-ipmask',            dest='vpndIPMask', metavar='MASK', required=None, default="255.255.0.0", help='IP mask for client IPs')
+    p.add_argument(       '--vpnd-ip6range',          dest='vpndIP6Range', metavar='IP6', required=None, default=None, help='IP6 Range for client IPs. Client will get /30 subnet from this range.')
     p.add_argument(       '--vpnd-reneg',             dest='vpndReneg', metavar='S', required=None, default=600, help='Client has to renegotiate after this number of seconds to check if paymentid is still active')
     p.add_argument(       '--vpnd-tun',               dest='vpndTun', metavar='IF', required=None, default="tun0", help='Use specific tun device for server')
     p.add_argument(       '--vpnd-mgmt-port',         dest='vpndMgmtPort', metavar='PORT', required=None, default="11192", help='Use specific port for local mgmt')
     p.add_argument(       '--vpnc-standalone',        dest='vpncStandalone', action='store_const', const='vpncStandalone', metavar='Bool', required=None, help='Create standalone openvn config that can be run outside of dispatcher.')
     p.add_argument(       '--proxyc-standalone',      dest='proxycStandalone',  action='store_const', const='proxycStandalone', metavar='Bool', required=None, help='Create standalone haproxy config that can be run outside of dispatcher.')
+    p.add_argument(       '--no-run',                 dest='noRun', action='store_const', const='vpncStandalone', metavar='Bool', required=None, help='Do not run openvpn or haproxy, just prepare configs')
 
 def parseCommonArgs(parser, cfg, name):
     if (cfg.lc):
@@ -159,6 +160,9 @@ def parseCommonArgs(parser, cfg, name):
     if not cfg.sdpUri.endswith('/v1'):
         cfg.sdpUri = cfg.sdpUri + '/v1'
     cfg.sdpUri = {'sdp': cfg.sdpUri}
+    if cfg.noRun:
+        cfg.vpncStandalone = True
+        cfg.proxycStandalone = True
     
     # Initialise services
     services.SERVICES = services.Services()

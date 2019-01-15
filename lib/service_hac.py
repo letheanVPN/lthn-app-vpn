@@ -25,7 +25,7 @@ class ServiceHaClient(ServiceHa):
     """
     
     OPTS = dict(
-                name='ProxyClient', https_proxy_host=None, https_proxy_port=3128,
+                name='ProxyClient', outbound_proxy_host=None, outbound_proxy_port=3128,
                 proxy_bind='127.0.0.1', proxy_port=8180, status_port=8181,
                 max_connections=2000, timeout='30s', connect_timeout='5s',
                 paymentid='authid1', uniqueid='abcd1234', 
@@ -142,8 +142,8 @@ class ServiceHaClient(ServiceHa):
         if (config.CONFIG.CAP.httpsProxyHost):
             cfg = self.cfg
             cfg["port"] = "%s" % config.CONFIG.CAP.stunnelPort
-            cfg["https_proxy_host"] = config.CONFIG.CAP.httpsProxyHost
-            cfg["https_proxy_port"] = "%s" % config.CONFIG.CAP.httpsProxyPort
+            cfg["outbound_proxy_host"] = config.CONFIG.CAP.httpsProxyHost
+            cfg["outbound_proxy_port"] = "%s" % config.CONFIG.CAP.httpsProxyPort
             cfg["remote_port"] = "%s" % self.json['proxy'][0]['port'].split('/')[0]
             cfg["remote_host"] = "%s" % self.cfg['endpoint']
             self.stunnel = ServiceStunnel(self.id, cfg=cfg)

@@ -95,6 +95,7 @@ COPY ./server/docker-run.sh /entrypiont-lethean-vpn.sh
 RUN chown -R lthn /usr/src/; \
   chmod +x /entrypiont-lethean-vpn.sh; \
   chmod +x /usr/src/lethean-vpn/install.sh
+RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
 
 USER lthn
 WORKDIR /usr/src/lethean-vpn/

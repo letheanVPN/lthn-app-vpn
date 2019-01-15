@@ -25,6 +25,8 @@ class ServiceOvpnServer(ServiceOvpn):
         enabled = True,
         iprange = "",
         ipmask = "",
+        ip6range = "",
+        dns = ""
     )
     OPTS_HELP = dict(
         tundev = "Local tun device"
@@ -88,6 +90,8 @@ class ServiceOvpnServer(ServiceOvpn):
             f_key = "".join(f.readlines())
         if (config.Config.CAP.vpndDns):
             dns = "dhcp-option dns " + config.Config.CAP.vpndDns
+        elif ('dns' not in self.cfg):
+            dns = "dhcp-option dns " + self.cfg['dns']
         else:
             dns = ""
         if "tundev" in self.cfg:
@@ -118,6 +122,14 @@ class ServiceOvpnServer(ServiceOvpn):
             ipmask = self.cfg["ipmask"]
         else:
             ipmask = config.Config.CAP.vpndIPMask    
+        if "ip6range" in self.cfg:
+            ip6range = self.cfg["ip6range"]
+        else:
+            ip6range = config.Config.CAP.vpndIP6Range
+        if ip6range:
+            ip6comment=''
+        else:
+            ip6comment='#'
         out = tmpl.decode("utf-8").format(
                           port=self.cfg['port'],
                           proto=self.cfg['proto'].lower(),
@@ -134,6 +146,8 @@ class ServiceOvpnServer(ServiceOvpn):
                           f_status="status",
                           iprange=iprange,
                           ipmask=ipmask,
+                          ip6range=ip6range,
+                          ip6comment=ip6comment,
                           mgmt_sock="127.0.0.1 %s" % mgmtport,
                           reneg=config.Config.CAP.vpndReneg,
                           mtu=1400,

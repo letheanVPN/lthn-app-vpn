@@ -8,9 +8,14 @@ import time
 import select
 from subprocess import Popen
 from subprocess import PIPE
+import atexit
+import services
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 class ServiceOvpn(Service):
+    
+    def isClient(self):
+        return(self.__class__.__name__=="ServiceOvpnClient")
     
     def run(self):
         self.createConfig()
@@ -20,9 +25,16 @@ class ServiceOvpn(Service):
         if (os.path.isfile(self.pidfile)):
             os.remove(self.pidfile)
         log.A.audit(log.A.START, log.A.SERVICE, cmd=" ".join(cmd), serviceid=self.id)
-        if (config.Config.CAP.vpncStandalone):
-            command = cmd[0]
-            os.execv(command, cmd)
+        if self.isClient():
+            if (config.Config.CAP.vpncStandalone):
+                command = cmd[0]
+                if config.Config.CAP.noRun:
+                    log.L.warning("Exiting from dispatcher. Run manually:\n%s" % (" ".join(cmd)))
+                    atexit.unregister(services.SERVICES.stop)
+                    sys.exit()
+                else:
+                    log.L.warning("Running %s and exiting from dispatcher." % (" ".join(cmd)))
+                    os.execv(command, cmd)
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         log.L.info("Waiting for pid")
         i=0
@@ -65,6 +77,8 @@ class ServiceOvpn(Service):
             l = self.mgmtRead()
             
     def stop(self):
+        if config.Config.CAP.noRun:
+            return()
         self.mgmtWrite("signal SIGTERM\r\n")
         l = self.mgmtRead()
         while (l is not None):

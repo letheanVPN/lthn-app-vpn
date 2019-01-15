@@ -10,12 +10,17 @@ import re
 import shutil
 import random
 import subprocess
+import atexit
+import services
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 class ServiceHa(Service):
     """
     HAproxy service class
     """
+    
+    def isClient(self):
+        return(self.__class__.__name__=="ServiceHaClient")
         
     def run(self):
         self.createConfig()
@@ -24,9 +29,16 @@ class ServiceHa(Service):
             os.remove(self.pidfile)
         os.chdir(self.dir)
         log.A.audit(log.A.START, log.A.SERVICE, cmd=" ".join(cmd), serviceid=self.id)
-        if (config.Config.CAP.proxycStandalone):
-            command = cmd[0]
-            os.execv(command, cmd)
+        if self.isClient():
+            if (config.Config.CAP.proxycStandalone):
+                command = cmd[0]
+                if config.Config.CAP.noRun:
+                    log.L.warning("Exiting from dispatcher. Run manually:\n%s" % (" ".join(cmd)))
+                    atexit.unregister(services.SERVICES.stop)
+                    sys.exit()
+                else:
+                    log.L.warning("Running %s and exiting from dispatcher." % (" ".join(cmd)))
+                    os.execv(command, cmd)
         self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=None, preexec_fn=os.setsid)
         log.L.info("Waiting for pid")
         i=0

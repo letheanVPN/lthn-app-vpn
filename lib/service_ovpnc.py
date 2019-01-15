@@ -18,7 +18,7 @@ class ServiceOvpnClient(ServiceOvpn):
     """ 
     
     OPTS = dict(
-        https_proxy_host=None, https_proxy_port=3128,
+        outbound_proxy_host=None, outbound_proxy_port=3128,
         crt = None, key = None, crtkey = None,
         paymentid='authid1',
         tundev = "tun1",
@@ -86,13 +86,20 @@ class ServiceOvpnClient(ServiceOvpn):
             mgmt_comment = ''
             authfile=''
         if (config.CONFIG.CAP.httpsProxyHost):
-            hproxy_comment = ''
+            proxy_comment = ''
             http_proxy = config.CONFIG.CAP.httpsProxyHost
             http_proxy_port = config.CONFIG.CAP.httpsProxyPort
+        elif 'outbound_proxy_host' in self.cfg:
+            proxy_comment = ''
+            http_proxy = self.cfg['outbound_proxy_host']
+            http_proxy_port = self.cfg['outbound_proxy_port']
         else:
-            hproxy_comment = '#'
+            proxy_comment = '#'
             http_proxy = ''
             http_proxy_port = ''
+        if self.cfg['proto']=='UDP' and proxy_comment!='#':
+            log.L.error("Cannot use outbound HTTP proxy to proxy UDP connection to OpenVPN!. Exiting.")
+            sys.exit(14)
         if (config.CONFIG.CAP.vpncBlockDns):
             bdns_comment='#'
             log.L.warning("block-outside-dns not supported yet.")
@@ -121,7 +128,7 @@ class ServiceOvpnClient(ServiceOvpn):
                           reneg=60,
                           mtu=1400,
                           mssfix=1300,
-                          hproxy_comment=hproxy_comment,
+                          hproxy_comment=proxy_comment,
                           http_proxy=http_proxy,
                           http_proxy_port=http_proxy_port,
                           payment_header=config.Config.CAP.authidHeader,

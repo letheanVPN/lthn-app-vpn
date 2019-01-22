@@ -92,7 +92,7 @@ def loadService(pid, sid):
 # Starting here
 def main(argv):
     
-    config.CONFIG = config.Config("dummy")
+    config.CONFIG = config.Config("dummy")    
     p = configargparse.getArgumentParser(ignore_unknown_config_file_keys=True, fromfile_prefix_chars='@')
     util.commonArgs(p)
     p.add_argument('--authid',                 dest='authId', metavar='AUTHID', required=None, default=None, help='Authentication ID. Use "random" to generate.')
@@ -107,7 +107,9 @@ def main(argv):
     p.add_argument('--exit-on-no-payment',     dest='exitNoPayment', action='store_const', const='vpncStandalone', metavar='Bool', required=None, default=None, help='Exit after payment is gone.')
     p.add_argument('--fork-on-connect',        dest='forkOnConnect', action='store_const', const='forkOnConnect', metavar='Bool', required=None, default=None, help='Fork after successful paid connection. Client will fork into background.')
     p.add_argument('--vpnc-tun',               dest='vpncTun', metavar='IF', required=None, default="tun1", help='Use specific tun device for client')
-    p.add_argument('--vpnc-mgmt-port',         dest='vpncMgmtPort', metavar='PORT', required=None, default="11193", help='Use specific port for local mgmt')
+    p.add_argument('--vpnc-mgmt-port',         dest='vpncMgmtPort', metavar='PORT', required=None, default="11193", help='Use specific port for local Openvpn mgmt')
+    p.add_argument('--proxyc-mgmt-port',       dest='proxyMgmtPort', metavar='PORT', required=None, default="11194", help='Use specific port for local Haproxy mgmt')
+    p.add_argument('--proxyc-ssl-noverify',    dest='proxySSLNoVerify', action='store_const', const='proxySSLNoVerify', metavar='Bool', required=None, default=None, help='Do not verify SSL certificate of remote proxy. Dangerous, use only if you know what you are doing!')
     p.add_argument('--vpnc-block-route',       dest='vpncBlockRoute', action='store_const', const='vpncBlockRoute', metavar='Bool', required=None, default=None, help='Filter router changes from server')
     p.add_argument('--vpnc-block-dns',         dest='vpncBlockDns', action='store_const', const='vpncBlockDns', metavar='Bool', required=None, default=None, help='Filter router DNS server from server')
           

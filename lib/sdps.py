@@ -133,10 +133,11 @@ class SDPList(object):
             providerJson['provider']['name'] = prov['providerName']
             providerJson['provider']['wallet'] = prov['providerWallet']
             ca = base64.b64decode(prov['certArray'][0]['certContent']).decode('utf-8')
-            providerJson['provider']['certificates'] = {}
-            providerJson['provider']['certificates']['cn'] = 'ignored'
-            providerJson['provider']['certificates']['id'] = 0
-            providerJson['provider']['certificates']['content'] = ca
+            providerJson['provider']['certificates'] = [ {
+                'cn': 'ignored',
+                'id': 0,
+                'content': ca
+            } ]
             sid = prov["id"]
             stype = prov["type"]
             log.L.info("Adding service type %s %s/%s to SDP list" % (stype, pid, sid))

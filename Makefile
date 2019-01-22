@@ -62,6 +62,12 @@ docker-shell:
 	  lethean/lethean-vpn:devel sh
 
 lthnvpnc:
-	pyinstaller -p lib -p 'C:\Python37\Lib\site-packages' client/lthnvpnc.py
+	@echo pyinstaller --add-data "lib;lib" --add-data "conf;conf" \
+	  --add-data "bin/cygwin1.dll;bin" --add-data "bin/cygcrypto-1.0.0.dll;bin" \
+	  --add-data "bin/cygpcre-1.dll;bin" --add-data "bin/cygssl-1.0.0.dll;bin" \
+	  --add-binary "bin/openvpn.exe;bin" --add-binary "bin/tstunnel.exe;bin" --add-binary "bin/haproxy.exe;bin" \
+	  -p lib -p 'C:\Python37\Lib\site-packages' \
+	  --noconfirm --log-level=WARN --onefile --nowindow \
+	  client/lthnvpnc.py
 
 	

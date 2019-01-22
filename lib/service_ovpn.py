@@ -20,7 +20,7 @@ class ServiceOvpn(Service):
     def run(self):
         self.createConfig()
         verb = "3"
-        cmd = [config.Config.SUDO_BIN, config.Config.OPENVPN_BIN, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb, "--writepid", self.pidfile]
+        cmd = [config.Config.SUDO_BIN, config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb, "--writepid", self.pidfile]
         os.chdir(self.dir)
         if (os.path.isfile(self.pidfile)):
             os.remove(self.pidfile)
@@ -33,8 +33,14 @@ class ServiceOvpn(Service):
                     atexit.unregister(services.SERVICES.stop)
                     sys.exit()
                 else:
+                    if not os.path.isfile(config.Config.CAP.openvpnBin):
+                        log.L.error("Openvpn binary %s not found. Cannot continue!" % (config.Config.CAP.openvpnBin))
+                        sys.exit(1)
                     log.L.warning("Running %s and exiting from dispatcher." % (" ".join(cmd)))
                     os.execv(command, cmd)
+        if not os.path.isfile(config.Config.CAP.openvpnBin):
+            log.L.error("Openvpn binary %s not found. Cannot continue!" % (config.Config.CAP.openvpnBin))
+            sys.exit(1)
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         log.L.info("Waiting for pid")
         i=0

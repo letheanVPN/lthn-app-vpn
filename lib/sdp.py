@@ -187,12 +187,12 @@ class SDP(object):
         certStart = "-----BEGIN CERTIFICATE-----"
         certEnd = "-----END CERTIFICATE-----"
         ca = self.data['provider']['certificates'][0]['content']
-        p = re.search(certStart + '(.*)' + certEnd,ca)
+        p = re.search(certStart + '(.*)' + certEnd, ca)
         if (p):
             ca = certStart + '\n' + p.group(1) + '\n' + certEnd
             return(ca)
         else:
-            return None
+            return(ca)
     
     def getProviderId(self):
         return(self.data['provider']['id'])

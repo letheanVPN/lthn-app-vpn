@@ -53,7 +53,7 @@ Parameters:
 
   DaemonBinUrl:
     Type: String
-    Default: 'https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2'
+    Default: 'https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2'
     Description: Version of daemon binaries to use
     AllowedPattern: ^http.+
 
@@ -101,7 +101,7 @@ Mappings:
     ap-northeast-1:
       AMI: ami-98cfaa75
     ap-southeast-1:
-      AMI: ami-1c106cf6
+      AMI: ami-41e4af3d
     sa-east-1:
       AMI: ami-8eecc9e2
 

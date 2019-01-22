@@ -7,7 +7,7 @@ DOCKER=docker
 all:
 env.mk:
 	@if [ "$(MAKECMDGOALS)" != "docker" ]; then \
-	    if ! [ -f env.mk ]; then echo "You must configure first!" ; ./configure.sh --help; exit 1; fi \
+	    if ! [ -f env.mk ]; then echo "You must configure first!" ; ./configure.sh --help; exit 1; fi; \
 	    echo "Seems to be configured. Run make install."; \
 	fi
 	

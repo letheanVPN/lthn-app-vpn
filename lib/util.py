@@ -110,7 +110,7 @@ def commonArgs(p):
     p.add_argument(       '--wallet-address',         dest='walletAddr', metavar='ADDRESS', required=None, default='<NOADDR>', help='Provider wallet address')
     p.add_argument(       '--sdp-cache-dir',          dest='sdpCacheDir', metavar='DIR', required=None, default=config.CONFIG.PREFIX + '/var/', help='SDP cache dir')
     p.add_argument(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
-    p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", help='Compatibility level for remote node. Use v3 or v4')
+    p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3.1", choices=["v3.1", "v3"], help='Compatibility level for remote node. Use v3.1 or v3')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')
     p.add_argument(       '--vpnd-more-user-sessions',dest='duplicateCN', metavar='bool', action='store_const', const='duplicateCN', required=None, default=None, help='If true, user can connect multiple sessions with one paymentid.')
     p.add_argument(       '--vpnd-iprange',           dest='vpndIPRange', metavar='IP', required=None, default="10.11.0.0", help='IP Range for client IPs. Client will get /30 subnet from this range.')
@@ -150,11 +150,11 @@ def parseCommonArgs(parser, cfg, name):
         cfg.mgmtHeader="X-ITNS-MgmtID"
         cfg.authidHeader="X-ITNS-PaymentID"
         cfg.sdpUri='https://sdp.staging.cloud.lethean.io'
-    elif (cfg.comp=="v4" or cfg.comp=="v4b"):
+    elif (cfg.comp=="v3.1"):
         cfg.mgmtHeader="X-LTHN-MgmtID"
         cfg.authidHeader="X-LTHN-PaymentID"
     else:
-        log.L.error("Bad compatibility level. Use v3 or v4 now.")
+        log.L.error("Bad compatibility level.")
         sys.exit(2)
     if cfg.sdpUri.endswith('/'):
         cfg.sdpUri = cfg.sdpUri[:-1]

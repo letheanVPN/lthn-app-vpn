@@ -11,6 +11,7 @@ import sys
 from urllib.error import HTTPError
 from urllib.request import Request
 from urllib.request import urlopen
+import config
 
 class SDP(object):
     configFile = None
@@ -101,19 +102,19 @@ class SDP(object):
 
         validNodeTypes = ['residential', 'commercial', 'government']
         if (self.data['provider']['nodeType'] not in validNodeTypes):
-            if not self.setNodeType(cap.nodeType):
+            if not self.setNodeType(config.CONFIG.CAP.serviceType):
                 return False
 
         if (len(self.data['provider']['id']) != 64 or not re.match(r'[a-zA-Z0-9]', self.data['provider']['id'])):
-            if not self.setProviderId(cap.providerid):
+            if not self.setProviderId(config.CONFIG.CAP.providerid):
                 return False
         
         if(not self.data['provider']['name'] or len(self.data['provider']['name']) > 16):
-            if not self.setProviderName(cap.providerName):
+            if not self.setProviderName(config.CONFIG.CAP.providerName):
                 return False
 
         if (not self.data['provider']['wallet'] or len(self.data['provider']['wallet']) != 97):
-            if not self.setWalletAddr(cap.walletAddr):
+            if not self.setWalletAddr(config.CONFIG.CAP.walletAddr):
                 return False
 
         if (not self.data['provider']['terms'] or len(self.data['provider']['terms']) > 50000):
@@ -174,6 +175,27 @@ class SDP(object):
                 log.L.error('The CA certificate file does not contain the expected contents. Try deleting it and running `make ca` again.')
                 return False
         return False
+    
+    def setCertificates(self, crt):
+        self.data['provider']['certificates'] = {}
+        self.data['provider']['certificates']['cn'] = 'ignored'
+        self.data['provider']['certificates']['id'] = 0
+        self.data['provider']['certificates']['content'] = crt
+        return True
+    
+    def getCertificates(self):
+        certStart = "-----BEGIN CERTIFICATE-----"
+        certEnd = "-----END CERTIFICATE-----"
+        ca = self.data['provider']['certificates'][0]['content']
+        p = re.search(certStart + '(.*)' + certEnd,ca)
+        if (p):
+            ca = certStart + '\n' + p.group(1) + '\n' + certEnd
+            return(ca)
+        else:
+            return None
+    
+    def getProviderId(self):
+        return(self.data['provider']['id'])
 
     def setProviderId(self, providerid=None):
         if (providerid == None):
@@ -213,6 +235,9 @@ class SDP(object):
 
         self.data['provider']['wallet'] = choice
         return True
+    
+    def getProviderName(self):
+        return(self.data['provider']['name'])
 
     def setProviderName(self, name=None):
         if (name == None):
@@ -225,16 +250,21 @@ class SDP(object):
         else:
             log.L.error('Invalid provider name!')
             return self.setProviderName()
+        
+    def getServiceById(self, sid):
+        for item in self.data["services"]:
+            if sid==item['id']:
+                return(item)
 
     def setNodeType(self, type):
         self.data['provider']['nodeType'] = type
         return True
-    
+        
     def getJson(self):
         self.load(None)
         jsonpickle.set_encoder_options('json', sort_keys=True, indent=3)
         json = jsonpickle.encode(self.data, unpicklable=False)
-        log.L.info('Encoded SDP JSON: %s' % json)
+        log.L.debug('Encoded SDP JSON: %s' % json)
         return json
 
     def save(self, cfg):
@@ -249,8 +279,13 @@ class SDP(object):
             except IOError:
                 log.L.error("Cannot write %s" % (self.configFile))
                 sys.exit(1)
-
-    def load(self, config, prefix=None):
+                
+    def loadJson(self, j):
+        self.data=j
+        self.dataLoaded=True
+        return(True)
+        
+    def load(self, cfgf, prefix=None):
         if self.dataLoaded:
             return
 
@@ -262,7 +297,7 @@ class SDP(object):
                 self.certsDir = None
 
         if (self.configFile is None):
-            self.configFile = config
+            self.configFile = cfgf
         try:
             if (self.configFile != None):
                 f = open(self.configFile, 'r')
@@ -309,7 +344,7 @@ class SDP(object):
         encodedSignedPayload = signedPayload.hex()
         # end ed25519 signing
 
-        sdpAddServiceEndpoint = cfg.CAP.sdpUri + '/services/add/'
+        sdpAddServiceEndpoint = cfg.CAP.sdpUri['sdp'] + '/services/add/'
 
         log.L.info('Using SDP endpoint %s' % sdpAddServiceEndpoint)
 
@@ -322,9 +357,9 @@ class SDP(object):
             response = urlopen(request).read()
             jsonResp = json.loads(response.decode('utf-8'))
             if jsonResp and jsonResp['status'] == '0':
-                print('SDP upload succeeded!')
+                log.L.warning('SDP upload succeeded!')
             else:
-                print('SDP upload server response: %s' % response)
+                log.L.error('SDP upload server response: %s' % response)
             return True
         except HTTPError as err:
             error_message = err.read()
@@ -434,9 +469,9 @@ class SDPService(object):
 
         if (thisService != None):
             self.data = jsonpickle.decode(thisService)
-            print('Loaded existing SDP service %s' % self.data['name'])
+            log.L.info('Loaded existing SDP service %s' % self.data['name'])
         else:
-            print('Creating new SDP service...')
+            log.L.info('Creating new SDP service...')
 
     def checkConfig(self, cap, id=None):
         if not id:

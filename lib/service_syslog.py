@@ -56,7 +56,7 @@ class ServiceSyslog(Service):
                     if (server=="s-proxy"):
                         sessions.SESSIONS.add(authid, ip, port, method=method, uri=uri, proto=proto)
                     else:
-                        log.L.debug("Ignoring haproxy log for server " + server)
+                        log.L.debug("Ignoring haproxy log")
                 else:
                     p = re.search("(^\d*\.\d*\.\d*\.\d*):(\d*) \[(.*)\] ssltunnel", msg)
                     if (p):

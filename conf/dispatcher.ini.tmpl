@@ -17,6 +17,7 @@ provider-terms=Some Terms
 ;;; SDP
 ;sdp-servers={sdpservers}
 
+; Each service can be configured here. Key is service-id
 [service-1A]
 name=Proxy
 backend_proxy_server=localhost:3128
@@ -28,5 +29,18 @@ crtkey={haboth}
 crt={vpncrt}
 key={vpnkey}
 crtkey={vpnboth}
-reneg=60
-enabled=false
+reneg=600
+;enabled=false
+;iprange=1.2.3.0
+;ipmask=255.255.0.0
+;ip6range=fe80:abcd:1234::/64
+;dns=127.0.0.1
+;mgmtport=11123
+
+; For client side scripts, service ids are prepended by 'C'
+[service-C1A]
+;http_proxy=127.0.0.1:3128
+;endpoint=127.0.0.1
+;port=1234
+;proxy_port=8188
+;proxy_bind=127.0.0.1

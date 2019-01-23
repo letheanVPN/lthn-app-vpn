@@ -10,7 +10,18 @@ LTHN_PREFIX=/opt/lthn/
 
 # General usage help
 usage() {
-   echo $0 "[--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet-address address] [--with-wallet-rpc-pass pass] [--with-wallet-rpc-user user] [--with-wallet-rpc-uri uri] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--with-providerid id --with-providerkey key] [--easy]"
+   echo 
+   echo "To configure server:"
+   echo $0 "--server [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet-address address] [--with-wallet-rpc-pass pass] [--with-wallet-rpc-user user] [--with-wallet-rpc-uri uri] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--with-providerid id --with-providerkey key]"
+   echo
+   echo "To configure client:"
+   echo $0 "--client [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix]"
+   echo
+   echo "To configure server and client:"
+   echo $0 "--client --server ..."
+   echo
+   echo "To easy configure server and client:"
+   echo $0 "--easy ..."
    echo
    exit
 }
@@ -53,7 +64,7 @@ defaults() {
     wallet_address="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     wallet_rpc_uri=http://127.0.0.1:14660/json_rpc
     wallet_rpc_user=dispatcher
-    wallet_rpc_pass=somepassword
+    wallet_rpc_pass=SecretPass
 }
 
 summary() {
@@ -78,7 +89,9 @@ summary() {
     echo "Data dir:     $data_dir"
     echo "Temp dir:     $tmp_dir"
     echo "Run as user:  $LTHN_USER"
-    echo "Run as group:  $LTHN_GROUP"
+    echo "Run as group: $LTHN_GROUP"
+    echo "Server:       $server"
+    echo "Client:       $client"
     echo
 }
 
@@ -138,6 +151,8 @@ HAPROXY_BIN=$HAPROXY_BIN
 OPENSSL_BIN=$OPENSSL_BIN
 LTHN_USER=$LTHN_USER
 LTHN_GROUP=$LTHN_GROUP
+SERVER=$server
+CLIENT=$client
 
 EOF
 }
@@ -265,12 +280,24 @@ while [[ $# -gt 0 ]]; do
     --easy)
         cert_pass="1234"
         cert_cn="LTHNEasyDeploy"
-        LTHN_USER="$USER"
+        if [ -n "$USER" ]; then
+            LTHN_USER="$USER"
+        fi
         install_service=1
         generate_providerid=1
         generate_ca=1
         generate_ini=1
         generate_dh=1
+        server=1
+        client=1
+        shift
+    ;;
+    --client)
+        client=1
+        shift
+    ;;
+    --server)
+        server=1
         shift
     ;;
     *)
@@ -280,6 +307,12 @@ while [[ $# -gt 0 ]]; do
     ;;
 esac
 done
+
+if [ -z "$client" ] && [ -z "$server" ]; then
+    echo "You must select which parts to configure".
+    $0 -h
+    exit 1
+fi
 
 bin_dir=${LTHN_PREFIX}/bin/
 sysconf_dir=${LTHN_PREFIX}/etc/
@@ -334,12 +367,12 @@ if [ -n "$generate_ini" ]; then
         -e "s#{ca}#${LTHN_PREFIX}/etc/ca/certs/ca.cert.pem#g" \
         -e "s#{providerid}#$(cat build/etc/provider.public)#g" \
         -e "s#{providerkey}#$(cat build/etc/provider.private)#g" \
+        -e "s#{vpncrt}#${LTHN_PREFIX}/etc/ca/certs/openvpn.cert.pem#g" \
+        -e "s#{vpnkey}#${LTHN_PREFIX}/etc/ca/private/openvpn.key.pem#g" \
+        -e "s#{vpnboth}#${LTHN_PREFIX}/etc/ca/certs/openvpn.both.pem#g" \
         -e "s#{hacrt}#${LTHN_PREFIX}/etc/ca/certs/ha.cert.pem#g" \
-        -e "s#{vpncrt}#${LTHN_PREFIX}/etc/ca/certs/vpn.cert.pem#g" \
-        -e "s#{hakey}#${LTHN_PREFIX}/etc/ca/private/ha.cert.pem#g" \
-        -e "s#{vpnkey}#${LTHN_PREFIX}/etc/ca/private/ha.cert.pem#g" \
+        -e "s#{hakey}#${LTHN_PREFIX}/etc/ca/private/ha.key.pem#g" \
         -e "s#{haboth}#${LTHN_PREFIX}/etc/ca/certs/ha.both.pem#g" \
-        -e "s#{vpnboth}#${LTHN_PREFIX}/etc/ca/certs/vpn.both.pem#g" \
         -e "s#{wallet_rpc_user}#$wallet_rpc_user#g" \
         -e "s#{wallet_rpc_pass}#$wallet_rpc_pass#g" \
         -e "s#{wallet_address}#$wallet_address#g" \
@@ -356,6 +389,10 @@ fi
 if [ -n "$install_service" ]; then
     mkdir -p build/etc/systemd/system
     cp conf/lthnvpnd.service build/etc/systemd/system/
+fi
+
+if [ -n "$client"  ]; then
+    touch build/etc/dispatcher.ini
 fi
 
 generate_env >env.mk

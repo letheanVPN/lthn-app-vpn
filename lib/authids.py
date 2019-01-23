@@ -50,10 +50,12 @@ class AuthId(object):
     
     def activate(self):
         self.activated = True
+        log.L.info("Activating authid %s" % (self.getId()))
         self.getService().addAuthId(self)
 
     def deActivate(self):
         self.activated = None
+        log.L.info("Deactivating authid %s" % (self.getId()))
         self.getService().delAuthId(self)
         
     def isActivated(self):
@@ -88,6 +90,7 @@ class AuthId(object):
         
     def isCreditOk(self):
         if self.invalid:
+            log.L.info("Ignoring invalid authid %s" % (self.getId()))
             return(None)
         s = self.getService()
         if self.getTimeSpent()==0 and not self.isActivated():
@@ -178,6 +181,10 @@ class AuthId(object):
         
         if self.isCreditOk() and not self.isActivated():
             self.activate()
+        elif self.isCreditOk() and self.isActivated():
+            log.L.info("Authid %s already activated." % (self.getId()))
+        else:
+            log.L.info("Authid %s has not enough credit." % (self.getId()))
            
     def startSpending(self):
         """ Start spending of authid """
@@ -235,7 +242,7 @@ class AuthIds(object):
         
     def add(self, payment):
         log.L.warning("New authid %s" % (payment.getId()))
-        log.A.audit(log.A.AUTHID, log.A.ADD, paymentid=payment.getId(), lthn=balance, msg="init")
+        log.A.audit(log.A.AUTHID, log.A.ADD, paymentid=payment.getId(), lthn=payment.getBalance(), msg="init")
         self.authids[payment.getId()] = payment
         
     def update(self, auth_id, service_id, amount, confirmations, height=0, txid=None):
@@ -419,7 +426,7 @@ class AuthIds(object):
                 self.save()
 
     def save(self):
-        if (config.Config.AUTHIDSFILE != ""):
+        if (config.Config.AUTHIDSFILE != "none"):
             try:
                 self.lastmodify = time.time()
                 log.L.debug("Saving authids db into %s" % (config.Config.AUTHIDSFILE))

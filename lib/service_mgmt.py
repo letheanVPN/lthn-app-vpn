@@ -87,7 +87,7 @@ class ServiceMgmt(Service):
         if (p):
             a = p.group(1).upper()
             i = float(p.group(2))
-            self.topUpAuthId(a, i, random.randint(1000,20000), 1)
+            self.topUpAuthId(a, i, "%s" % (random.randint(1000,20000)), 1)
             self.conn.close()
             return()
         p = re.search("^spend (.*) (.*)", msg)

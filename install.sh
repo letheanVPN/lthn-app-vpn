@@ -2,6 +2,11 @@
 
 ERRORS=false
 
+if [ -z "$CLIENT" ] && [ -z "$SERVER" ]; then
+    SERVER=y
+    CLIENT=y
+fi
+
 if [ "$USER" = "root" ]; then
     echo "Do not run install as root! It will invoke sudo automatically. Exiting!"
     exit 2
@@ -44,12 +49,17 @@ sudo chmod 600 "$INSTALL_PREFIX/$LTHN_PREFIX/dev/net/tun"
 sudo chown "$LTHN_USER" "$INSTALL_PREFIX/$LTHN_PREFIX/dev/net/tun"
 
 # Copy bin files
-sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lthnvpnd.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnd
-sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./client/lthnvpnc.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnc
-sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lvmgmt.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lvmgmt
-sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnd
-sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnc
-sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lvmgmt
+sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/unpriv-ip.sh $INSTALL_PREFIX/$LTHN_PREFIX/bin/
+if [ -n "$SERVER" ]; then
+    sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lthnvpnd.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnd
+    sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./server/lvmgmt.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lvmgmt
+    sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnd
+    sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lvmgmt
+fi
+if [ -n "$CLIENT" ]; then
+    sudo install -o "$LTHN_USER" -g "$LTHN_GROUP" -m 770 ./client/lthnvpnc.py $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnc
+    sed -i 's^/usr/bin/python^'$PYTHON_BIN'^' $INSTALL_PREFIX/$LTHN_PREFIX/bin/lthnvpnc
+fi
 
 # Copy lib files
 for f in lib/*py; do
@@ -64,16 +74,23 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$LTHN_PREFIX/lib/
     sudo install -C -o "$LTHN_USER" -g "$LTHN_GROUP" -m 440 ./$f $INSTALL_PREFIX/$LTHN_PREFIX/etc/ 
 done)
 
-if [ -f build/etc/systemd/system/lthnvpnd.service ]; then
+if [ -n "$SERVER" ]; then
+  if [ -f build/etc/systemd/system/lthnvpnd.service ]; then
     echo "Installing service file /etc/systemd/system/lthnvpnd.service as user $LTHN_USER"
     sed -i "s^User=lthn^User=$LTHN_USER^" build/etc/systemd/system/lthnvpnd.service
-    if ! diff -q build/etc/systemd/system/lthnvpnd.service /etc/systemd/system/lthnvpnd.service; then
-      sudo cp build/etc/systemd/system/lthnvpnd.service /etc/systemd/system/
-    fi
-    if ! [ -f /etc/default/lthnvpnd ]; then
-      sudo cp conf/lthnvpnd.env /etc/default/lthnvpnd
-    fi
+    sudo cp build/etc/systemd/system/lthnvpnd.service /etc/systemd/system/
+    sudo cp conf/lthnvpnd.env /etc/default/lthnvpnd
+  fi
 fi
+
+#if [ -n "$CLIENT" ]; then
+#  if [ -f build/etc/systemd/system/lthnvpnd.service ]; then
+#    echo "Installing service file /etc/systemd/system/lthnvpnc.service as user $LTHN_USER"
+#    sed -i "s^User=lthn^User=$LTHN_USER^" build/etc/systemd/system/lthnvpnc.service
+#    sudo cp build/etc/systemd/system/lthnvpnc.service /etc/systemd/system/
+#    sudo cp conf/lthnvpnc.env /etc/default/lthnvpnc
+#  fi
+#fi
 
 # Copy generated configs
 if [ -n "$FORCE" ]; then
@@ -82,33 +99,43 @@ else
     sudo cp -nva build/etc/* $INSTALL_PREFIX/$LTHN_PREFIX/etc/
 fi
 
-if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/dispatcher.ini ]; then
+if [ -n "$SERVER" ]; then
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/dispatcher.ini ]; then
     echo "ERROR: No dispatcher config file found. You have to create $INSTALL_PREFIX/$LTHN_PREFIX/etc/dispatcher.ini"
     echo "Use conf/dispatcher_example.ini as example"
     ERRORS=true
+  fi
 fi
 
-if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/sdp.json ]; then
+if [ -n "$SERVER" ]; then
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/sdp.json ]; then
     echo "ERROR: No SDP config file found. You can use lvmgmt --generate-sdp to create it for you."
     ERRORS=true 
+  fi
 fi
 
-if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/index.txt ]; then
+if [ -n "$SERVER" ]; then
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/index.txt ]; then
         if [ -f ./build/ca/index.txt ]; then
             install_dir etc/ca -m 700
             cp -R build/ca/* $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/
         else
             echo "CA directory $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/ not prepared! You should generate by configure or use your own CA!"
-            exit 3
+            ERRORS=true 
         fi
+  fi
 fi
 
-if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/dhparam.pem ] && [ -f build/dhparam.pem ]; then
+if [ -n "$SERVER" ]; then
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/dhparam.pem ] && [ -f build/dhparam.pem ]; then
     install build/dhparam.pem $INSTALL_PREFIX/$LTHN_PREFIX/etc/
+  fi
 fi
 
-if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/openvpn.tlsauth ] && [ -n "$OPENVPN_BIN" ] ; then
+if [ -n "$SERVER" ]; then
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/openvpn.tlsauth ] && [ -n "$OPENVPN_BIN" ] ; then
     "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$LTHN_PREFIX/etc/openvpn.tlsauth
+  fi
 fi
 
 sudo chown -R $LTHN_USER:$LTHN_GROUP $INSTALL_PREFIX/$LTHN_PREFIX/etc/

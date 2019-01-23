@@ -1,14 +1,19 @@
 PASS=1234
 CN=ItnsVPNFakeCN
+DOCKER=docker
 
 -include env.mk
 
 all:
 env.mk:
-	@if ! [ -f env.mk ]; then echo "You must configure first!" ; ./configure.sh --help; exit 1; fi
-	@echo "Seems to be configured. Run make install."	
+	@if [ "$(MAKECMDGOALS)" != "docker" ]; then \
+	    if ! [ -f env.mk ]; then echo "You must configure first!" ; ./configure.sh --help; exit 1; fi; \
+	    echo "Seems to be configured. Run make install."; \
+	fi
+	
 
 install: env.mk
+	chmod +x install.sh
 	INSTALL_PREFIX=$(INSTALL_PREFIX) \
 	FORCE=$(FORCE) \
 	LTHN_PREFIX=$(LTHN_PREFIX) \
@@ -20,8 +25,16 @@ install: env.mk
 	OPENSSL_BIN=$(OPENSSL_BIN) \
 	LTHN_USER=$(LTHN_USER) \
 	LTHN_GROUP=$(LTHN_GROUP) \
+	CLIENT=$(CLIENT) \
+	SERVER=$(SERVER) \
 	./install.sh
 	
+install-client:
+	@$(MAKE) install CLIENT=y
+	
+install-server:
+	@$(MAKE) install SERVER=y
+
 clean:
 	@echo Note this cleans only build directory. If you want to uninstall package, do it manually by removing files from install location.
 	@echo Your last install dir is $(LTHN_PREFIX)
@@ -32,3 +45,23 @@ ca: build/ca/index.txt
 build/ca/index.txt: env.mk
 	./configure.sh --generate-ca --with-capass "$(PASS)" --with-cn "$CN"
 
+docker-img:
+	docker build -t lethean/lethean-vpn:devel .
+
+docker: docker-img
+
+docker-clean:
+	docker rm -v lethean-vpn:devel 
+
+docker-shell:
+	mkdir -p build/etc
+	mkdir -p build/bcdata
+	docker run -i -t \
+	  --mount type=bind,source=$$(pwd)/build/etc,target=/opt/lthn/etc \
+   	  --mount type=bind,source=$$(pwd)/build/bcdata,target=/home/lthn \
+	  lethean/lethean-vpn:devel sh
+
+lthnvpnc:
+	pyinstaller -p lib -p 'C:\Python37\Lib\site-packages' client/lthnvpnc.py
+
+	

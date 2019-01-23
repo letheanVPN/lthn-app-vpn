@@ -1,30 +1,49 @@
-port {port}
-proto {proto}
-dev tun
-persist-tun
-persist-key
-auth SHA256
 client
 remote {ip} {port} {proto}
-verify-x509-name "openvpn" name
-auth-user-pass
+proto {proto}
+rport {port}
+nobind
+proto {proto}
 remote-cert-tls server
-cipher AES-256-CBC
+dev {tundev}
+dev-node {tunnode}
 tun-mtu {mtu}
 mssfix {mssfix}
 float
 
+# Persist tun device
+persist-tun
+persist-key
+
+# Not implemented yet. We trust CA
+#verify-x509-name "openvpn" name
+auth SHA256
+cipher AES-256-CBC
+auth-user-pass {auth_file}
+auth-retry nointeract
+
+# Filtering pulls
+{pull_filters}
+
+# Management version (needs disatcher)
+{mgmt_comment}management {mgmt_sock}
+{mgmt_comment}management-hold
+{mgmt_comment}management-query-passwords
+
+# Use = outbound http proxy
+{hproxy_comment} http-proxy {http_proxy} {http_proxy_port}
+
+syslog
+{rgw_comment}redirect-gateway def1
+{bdns_comment}block-outside-dns
+
 <ca>
 {f_ca}
 </ca>
-<cert>
-{f_crt}
-</cert>
-topology subnet
-keepalive 30 120
-reneg-sec {reneg}
-<tls-auth>
-{f_ta}
-</tls-auth>
-key-direction 1
+
+# Not implemented yet
+#<tls-auth>
+#f_ta
+#</tls-auth>
+#key-direction 1
 

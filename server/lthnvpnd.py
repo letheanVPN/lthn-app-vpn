@@ -25,7 +25,6 @@ import log
 import configargparse
 from service_ha import ServiceHa
 from service_ovpn import ServiceOvpn
-import atexit
 import pwd
 import grp
 import util
@@ -80,12 +79,16 @@ def main(argv):
     p.add(      '--run-services',            dest='runServices', default=True, type=bool, required=None, help='Run services from dispatcher or externally. Default to run by itnsdispatcher.')
     p.add(      '--track-sessions',          dest='trackSessions', default=True, type=bool, required=None, help='If true, dispatcher will track sessions. If not, existing sessions will not be terminated after payment is spent.')
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
-    p.add('-H',  '--from-height',               dest='initHeight', metavar='HEIGHT', required=None, type=int, default=-1, help='Initial height to start scan payments. Default is actual height.')
+    p.add('-H',  '--from-height',            dest='initHeight', metavar='HEIGHT', required=None, type=int, default=-1, help='Initial height to start scan payments. Default is actual height.')
+    p.add(       '--wallet-rpc-uri',         dest='walletUri', metavar='URI', default='http://127.0.0.1:13660/json_rpc', help='Wallet RPC URI')
+    p.add(       '--wallet-username',        dest='walletUsername', metavar='USER', required=None, default='dispatcher', help='Wallet RPC username')
+    p.add(       '--wallet-password',        dest='walletPassword', metavar='PW', required=None, help='Wallet RPC passwd')
+    p.add(       '--provider-key',           dest='providerkey', metavar='PROVIDERKEY', required=True, help='ProviderID (private ed25519 key)')
 
     # Initialise config
     cfg = p.parse_args()
     config.CONFIG = config.Config("dummy")
-    util.parseCommonArgs(p, cfg)
+    util.parseCommonArgs(p, cfg, 'lthnvpnd')
     config.Config.CAP = cfg
     
     config.Config.T_SAVE = cfg.st
@@ -93,7 +96,7 @@ def main(argv):
     config.Config.AUTHIDSFILE = cfg.A
 
     if (cfg.S):
-        services.SERVICES.load()
+        services.SERVICES.loadServer()
         # Generate config files for Openvpn and Haproxy only and exit
         services.SERVICES.createConfigs()
         sys.exit()
@@ -109,7 +112,7 @@ def main(argv):
         pf.close()
         atexit.register(remove_pidfile)
     
-    services.SERVICES.load()
+    services.SERVICES.loadServer()
         
     # Initialise sessions
     sessions.SESSIONS = sessions.Sessions()
@@ -122,11 +125,12 @@ def main(argv):
     authids.AUTHIDS = authids.AuthIds()
     
     # Load authids from file
-    tmpauthids=authids.AUTHIDS.load()
-    if (tmpauthids):
-        if not hasattr(tmpauthids,'version') or tmpauthids.getVersion()<authids.AUTHIDS.getVersion():
-            log.L.error("You have incompatible authids database. You need to remove authids file %s to continue." % (config.Config.AUTHIDSFILE))
-            sys.exit(2)
+    if (cfg.A != "none"):
+        tmpauthids=authids.AUTHIDS.load()
+        if (tmpauthids):
+            if not hasattr(tmpauthids,'version') or tmpauthids.getVersion()<authids.AUTHIDS.getVersion():
+                log.L.error("You have incompatible authids database. You need to remove authids file %s to continue." % (config.Config.AUTHIDSFILE))
+                sys.exit(2)
         authids.AUTHIDS=tmpauthids
     
     if not authids.AUTHIDS.getFromWallet():

@@ -1,0 +1,17 @@
+pid = {pidfile}
+foreground = yes
+output = /tmp/log
+;debug = debug
+pid = {pidfile}
+syslog = yes
+
+[https]
+accept = {bind_addr}:{port}
+protocol = connect
+connect = {https_proxy_host}:{https_proxy_port}
+protocolHost = {remote_host}:{remote_port}
+client = yes
+CAfile = {ca}
+sslVersion = TLSv1.2
+verifyChain = yes
+

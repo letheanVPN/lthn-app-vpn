@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Creates an autoscaling group of itns nodes
+Description: Creates an autoscaling group of lethean nodes
 
 Parameters:
   DesiredNumberOfNodes:
@@ -53,7 +53,7 @@ Parameters:
 
   DaemonBinUrl:
     Type: String
-    Default: 'https://itns.s3.us-east-2.amazonaws.com/Cli/Cli_Ubuntu160464bitStaticRelease/1755/lethean-cli-linux-64bit-v3.0.0.b3.tar.bz2'
+    Default: 'https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2'
     Description: Version of daemon binaries to use
     AllowedPattern: ^http.+
 
@@ -101,7 +101,7 @@ Mappings:
     ap-northeast-1:
       AMI: ami-98cfaa75
     ap-southeast-1:
-      AMI: ami-1c106cf6
+      AMI: ami-41e4af3d
     sa-east-1:
       AMI: ami-8eecc9e2
 
@@ -151,19 +151,19 @@ Resources:
   NodeSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: 'Security group for ITNS nodes'
+      GroupDescription: 'Security group for LTHN nodes'
       SecurityGroupIngress:
         - Description: 'HAProxy incoming'
           IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
           CidrIp: 0.0.0.0/0
-        - Description: 'ITNS daemon P2P bind port'
+        - Description: 'LTHN daemon P2P bind port'
           IpProtocol: tcp
           FromPort: 48772
           ToPort: 48772
           CidrIp: 0.0.0.0/0
-        - Description: 'ITNS daemon RPC bind port'
+        - Description: 'LTHN daemon RPC bind port'
           IpProtocol: tcp
           FromPort: 48782
           ToPort: 48782
@@ -265,8 +265,8 @@ Resources:
         RPC
       ]]
 
-  LaunchConfig:
-    Type: AWS::AutoScaling::LaunchConfiguration
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
     Metadata:
       AWS::CloudFormation::Authentication:
         S3AccessCreds:
@@ -410,57 +410,67 @@ Resources:
                 ( crontab -u ubuntu -l; echo "${minute} ${hour} * * * /bin/bash /home/ubuntu/upload_lmdb.sh 1>>/home/ubuntu/upload_lmdb.log 2>&1"; ) | crontab -u ubuntu -
 
     Properties:
-      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
-      InstanceType: !Ref 'InstanceType'
-      KeyName: !FindInMap [RegionMap, Global, Key]
-      IamInstanceProfile: !Ref 'S3ReadOnlyAccessInstanceProfile'
-      SecurityGroups: !If [
-        AttachToTempSecurityGroup,
-        [
-          !GetAtt 'NodeSecurityGroup.GroupId',
-          !ImportValue {'Fn::Sub': '${VPCStack}-TempSecurityGroup'}
-        ],
-        [
-          !GetAtt 'NodeSecurityGroup.GroupId'
+      LaunchTemplateName: !Join ['-', [
+        !Ref 'AWS::StackName',
+        !Select ['0', !Split ['-', !Select ['2', !Split [/, !Ref 'AWS::StackId']]]],
+        LT
+      ]]
+      LaunchTemplateData:
+        ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
+        InstanceType: !Ref 'InstanceType'
+        KeyName: !FindInMap [RegionMap, Global, Key]
+        IamInstanceProfile:
+          Name: !Ref 'S3ReadOnlyAccessInstanceProfile'
+        SecurityGroupIds: !If [
+          AttachToTempSecurityGroup,
+          [
+            !GetAtt 'NodeSecurityGroup.GroupId',
+            !ImportValue {'Fn::Sub': '${VPCStack}-TempSecurityGroup'}
+          ],
+          [
+            !GetAtt 'NodeSecurityGroup.GroupId'
+          ]
         ]
-      ]
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: 32
-            VolumeType: gp2
-      UserData:
-        Fn::Base64:
-          Fn::Sub:
-          - |
-            #!/bin/bash -xe
-            export PATH=${!PATH}:/usr/local/bin &&
-            apt-get -y update &&
-            DEBIAN_FRONTEND=noninteractive apt-get -y upgrade &&
-            apt-get -y install python-pip &&
-            pip install --upgrade setuptools &&
-            easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 32
+              VolumeType: gp2
+        CreditSpecification:
+          CpuCredits:
+            unlimited
+        UserData:
+          Fn::Base64:
+            Fn::Sub:
+            - |
+              #!/bin/bash -xe
+              export PATH=${!PATH}:/usr/local/bin &&
+              apt-get -y update &&
+              DEBIAN_FRONTEND=noninteractive apt-get -y upgrade &&
+              apt-get -y install python-pip &&
+              pip install --upgrade setuptools &&
+              easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
 
-            #############################
-            # Helper function
-            #############################
-            function error_exit
-            {
-              error=$1
-              if [[ -z $error ]]; then error=1; fi
-              cfn-signal -e $error --resource ${SignalResourceName} --stack ${AWS::StackName} --region ${AWS::Region}
-              exit $error
-            }
-            #############################
-            # Run cfn-init
-            #############################
-            cfn-init -v --resource ${ResourceName} --stack ${AWS::StackName} --region ${AWS::Region} || error_exit $?
-            #############################
-            # Trigger complete signal
-            #############################
-            cfn-signal -e 0 --resource ${SignalResourceName} --stack ${AWS::StackName} --region ${AWS::Region}
-          - ResourceName: LaunchConfig
-            SignalResourceName: AutoScalingGroup
+              #############################
+              # Helper function
+              #############################
+              function error_exit
+              {
+                error=$1
+                if [[ -z $error ]]; then error=1; fi
+                cfn-signal -e $error --resource ${SignalResourceName} --stack ${AWS::StackName} --region ${AWS::Region}
+                exit $error
+              }
+              #############################
+              # Run cfn-init
+              #############################
+              cfn-init -v --resource ${ResourceName} --stack ${AWS::StackName} --region ${AWS::Region} || error_exit $?
+              #############################
+              # Trigger complete signal
+              #############################
+              cfn-signal -e 0 --resource ${SignalResourceName} --stack ${AWS::StackName} --region ${AWS::Region}
+            - ResourceName: LaunchTemplate
+              SignalResourceName: AutoScalingGroup
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -468,14 +478,16 @@ Resources:
       AvailabilityZones:
         - !ImportValue {'Fn::Sub': '${VPCStack}-AZ0'}
         - !ImportValue {'Fn::Sub': '${VPCStack}-AZ1'}
-      LaunchConfigurationName: !Ref 'LaunchConfig'
+      LaunchTemplate:
+        LaunchTemplateId: !Ref 'LaunchTemplate'
+        Version: !GetAtt 'LaunchTemplate.LatestVersionNumber'
       VPCZoneIdentifier:
         - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet0'}
         - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet1'}
       Tags:
         - PropagateAtLaunch: 'true'
           Key: Name
-          Value: itns-node
+          Value: lthn-node
       DesiredCapacity: !Ref 'DesiredNumberOfNodes'
       MinSize: 0
       MaxSize: 5
@@ -486,6 +498,17 @@ Resources:
         Timeout: PT15M
 
 Outputs:
-  RPCLoadBalancerURL:
+  LoadBalancerURL:
     Description: The URL of the website (ELB)
-    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', ':48782/json_rpc']]
+    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', ':48782/getheight']]
+
+  DNSURL:
+    Description: The URL of the website (DNS)
+    Value: !Join ['', [
+      'http://',
+      nodes.,
+      !Ref 'AWS::Region',
+      .,
+      !FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone],
+      ':48782/getheight'
+    ]]

@@ -7,7 +7,7 @@ DOCKER=docker
 all:
 env.mk:
 	@if [ "$(MAKECMDGOALS)" != "docker" ]; then \
-	    if ! [ -f env.mk ]; then echo "You must configure first!" ; ./configure.sh --help; exit 1; fi \
+	    if ! [ -f env.mk ]; then echo "You must configure first!" ; ./configure.sh --help; exit 1; fi; \
 	    echo "Seems to be configured. Run make install."; \
 	fi
 	
@@ -62,8 +62,9 @@ docker-shell:
 	  lethean/lethean-vpn:devel sh
 
 lthnvpnc:
+	mkdir bin
 	@echo pyinstaller --add-data "lib;lib" --add-data "conf;conf" \
-	  --add-data "bin/cygwin1.dll;bin" --add-data "bin/cygcrypto-1.0.0.dll;bin" \
+	  --add-data "bin/cygwin1.dll;bin" --add-data "bin/cygcrypto-1.0.0.dll;bin" --add-data "bin/cygz.dll;bin" \
 	  --add-data "bin/cygpcre-1.dll;bin" --add-data "bin/cygssl-1.0.0.dll;bin" \
 	  --add-binary "bin/openvpn.exe;bin" --add-binary "bin/tstunnel.exe;bin" --add-binary "bin/haproxy.exe;bin" \
 	  -p lib -p 'C:\Python37\Lib\site-packages' \

@@ -117,6 +117,10 @@ class ServiceOvpnClient(ServiceOvpn):
             pull_filter += "pull-filter ignore route-gateway\n"
         self.cfg["tundev"] = config.Config.CAP.vpncTun
         self.cfg["mgmtport"] = config.Config.CAP.vpncMgmtPort
+        if (config.CONFIG.isWindows()):
+            wc='#'
+        else:
+            wc=''
 
         out = tmpl.decode("utf-8").format(
                           port=self.cfg['port'],
@@ -138,7 +142,8 @@ class ServiceOvpnClient(ServiceOvpn):
                           bdns_comment=bdns_comment,
                           auth_file=authfile,
                           pull_filters=pull_filter,
-                          mgmt_comment=mgmt_comment
+                          mgmt_comment=mgmt_comment,
+                          comment_dn=wc,
                           )
         try:
             cf = open(self.cfgfile, "wb")

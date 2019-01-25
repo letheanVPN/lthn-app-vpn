@@ -8,6 +8,9 @@ from sdp import SDP
 import sys
 from os.path import expanduser
 import pathlib
+import platform
+import glob
+import shutil
 
 class Config(object):
     """Configuration container"""
@@ -16,7 +19,6 @@ class Config(object):
     OPENVPN_BIN = None
     HAPROXY_BIN = None
     SUDO_BIN = None
-    OPENVPN_SUDO = None
     LOGLEVEL = logging.WARNING
     AUDITLOG = None
     VERBOSE = None
@@ -33,7 +35,7 @@ class Config(object):
     CAP = None
     
     def isWindows(self):
-        if (os.getenv('HOMEDRIVE') and os.getenv('HOMEPATH')):
+        if (platform.system()=="Windows"):
             return True
         else:
             return None
@@ -49,14 +51,15 @@ class Config(object):
             prefix = str(pathlib.Path(os.getenv('HOMEDRIVE') + os.getenv('HOMEPATH') + '/lthn'))
             type(self).PREFIX = prefix
             if getattr(sys, 'frozen', False):
-                binprefix = sys._MEIPASS + "/bin"
+                binprefix = str(pathlib.Path(sys._MEIPASS + "/bin"))
+                cfgprefix = str(pathlib.Path(sys._MEIPASS + "/conf"))
             else:
                 binprefix = "."
+                cfgprefix = "conf"
             type(self).OPENVPN_BIN = str(pathlib.Path(binprefix + "/openvpn.exe"))
             type(self).HAPROXY_BIN = str(pathlib.Path(binprefix + "/haproxy.exe"))
             type(self).SUDO_BIN = None
             type(self).STUNNEL_BIN = str(pathlib.Path(binprefix + "/tstunnel.exe"))
-            type(self).OPENVPN_SUDO = None
             type(self).LOGLEVEL = logging.WARNING
             type(self).SDPFILE = None
             type(self).PIDFILE = None
@@ -66,18 +69,23 @@ class Config(object):
             if not os.path.exists(prefix + "/etc"):    
                 os.mkdir(prefix + "/etc")
             if not os.path.exists(prefix + "/var"): 
-                os.mkdir(prefix + "var")
+                os.mkdir(prefix + "/var")
             if not os.path.exists(prefix + "/var/log"): 
                 os.mkdir(prefix + "/var/log")
             if not os.path.exists(prefix + "/var/run"): 
                 os.mkdir(prefix + "/var/run")
+            for file in glob.glob(cfgprefix + '/*.http'):
+                shutil.copy(file, prefix + '/etc/')
+            for file in glob.glob(cfgprefix + '/*.tmpl'):
+                shutil.copy(file, prefix + '/etc/')
+            if not os.path.exists(prefix + "/etc/dispatcher.ini"):
+                shutil.copy(cfgprefix + '/dispatcher.ini.tmpl', prefix + '/etc/dispatcher.ini')
 
         else:
             type(self).OPENVPN_BIN = "/usr/sbin/openvpn"
             type(self).HAPROXY_BIN = "/usr/sbin/haproxy"
             type(self).SUDO_BIN = "/usr/bin/sudo"
             type(self).STUNNEL_BIN = "/usr/bin/stunnel"
-            type(self).OPENVPN_SUDO = True
             type(self).LOGLEVEL = logging.WARNING
 
         if (os.getenv('LTHN_PREFIX')):

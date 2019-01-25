@@ -16,6 +16,7 @@ import time
 import util
 import requests
 import atexit
+import pathlib
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 
@@ -160,12 +161,11 @@ class ServiceHaClient(ServiceHa):
             self.stunnel = None
             comment_tls = ''
             comment_clr = '#'
+        sc=''
         if (config.CONFIG.isWindows()):
-            sc='#'
-            lc='#'
+            wc='#'
         else:
-            sc=''
-            lc=''
+            wc=''
         if (config.CONFIG.CAP.proxySSLNoVerify):
             nosslverify='verify none'
             comment_nossl='#'
@@ -191,14 +191,14 @@ class ServiceHaClient(ServiceHa):
                                           proxyport=self.cfg['proxy_port'],
                                           bindaddr=self.cfg['proxy_bind'],
                                           s_port=self.cfg['status_port'],
-                                          f_status='ha_info.http',
-                                          f_err_connect='ha_err_connect.http',
-                                          f_err_badid='ha_err_badid.http',
+                                          f_status=str(pathlib.Path(self.dir + 'ha_info.http')),
+                                          f_err_connect=str(pathlib.Path(self.dir + 'ha_err_connect.http')),
+                                          f_err_badid=str(pathlib.Path(self.dir + 'ha_err_badid.http')),
                                           comment_tls=comment_tls,
                                           comment_clr=comment_clr,
                                           paymentid=paymentid,
                                           stats_comment=sc,
-                                          log_comment=lc,
+                                          log_comment=wc,
                                           comment_nossl=comment_nossl,
                                           nosslverify=nosslverify
                                           )

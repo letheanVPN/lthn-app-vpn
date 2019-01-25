@@ -20,7 +20,10 @@ class ServiceOvpn(Service):
     def run(self):
         self.createConfig()
         verb = "3"
-        cmd = [config.Config.SUDO_BIN, config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb, "--writepid", self.pidfile]
+        if config.Config.SUDO_BIN:
+            cmd = [config.Config.SUDO_BIN, config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb, "--writepid", self.pidfile]
+        else:
+            cmd = [config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb, "--writepid", self.pidfile]
         os.chdir(self.dir)
         if (os.path.isfile(self.pidfile)):
             os.remove(self.pidfile)
@@ -52,10 +55,14 @@ class ServiceOvpn(Service):
             sys.exit(1)
         self.pid = int(open(self.pidfile).read())
         log.L.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
-        self.stdout = select.poll()
-        self.stderr = select.poll()
-        self.stdout.register(self.process.stdout, select.POLLIN)
-        self.stderr.register(self.process.stderr, select.POLLIN)
+        if not config.CONFIG.isWindows():
+            self.stdout = select.poll()
+            self.stderr = select.poll()
+            self.stdout.register(self.process.stdout, select.POLLIN)
+            self.stderr.register(self.process.stderr, select.POLLIN)
+        else:
+            self.stdout=None
+            self.stderr=None
         self.mgmtConnect("127.0.0.1", self.cfg["mgmtport"])
         log.L.warning("Started service %s[%s]" % (self.name, self.id))
         

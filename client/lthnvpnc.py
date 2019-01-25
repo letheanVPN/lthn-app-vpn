@@ -91,7 +91,6 @@ def loadService(pid, sid):
     
 # Starting here
 def main(argv):
-    
     config.CONFIG = config.Config("dummy")    
     p = configargparse.getArgumentParser(ignore_unknown_config_file_keys=True, fromfile_prefix_chars='@')
     util.commonArgs(p)

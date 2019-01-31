@@ -10,6 +10,7 @@ from subprocess import Popen
 from subprocess import PIPE
 from service_ovpn import ServiceOvpn
 import services
+import pathlib
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 class ServiceOvpnClient(ServiceOvpn):
@@ -73,7 +74,7 @@ class ServiceOvpnClient(ServiceOvpn):
             self.cfg['endpoint'] = self.json['vpn'][0]['endpoint']
         if (config.CONFIG.CAP.vpncStandalone):
             mgmt_comment = '#'
-            authfile=self.dir + 'vpnc.auth'
+            authfile=str(pathlib.Path(self.dir + 'vpnc.auth')).replace('\\','\\\\')
             try:
                 af = open(authfile, "w")
                 af.write(self.cfg["paymentid"].upper() + "\n")
@@ -128,7 +129,7 @@ class ServiceOvpnClient(ServiceOvpn):
                           ip=self.cfg['endpoint'],
                           f_ca=ca,
                           tundev=self.cfg["tundev"],
-                          tunnode=config.Config.PREFIX + '/dev/net/tun',
+                          tunnode=str(pathlib.Path(config.Config.PREFIX + '/dev/net/tun')).replace('\\','\\\\'),
                           reneg=60,
                           mtu=1400,
                           mssfix=1300,
@@ -144,6 +145,7 @@ class ServiceOvpnClient(ServiceOvpn):
                           pull_filters=pull_filter,
                           mgmt_comment=mgmt_comment,
                           comment_dn=wc,
+                          comment_syslog=wc
                           )
         try:
             cf = open(self.cfgfile, "wb")

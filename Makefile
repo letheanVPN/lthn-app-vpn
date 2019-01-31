@@ -65,6 +65,7 @@ lthnvpnc:
 	mkdir bin
 	@echo pyinstaller --add-data "lib;lib" --add-data "conf;conf" \
 	  --add-data "bin/cygwin1.dll;bin" --add-data "bin/cygcrypto-1.0.0.dll;bin" --add-data "bin/cygz.dll;bin" \
+	  --add-data "bin/liblzo2-2.dll;bin" --add-data "bin/libpkcs11-helper-1.dll;bin" \
 	  --add-data "bin/cygpcre-1.dll;bin" --add-data "bin/cygssl-1.0.0.dll;bin" \
 	  --add-binary "bin/openvpn.exe;bin" --add-binary "bin/tstunnel.exe;bin" --add-binary "bin/haproxy.exe;bin" \
 	  -p lib -p 'C:\Python37\Lib\site-packages' \

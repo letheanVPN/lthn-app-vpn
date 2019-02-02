@@ -94,10 +94,11 @@ class SDPList(object):
                 localJson = json.loads(localSdp)
                 caf = open(config.CONFIG.PREFIX + "/etc/ca/certs/ca.cert.pem", "r")
                 localCa = caf.read()
-                localJson['provider']['certificates'] = {}
-                localJson['provider']['certificates']['cn'] = 'ignored'
-                localJson['provider']['certificates']['id'] = 0
-                localJson['provider']['certificates']['content'] = localCa
+                localJson['provider']['certificates'] = [ {
+                  'cn': 'ignored',
+                  'id': 0,
+                  'content': localCa
+                } ]
             except (IOError, OSError):
                 log.L.warning("Cannot read local SDP file %s" % (config.CONFIG.SDPFILE))
                 return None
@@ -133,10 +134,11 @@ class SDPList(object):
             providerJson['provider']['name'] = prov['providerName']
             providerJson['provider']['wallet'] = prov['providerWallet']
             ca = base64.b64decode(prov['certArray'][0]['certContent']).decode('utf-8')
-            providerJson['provider']['certificates'] = {}
-            providerJson['provider']['certificates']['cn'] = 'ignored'
-            providerJson['provider']['certificates']['id'] = 0
-            providerJson['provider']['certificates']['content'] = ca
+            providerJson['provider']['certificates'] = [ {
+                'cn': 'ignored',
+                'id': 0,
+                'content': ca
+            } ]
             sid = prov["id"]
             stype = prov["type"]
             log.L.info("Adding service type %s %s/%s to SDP list" % (stype, pid, sid))

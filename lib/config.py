@@ -7,6 +7,10 @@ import os
 from sdp import SDP
 import sys
 from os.path import expanduser
+import pathlib
+import platform
+import glob
+import shutil
 
 class Config(object):
     """Configuration container"""
@@ -15,7 +19,6 @@ class Config(object):
     OPENVPN_BIN = None
     HAPROXY_BIN = None
     SUDO_BIN = None
-    OPENVPN_SUDO = None
     LOGLEVEL = logging.WARNING
     AUDITLOG = None
     VERBOSE = None
@@ -31,23 +34,67 @@ class Config(object):
     # configargparse results
     CAP = None
     
+    def isWindows(self):
+        if (platform.system()=="Windows"):
+            return True
+        else:
+            return None
+        
+    def isClient(self):
+        if "lthnvpnc" in sys.argv[0]:
+            return True
+        else:
+            return None
+    
     def __init__(self, action="read", services=None):
+        if self.isWindows():
+            prefix = str(pathlib.Path(os.getenv('HOMEDRIVE') + os.getenv('HOMEPATH') + '/lthn'))
+            type(self).PREFIX = prefix
+            if getattr(sys, 'frozen', False):
+                binprefix = str(pathlib.Path(sys._MEIPASS + "/bin"))
+                cfgprefix = str(pathlib.Path(sys._MEIPASS + "/conf"))
+            else:
+                binprefix = "."
+                cfgprefix = "conf"
+            type(self).OPENVPN_BIN = str(pathlib.Path(binprefix + "/openvpn.exe"))
+            type(self).HAPROXY_BIN = str(pathlib.Path(binprefix + "/haproxy.exe"))
+            type(self).SUDO_BIN = None
+            type(self).STUNNEL_BIN = str(pathlib.Path(binprefix + "/tstunnel.exe"))
+            type(self).LOGLEVEL = logging.WARNING
+            type(self).SDPFILE = None
+            type(self).PIDFILE = None
+            type(self).AUTHIDSFILE = None
+            if not os.path.exists(prefix):
+                os.mkdir(prefix)
+            if not os.path.exists(prefix + "/etc"):    
+                os.mkdir(prefix + "/etc")
+            if not os.path.exists(prefix + "/var"): 
+                os.mkdir(prefix + "/var")
+            if not os.path.exists(prefix + "/var/log"): 
+                os.mkdir(prefix + "/var/log")
+            if not os.path.exists(prefix + "/var/run"): 
+                os.mkdir(prefix + "/var/run")
+            for file in glob.glob(cfgprefix + '/*.http'):
+                shutil.copy(file, prefix + '/etc/')
+            for file in glob.glob(cfgprefix + '/*.tmpl'):
+                shutil.copy(file, prefix + '/etc/')
+            if not os.path.exists(prefix + "/etc/dispatcher.ini"):
+                shutil.copy(cfgprefix + '/dispatcher.ini.tmpl', prefix + '/etc/dispatcher.ini')
+
+        else:
+            type(self).OPENVPN_BIN = "/usr/sbin/openvpn"
+            type(self).HAPROXY_BIN = "/usr/sbin/haproxy"
+            type(self).SUDO_BIN = "/usr/bin/sudo"
+            type(self).STUNNEL_BIN = "/usr/bin/stunnel"
+            type(self).LOGLEVEL = logging.WARNING
+
         if (os.getenv('LTHN_PREFIX')):
             type(self).PREFIX = os.getenv('LTHN_PREFIX')
-        if os.name == 'nt':
-            type(self).PREFIX = expanduser("~") + "/lthn"
-        
-        type(self).OPENVPN_BIN = "/usr/sbin/openvpn"
-        type(self).HAPROXY_BIN = "/usr/sbin/haproxy"
-        type(self).SUDO_BIN = "/usr/bin/sudo"
-        type(self).STUNNEL_BIN = "/usr/bin/stunnel"
-        type(self).OPENVPN_SUDO = True
-        type(self).LOGLEVEL = logging.WARNING
         type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"
         type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
         type(self).PIDFILE = type(self).PREFIX + "/var/run/lthnvpnd.pid"
         type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
-        
+
         s = SDP()
         self.load(self.CONFIGFILE)
         if (action == "init"):
@@ -63,7 +110,8 @@ class Config(object):
             if (os.path.exists(self.SDPFILE)):
                 s.load(self.SDPFILE)
             else:
-                logging.warning("Missing SDP file" + self.SDPFILE)
+                if not self.isClient():
+                    logging.error("Missing SDP file" + self.SDPFILE)
         elif (action == "edit"):
             # generate SDP configuration file based on user input
             print('Editing SDP file %s' % self.SDPFILE)
@@ -89,10 +137,14 @@ class Config(object):
             
     def load(self, filename):
         try:
-            logging.debug("Reading config file %s" % (filename))
-            cfg = configparser.ConfigParser()
-            cfg.read(filename)
-            self.cfg = cfg
+            if os.path.exists(filename):
+                logging.debug("Reading config file %s" % (filename))
+                cfg = configparser.ConfigParser()
+                cfg.read(filename)
+                self.cfg = cfg
+            else:
+                cfg = configparser.ConfigParser()
+                self.cfg = cfg
         except IOError:
             logging.error("Cannot read %s. Exiting." % (filename))
             sys.exit(1)

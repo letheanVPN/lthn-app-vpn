@@ -80,6 +80,7 @@ def main(argv):
     p.add(      '--track-sessions',          dest='trackSessions', default=True, type=bool, required=None, help='If true, dispatcher will track sessions. If not, existing sessions will not be terminated after payment is spent.')
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')
     p.add('-H',  '--from-height',            dest='initHeight', metavar='HEIGHT', required=None, type=int, default=-1, help='Initial height to start scan payments. Default is actual height.')
+    p.add(       '--no-check-wallet-rpc',    dest='walletNoCheck', metavar='BOOL', action='store_const', const='walletNoCheck', help='Do not check wallet collection at start.')
     p.add(       '--wallet-rpc-uri',         dest='walletUri', metavar='URI', default='http://127.0.0.1:13660/json_rpc', help='Wallet RPC URI')
     p.add(       '--wallet-username',        dest='walletUsername', metavar='USER', required=None, default='dispatcher', help='Wallet RPC username')
     p.add(       '--wallet-password',        dest='walletPassword', metavar='PW', required=None, help='Wallet RPC passwd')
@@ -134,8 +135,12 @@ def main(argv):
         authids.AUTHIDS=tmpauthids
     
     if not authids.AUTHIDS.getFromWallet():
-        log.L.error("No connection to wallet. Exiting")
-        sys.exit(2)
+        log.L.error("No connection to wallet!")
+        if not cfg.walletNoCheck:
+            log.L.warning("Exiting.")
+            sys.exit(2)
+        else:
+            log.L.warning("Forcing continue without wallet connection. Will check connection later.")
         
     # Wait for all services to settle
     if (config.CONFIG.CAP.runServices):

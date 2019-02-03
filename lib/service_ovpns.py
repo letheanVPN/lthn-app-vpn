@@ -90,7 +90,7 @@ class ServiceOvpnServer(ServiceOvpn):
             f_key = "".join(f.readlines())
         if (config.Config.CAP.vpndDns):
             dns = "dhcp-option dns " + config.Config.CAP.vpndDns
-        elif ('dns' not in self.cfg):
+        elif ('dns' in self.cfg):
             dns = "dhcp-option dns " + self.cfg['dns']
         else:
             dns = ""
@@ -102,6 +102,7 @@ class ServiceOvpnServer(ServiceOvpn):
             mgmtport = self.cfg["mgmtport"]
         else:
             mgmtport = config.Config.CAP.vpndMgmtPort
+            self.cfg["mgmtport"] = config.Config.CAP.vpndMgmtPort
         if (config.Config.CAP.duplicateCN):
             duplicate_cn = 'duplicate-cn'
         else:

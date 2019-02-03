@@ -10,6 +10,7 @@ dev {tundev}
 tun-mtu {mtu}
 mssfix {mssfix}
 float
+tls-exit
 
 # Persist tun device
 persist-tun
@@ -20,7 +21,7 @@ persist-key
 auth SHA256
 cipher AES-256-CBC
 auth-user-pass {auth_file}
-auth-retry nointeract
+auth-retry interact
 
 # Filtering pulls
 {pull_filters}

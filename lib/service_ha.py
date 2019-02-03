@@ -80,7 +80,8 @@ class ServiceHa(Service):
             
     def isAlive(self):
         try:
-            os.kill(self.pid, 0)
+            if self.pid:
+                os.kill(self.pid, 0)
         except OSError:
             return False
         else:

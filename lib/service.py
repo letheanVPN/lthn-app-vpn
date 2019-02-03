@@ -63,7 +63,7 @@ class Service(object):
                 if o not in self.cfg:
                     log.L.error("Service %s is not configured. You need to edit config file to add:\n[service-%s]\n%s=something" % (id, id, o))
                     sys.exit(2)
-        self.initphase = True
+        self.initphase = 0
         
     def isEnabled(self):
         if "enabled" in self.cfg:
@@ -162,8 +162,10 @@ class Service(object):
             pass
         if (line != ""):
             log.L.debug("%s[%s]-mgmt-in: %s" % (self.type, self.id, repr(line)))
-            self.mgmtEvent(line)
-            return(line)
+            if not self.mgmtEvent(line):
+                return None
+            else:
+                return(line)
         else:
             return(None)
         

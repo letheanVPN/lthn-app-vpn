@@ -53,7 +53,7 @@ Parameters:
 
   DaemonBinUrl:
     Type: String
-    Default: 'https://github.com/LetheanMovement/lethean/releases/download/v3.0.0/lethean-cli-linux-64bit-v3.0.0.tar.bz2'
+    Default: 'https://github.com/LetheanMovement/lethean/releases/download/v3.1.0/lethean-cli-linux-64bit-v3.1.tar.bz2'
     Description: Version of daemon binaries to use
     AllowedPattern: ^http.+
 

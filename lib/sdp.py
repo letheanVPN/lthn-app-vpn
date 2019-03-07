@@ -102,7 +102,7 @@ class SDP(object):
 
         validNodeTypes = ['residential', 'commercial', 'government']
         if (self.data['provider']['nodeType'] not in validNodeTypes):
-            if not self.setNodeType(config.CONFIG.CAP.serviceType):
+            if not self.setNodeType(config.CONFIG.CAP.nodeType):
                 return False
 
         if (len(self.data['provider']['id']) != 64 or not re.match(r'[a-zA-Z0-9]', self.data['provider']['id'])):
@@ -491,6 +491,7 @@ class SDPService(object):
         while not ret:
             log.L.info('Setting service port')
             ret = self.setPort(cap.servicePort)
+        ret = False
         while not ret:
             log.L.info('Setting service endpoint')
             ret = self.setEndpoints(cap.serviceFqdn)

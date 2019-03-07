@@ -5,6 +5,7 @@ import os
 import time
 import sys
 import subprocess
+import pathlib
 
 class Service(object):
     """
@@ -32,14 +33,18 @@ class Service(object):
             self.cost = float(json["cost"])
             self.json = json    
             
-        self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
         if (cfg):
             self.cfg = cfg
         else:
             self.cfg = config.CONFIG.getService(self.id)
-        self.cfgfile = self.dir + "/cfg"
-        self.pidfile = self.dir + "/pid"
-        self.mgmtfile = self.dir + "/mgmt"
+        if (config.CONFIG.CAP.serviceDir):
+            self.dir = config.CONFIG.CAP.serviceDir
+        else:
+            self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
+
+        self.cfgfile = str(pathlib.Path(self.dir + "/cfg"))
+        self.pidfile = str(pathlib.Path(self.dir + "/pid"))
+        self.mgmtfile = str(pathlib.Path(self.dir + "/mgmt"))
         self.process = None
         if (not self.cfg):
             self.cfg = {}

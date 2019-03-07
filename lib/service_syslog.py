@@ -14,13 +14,16 @@ class ServiceSyslog(Service):
         self.mgmtfile = config.Config.PREFIX + "/var/run/log"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        self.sock.bind(self.mgmtfile)
-        self.sock.settimeout(self.SOCKET_TIMEOUT)
+        if not config.CONFIG.isWindows():
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            self.sock.bind(self.mgmtfile)
+            self.sock.settimeout(self.SOCKET_TIMEOUT)
         self.name = "Syslog server"
         super().run()
 
     def orchestrate(self):
+        if config.CONFIG.isWindows():
+            return True
         s = self.getLine()
         while (s != None):
             message = syslogmp.parse(s)

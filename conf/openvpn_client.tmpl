@@ -6,7 +6,7 @@ nobind
 proto {proto}
 remote-cert-tls server
 dev {tundev}
-dev-node {tunnode}
+{comment_dn}dev-node {tunnode}
 tun-mtu {mtu}
 mssfix {mssfix}
 float
@@ -33,7 +33,7 @@ auth-retry nointeract
 # Use = outbound http proxy
 {hproxy_comment} http-proxy {http_proxy} {http_proxy_port}
 
-syslog
+{comment_syslog}syslog
 {rgw_comment}redirect-gateway def1
 {bdns_comment}block-outside-dns
 

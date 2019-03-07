@@ -57,9 +57,9 @@ class Services(object):
         s = self.sdp.getService(sid)
         if (s and s["type"]):
             if (s["type"] == "vpn"):
-                so = ServiceOvpnClient(sdp["provider"]["id"] + ":" + sid, s)
+                so = ServiceOvpnClient(sdp["provider"]["id"] + "_" + sid, s)
             elif (s["type"] == "proxy"):
-                so = ServiceHaClient(sdp["provider"]["id"] + ":" + sid, s)
+                so = ServiceHaClient(sdp["provider"]["id"] + "_" + sid, s)
             else:
                 log.L.error("Unknown service type %s in SDP!" % (s["type"]))
                 sys.exit(1)

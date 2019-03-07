@@ -16,6 +16,7 @@ import time
 import util
 import requests
 import atexit
+import pathlib
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 
@@ -26,7 +27,7 @@ class ServiceHaClient(ServiceHa):
     
     OPTS = dict(
                 name='ProxyClient', outbound_proxy_host=None, outbound_proxy_port=3128,
-                proxy_bind='127.0.0.1', proxy_port=8180, status_port=8181,
+                proxy_bind='127.0.0.1', proxy_port=8180, status_port=8181, mgmtport="11194",
                 max_connections=2000, timeout='30s', connect_timeout='5s',
                 paymentid='authid1', uniqueid='abcd1234', 
                 max_conns_per_ip=10000, max_conns_per_period=10000, max_requests_per_period=10000,
@@ -92,6 +93,8 @@ class ServiceHaClient(ServiceHa):
                     self.waitForPayment(providerid)
             
     def orchestrate(self):
+        if config.CONFIG.isWindows():
+            return True
         if self.stunnel:
             if not self.stunnel.orchestrate():
                 return None
@@ -158,6 +161,18 @@ class ServiceHaClient(ServiceHa):
             self.stunnel = None
             comment_tls = ''
             comment_clr = '#'
+        sc=''
+        if (config.CONFIG.isWindows()):
+            wc='#'
+        else:
+            wc=''
+        if (config.CONFIG.CAP.proxySSLNoVerify):
+            nosslverify='verify none'
+            comment_nossl='#'
+        else:
+            nosslverify=''
+            comment_nossl=''
+        self.cfg["mgmtport"] = config.Config.CAP.proxyMgmtPort
         out = tmpl.decode("utf-8").format(
                                           server=self.cfg['endpoint'],
                                           maxconn=self.cfg['max_connections'],
@@ -165,7 +180,7 @@ class ServiceHaClient(ServiceHa):
                                           ctimeout=self.cfg['connect_timeout'],
                                           port=self.cfg["port"],
                                           sport=self.cfg['status_port'],
-                                          f_sock=self.mgmtfile,
+                                          f_sock="127.0.0.1:"+ self.cfg["mgmtport"],
                                           f_logsocket=config.Config.PREFIX + '/var/run/log local0',
                                           ctrldomain='^(local.lethean|_local_)$',
                                           ctrlpath='/status',
@@ -176,12 +191,17 @@ class ServiceHaClient(ServiceHa):
                                           proxyport=self.cfg['proxy_port'],
                                           bindaddr=self.cfg['proxy_bind'],
                                           s_port=self.cfg['status_port'],
-                                          f_status='ha_info.http',
-                                          f_err_connect='ha_err_connect.http',
-                                          f_err_badid='ha_err_badid.http',
+                                          f_status=str(pathlib.Path(self.dir + 'ha_info.http')),
+                                          f_err_connect=str(pathlib.Path(self.dir + 'ha_err_connect.http')),
+                                          f_err_badid=str(pathlib.Path(self.dir + 'ha_err_badid.http')),
                                           comment_tls=comment_tls,
                                           comment_clr=comment_clr,
-                                          paymentid=paymentid)
+                                          paymentid=paymentid,
+                                          stats_comment=sc,
+                                          log_comment=wc,
+                                          comment_nossl=comment_nossl,
+                                          nosslverify=nosslverify
+                                          )
         try:
             cf = open(self.cfgfile, "wb")
             cf.write(out.encode())

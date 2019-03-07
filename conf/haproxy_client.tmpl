@@ -3,8 +3,8 @@ global
         daemon
         ssl-default-bind-ciphers ECDH+AESGCM
         ssl-default-bind-options force-tlsv12
-        log {f_logsocket}
-        stats socket {f_sock} mode 600 level admin
+{log_comment}    log {f_logsocket}
+{stats_comment}  stats socket {f_sock} mode 600 level admin
 
 frontend lthnproxy
         bind            {bindaddr}:{proxyport}
@@ -39,7 +39,8 @@ frontend lthnproxy
 	use_backend b-status if is_options !is_proxy_request is_mgmt_path is_mgmt_id
 	use_backend b-status if is_options !is_proxy_request is_stats_path
 
-        use_backend http-proxy if is_proxy_request || is_connect
+{comment_nossl}        use_backend http-proxy if is_proxy_request
+        use_backend http-proxy if is_connect
 
 # Backend for proxying requests to another proxy
 backend http-proxy
@@ -52,7 +53,7 @@ backend http-proxy
         
         http-request add-header {payment_header} {paymentid}
 
-        {comment_tls} server hatls {server}:{port} force-tlsv12 ssl ca-file {ca}
+        {comment_tls} server hatls {server}:{port} force-tlsv12 ssl ca-file {ca} {nosslverify}
         {comment_clr} server hatls {server}:{port}
         errorfile 503 {f_err_connect}
 

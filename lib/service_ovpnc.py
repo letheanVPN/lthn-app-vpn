@@ -33,6 +33,7 @@ class ServiceOvpnClient(ServiceOvpn):
     )
             
     def connect(self, sdp):
+        self.sdp = sdp
         while True:
             services.SERVICES.sleep(10)
         

@@ -75,7 +75,7 @@ def main(argv):
     util.commonArgs(p)
     p.add(      '--refresh-time',            dest='ct', metavar='SEC', help='Refresh frequency. Set to 0 for disable autorefresh.', default=config.CONFIG.T_CLEANUP, type=int)
     p.add(      '--save-time',               dest='st', metavar='SEC', help='Save authid frequency. Use 0 to not save authid regularly.', default=config.CONFIG.T_SAVE, type=int)
-    p.add(      '--max-wait-to-spend',       dest='maxToSpend', metavar='SEC', help='When payment arrive, we will wait max this number of seconds for first session before spending credit.', default=1800, type=int)
+    p.add(      '--max-wait-to-spend',       dest='maxToSpend', metavar='SEC', help='When payment arrive, we will wait max this number of seconds for first session before spending credit.', default=30, type=int)
     p.add(      '--run-services',            dest='runServices', default=True, type=bool, required=None, help='Run services from dispatcher or externally. Default to run by itnsdispatcher.')
     p.add(      '--track-sessions',          dest='trackSessions', default=True, type=bool, required=None, help='If true, dispatcher will track sessions. If not, existing sessions will not be terminated after payment is spent.')
     p.add('-S', '--generate-server-configs', dest='S', action='store_const', const='generate_server_configs', required=None, help='Generate configs for services and exit')

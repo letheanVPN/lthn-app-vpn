@@ -177,7 +177,13 @@ def main(argv):
             sdp = sdps.SDPS.getProviderSDP(pid)
             for srv in sdp["services"]:
                 sid = srv["id"]
-                print("%s:%s/%s,%s,%s,%s" % (sdp["provider"]["fqdn"], pid, sid, srv["type"], sdp["provider"]["name"], srv["name"]))
+                if srv["type"]=="proxy":
+                    endpoint = srv["proxy"][0]["endpoint"]
+                    port = srv["proxy"][0]["port"]
+                else:
+                    endpoint = srv["vpn"][0]["endpoint"]
+                    port = srv["vpn"][0]["port"]
+                print("%s:%s/%s(%s:%s),%s,%s,%s" % (sdp["provider"]["fqdn"], pid, sid, endpoint, port, srv["type"], sdp["provider"]["name"], srv["name"]))
     else:
         log.L.error("You must specify command (list|connect|show)")
         sys.exit(1)

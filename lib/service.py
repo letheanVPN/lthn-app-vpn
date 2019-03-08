@@ -90,6 +90,28 @@ class Service(object):
         
     def run(self):
         log.L.info("Starting service %s[%s]" % (self.name, self.id))
+        
+    def waitForPid(self):
+        log.L.info("Waiting for pid")
+        i=0
+        if config.CONFIG.isWindows():
+            maxwait=200
+        else:
+            maxwait=40
+        pid = 0
+        while not pid>0 and i<maxwait:
+            if os.path.isfile(self.pidfile):
+                pid=open(self.pidfile).read().strip()
+                if (pid.isdigit()):
+                    pid = int(pid)
+                else:
+                    pid = 0
+            time.sleep(0.1)
+            i = i+1
+        if (i==maxwait):
+            log.L.error("Error runing service %s: %s" % (self.id, " ".join(cmd)))
+            sys.exit(1)
+        return(pid)
 
     def stop(self):
         if (self.mgmtfile is not None and os.path.exists(self.mgmtfile)):

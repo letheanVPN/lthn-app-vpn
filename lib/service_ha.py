@@ -47,24 +47,7 @@ class ServiceHa(Service):
             log.L.error("Haproxy binary %s not found. Cannot continue!" % (config.Config.CAP.haproxyBin))
             sys.exit(1)
         self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=None)
-        log.L.info("Waiting for pid")
-        i=0
-        if config.CONFIG.isWindows():
-            maxwait=200
-        else:
-            maxwait=40
-        while not os.path.isfile(self.pidfile) and i<maxwait:
-            time.sleep(0.1)
-            i = i+1
-        if (i==maxwait):
-            log.L.error("Error runing service %s: %s" % (self.id, " ".join(cmd)))
-            sys.exit(1)
-        time.sleep(0.3)
-        pid=open(self.pidfile).read()
-        if (pid.isdigit()):
-            self.pid = int(pid)
-        else:
-            self.pid = None
+        self.pid = self.waitForPid()
         log.L.info("Service %s: [pid=%s]" % (self.id, self.pid))
         if self.isClient():
             self.mgmtConnect("127.0.0.1", self.cfg["mgmtport"])

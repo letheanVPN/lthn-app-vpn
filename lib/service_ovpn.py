@@ -51,15 +51,7 @@ class ServiceOvpn(Service):
             log.L.error("Openvpn binary %s not found. Cannot continue!" % (config.Config.CAP.openvpnBin))
             sys.exit(1)
         self.process = Popen(cmd, stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
-        log.L.info("Waiting for pid")
-        i=0
-        while not os.path.isfile(self.pidfile) and i<20:
-            time.sleep(0.1)
-            i = i+1
-        if (i==20):
-            log.L.error("Error runing service %s: %s" % (self.id, " ".join(cmd)))
-            sys.exit(1)
-        self.pid = int(open(self.pidfile).read())
+        self.pid = self.waitForPid()
         log.L.info("Run service %s: %s [pid=%s]" % (self.id, " ".join(cmd), self.pid))
         if not config.CONFIG.isWindows():
             self.stdout = select.poll()
@@ -104,6 +96,9 @@ class ServiceOvpn(Service):
         if (p and self.isClient()):
             log.L.error("TLS Error! Bad configuration or old SDP? Exiting.")
             sys.exit(2)
+        p = re.search("^>STATE:(\d*),CONNECTED,SUCCESS", msg)    
+        if (p and self.isClient()):
+            log.L.warning("Connected!")
         p = re.search("^>LOG:(\d*),W,ERROR:(.*)", msg)
         if (p and self.isClient()):
             log.L.error("Error seting up VPN! (%s). Exiting." % p.group(2).strip())

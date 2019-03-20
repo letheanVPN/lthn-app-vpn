@@ -60,7 +60,7 @@ class ServiceOvpn(Service):
 
                     handlePipe = win32file.CreateFile(pipeName, win32file.GENERIC_READ | win32file.GENERIC_WRITE, 0, None, win32file.OPEN_EXISTING, 0, None)
 
-                    if (handlePipe != win32.INVALID_HANDLE_VALUE):
+                    if (handlePipe != win32file.INVALID_HANDLE_VALUE):
                         log.L.info("OVPN Lethean service pipe opened")
                     else:
                         log.L.error("Failed opening LTHNVPN service pipe: invalid handle")
@@ -83,7 +83,6 @@ class ServiceOvpn(Service):
 
                     while True:
                         resp = win32file.ReadFile(handlePipe, 64*1024)
-                        #resp = resp.decode("utf-16")
                         log.L.debug("Pipe message received %d" % resp[0])
                         if (resp[0] == 0):
                             decoded = resp[1].decode("utf-16-le")
@@ -100,7 +99,7 @@ class ServiceOvpn(Service):
                     else:
                         log.L.error("Error opening OVPN LTHN service pipe! %d %s %s" % (e.args[0], e.args[1], e.args[2]))
                 finally:
-                    if (handlePipe and handlePipe != win32.INVALID_HANDLE_VALUE):
+                    if (handlePipe and handlePipe != win32file.INVALID_HANDLE_VALUE):
                         win32file.CloseHandle(handlePipe)
                 # if interactive service does not exist, request admin privileges to run openvpn
                 if not interactiveServicePipeExists:

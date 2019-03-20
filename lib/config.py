@@ -49,10 +49,10 @@ class Config(object):
     def __init__(self, action="read", services=None):
         if self.isWindows():
             homeDir = ''
-            if (os.getenv('HOMEDRIVE') and os.getenv('HOMEPATH')):
-                homeDir = os.getenv('HOMEDRIVE') + os.getenv('HOMEPATH')
-            elif (os.getenv('USERPROFILE')):
+            if (os.getenv('USERPROFILE')):
                 homeDir = os.getenv('USERPROFILE')
+            elif (os.getenv('HOMEDRIVE') and os.getenv('HOMEPATH')):
+                homeDir = os.getenv('HOMEDRIVE') + os.getenv('HOMEPATH')
 
             prefix = str(pathlib.Path(homeDir + '/lthn'))
             type(self).PREFIX = prefix

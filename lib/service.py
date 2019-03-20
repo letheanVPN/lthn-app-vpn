@@ -16,6 +16,7 @@ class Service(object):
     OPTS_HELP = dict()
     OPTS_REQUIRED = dict()
     SOCKET_TIMEOUT = 0.01
+    PROCESSED_LOG_MSGS = []
     
     def __init__(self, id=None, json=None, cfg=None):
         if (id):
@@ -45,6 +46,7 @@ class Service(object):
         self.cfgfile = str(pathlib.Path(self.dir + "/cfg"))
         self.pidfile = str(pathlib.Path(self.dir + "/pid"))
         self.mgmtfile = str(pathlib.Path(self.dir + "/mgmt"))
+        self.logfile = str(pathlib.Path(self.dir + "/log"))
         self.process = None
         if (not self.cfg):
             self.cfg = {}
@@ -126,6 +128,17 @@ class Service(object):
         return(self.cost)
         
     def getLine(self):
+        if config.CONFIG.isWindows() and pathlib.Path(self.logfile).is_file():
+            with open(self.logfile, 'rU') as f:
+                f = f.readlines()
+            global PROCESSED_LOG_MSGS
+            for line in f:
+                if not line in self.PROCESSED_LOG_MSGS:
+                    self.PROCESSED_LOG_MSGS.append(line)
+                    return(line)
+            return(None)
+        if not self.process:
+            return(None)
         try:
             outs, errs = self.process.communicate(timeout=0.05)
             return(outs + errs)

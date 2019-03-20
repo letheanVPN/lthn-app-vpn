@@ -113,6 +113,7 @@ class Service(object):
         if (i==maxwait):
             log.L.error("Error runing service %s: %s" % (self.id, " ".join(cmd)))
             sys.exit(1)
+        self.pid=pid
         return(pid)
 
     def stop(self):
@@ -226,8 +227,20 @@ class Service(object):
         pass
 
     def isAlive(self):
-        self.process.poll()
-        return(self.process.returncode == None)
+        if config.CONFIG.isWindows():
+            # check if pid exists in running processes
+            pid = self.pid
+            if (pid != 0):
+                filterByPid = "PID eq %s" % pid
+                pidStr = str(pid)
+                cmd = ["cmd", "/c", "tasklist", "/FI", filterByPid, "|", "findstr",  pidStr]
+                result = subprocess.call(cmd, stdout=subprocess.DEVNULL)
+                return (result == 0)
+            else:
+                return False
+        else:
+            self.process.poll()
+            return(self.process.returncode == None)
     
     def getCost(self):
         return(self.cost)

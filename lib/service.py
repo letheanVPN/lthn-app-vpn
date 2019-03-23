@@ -111,7 +111,7 @@ class Service(object):
             time.sleep(0.1)
             i = i+1
         if (i==maxwait):
-            log.L.error("Error runing service %s: %s" % (self.id, " ".join(cmd)))
+            log.L.error("Error getting PID for service %s" % (self.id))
             sys.exit(1)
         self.pid=pid
         return(pid)

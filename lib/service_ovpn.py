@@ -52,7 +52,7 @@ class ServiceOvpn(Service):
                     # prepare interactive service startup msg request
                     # https://community.openvpn.net/openvpn/wiki/OpenVPNInteractiveService
                     workingdir = os.path.split(self.cfgfile)[0]
-                    openvpnoptions = "--config " + self.cfgfile + " --writepid " + self.pidfile + " --verb " + verb
+                    openvpnoptions = "--config \"" + self.cfgfile + "\" --writepid \"" + self.pidfile + "\" --verb " + verb
                     stdin = ""
                     wzero = u"\u0000"
                     startupMsg = (workingdir + wzero + openvpnoptions + wzero + stdin + wzero).encode("utf-16-le")
@@ -109,7 +109,10 @@ class ServiceOvpn(Service):
             if config.Config.SUDO_BIN:
                 cmd = [config.Config.SUDO_BIN, config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
             else:
-                cmd = [config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
+                if config.CONFIG.isWindows():
+                    cmd = ["\"" + config.Config.CAP.openvpnBin + "\"", "--config", "\"" + self.cfgfile + "\"", "--writepid", "\"" + self.pidfile + "\"", "--verb", verb]
+                else:
+                    cmd = [config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
             os.chdir(self.dir)
             if (os.path.isfile(self.pidfile)):
                 os.remove(self.pidfile)

@@ -1,0 +1,19 @@
+[Unit]
+Description=LTHN VPN dispatcher
+ConditionPathExists=/opt/lthn/bin/lthnvpnd
+After=syslog.target
+
+[Service]
+EnvironmentFile=/etc/default/lthnvpnd
+Type=simple
+ExecStart=/opt/lthn/bin/lthnvpnd $LTHNVPND_ARGS
+ExecStopPost=/bin/rm -f /opt/lthn/var/run/lthnvpnd.pid
+User=lthn
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+PIDFile=/opt/lthn/var/run/lthnvpnd.pid
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+DH_VERBOSE = 1
+
+%:
+	dh $@ --with=systemd
+
+override_dh_auto_install:
+	make install INSTALL_PREFIX=$(PWD)/debian/lethean-vpn NOSUDO=1 LTHN_USER=lthn LTHN_GROUP=lthn
+	dh_installinit
+
+override_dh_installinit:
+	dh_installinit --name lethean-vpn-client
+	dh_installinit --name lethean-vpn-server

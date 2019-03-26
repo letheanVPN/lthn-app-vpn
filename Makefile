@@ -27,6 +27,7 @@ install: env.mk
 	LTHN_GROUP=$(LTHN_GROUP) \
 	CLIENT=$(CLIENT) \
 	SERVER=$(SERVER) \
+	NOSUDO=$(NOSUDO) \
 	./install.sh
 	
 install-client:

@@ -1,0 +1,19 @@
+[Unit]
+Description=LTHN VPN client
+ConditionPathExists=/opt/lthn/bin/lthnvpnc
+After=syslog.target
+
+[Service]
+EnvironmentFile=/etc/default/lthnvpnc
+Type=simple
+ExecStart=/opt/lthn/bin/lthnvpnc $LTHNVPNC_ARGS
+ExecStopPost=rm -f /opt/lthn/var/run/lthnvpnc.pid
+User=lthn
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+PIDFile=/opt/lthn/var/run/lthnvpnc.pid
+
+[Install]
+WantedBy=multi-user.target
+

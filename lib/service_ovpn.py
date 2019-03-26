@@ -195,6 +195,10 @@ class ServiceOvpn(Service):
         if (p and self.isClient()):
             log.L.error("Error seting up VPN! (%s). Exiting." % p.group(2).strip())
             sys.exit(2)
+        p = re.search("^>LOG:(\d*),F,(.*)", msg)
+        if (p and self.isClient()):
+            log.L.error("Error seting up VPN! (%s). Exiting." % p.group(2).strip())
+            sys.exit(2)
         return True
             
     def unHold(self):

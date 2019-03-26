@@ -67,7 +67,7 @@ class ServiceOvpn(Service):
 
                         err = ctypes.windll.kernel32.GetLastError()
                         if (err == ERROR_FILE_NOT_FOUND):
-                            log.L.error("Lethean VPN service not found! Make sure OpenVPN Interactive Service (Lethean) service is running. If service does not exist, please install OpenVPN and run the Install_LTHN_Service script.")
+                            log.L.warning("Lethean VPN service not found! Make sure OpenVPN Interactive Service (Lethean) service is running. If service does not exist, please install OpenVPN and run the Install_LTHN_Service script.")
                         elif (err != ERROR_PIPE_BUSY):
                             log.L.error("Failed opening LTHNVPN service pipe: %d" % err)
                         elif ((ctypes.windll.kernel32.WaitNamedPipeA(pipeName, 20000)) == 0):
@@ -95,7 +95,7 @@ class ServiceOvpn(Service):
 
                 except pywintypes.error as e:
                     if (e.args[0] == ERROR_FILE_NOT_FOUND):
-                        log.L.error("Lethean VPN service not found! Make sure OpenVPN Interactive Service (Lethean) service is running. If service does not exist, please install OpenVPN and run the Install_LTHN_Service script.")
+                        log.L.warning("Lethean VPN service not found! Make sure OpenVPN Interactive Service (Lethean) service is running. If service does not exist, please install OpenVPN and run the Install_LTHN_Service script.")
                     else:
                         log.L.error("Error opening OVPN LTHN service pipe! %d %s %s" % (e.args[0], e.args[1], e.args[2]))
                 finally:

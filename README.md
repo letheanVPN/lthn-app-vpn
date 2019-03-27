@@ -2,7 +2,7 @@
 This repository contains code needed to setup and run an exit node on the Lethean Virtual Private Network (VPN) or to use Lethean service as client in CLI mode.
 If you are looking for GUI, please look [here](https://github.com/LetheanMovement/lethean-gui)
 
-**This is development version! If you are seeking for stable version, use** [latest release](https://github.com/LetheanMovement/lethean-vpn/releases/tag/v3.0.0.b2). 
+**This is development version! If you are seeking for stable version, use** [latest release](https://github.com/LetheanMovement/lethean-vpn/releases/tag/v3.0.0.b2).
 **The exit node is currently only supported on Linux.**
 
 # Design
@@ -108,9 +108,9 @@ Easiest way to create from scratch is probably to easy-deploy. Do not forget to 
 
 ```
 
-After easy-deploy, all config files will be stored in your local etc directory. 
+After easy-deploy, all config files will be stored in your local etc directory.
 You can edit sdp.json, dispatcher.ini and other things to respect your needs.
-To upload your local SDP, use 
+To upload your local SDP, use
 ```
  docker run --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
@@ -139,11 +139,11 @@ Connect to URI:
 See [here](CLIENT.md) for information about URI format
 
 ```
- docker run  -p 8186:8186 --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
+ docker run  -p 8180:8180 --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
 ```
 Test proxy:
 ```
-curl -x http://localhost:8186 -L https://lethean.io/
+curl -x http://localhost:8180 -L https://lethean.io/
 ```
 
 ### Recomended steps to use lethean daemon
@@ -154,7 +154,7 @@ by setting DAEMON_HOST to empty string. But you need to store blockchain outside
 DAEMON_HOST='' docker run \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=$(pwd)/bcdata,target=/home/lthn \
-  limosek/lethean-vpn:devel 
+  limosek/lethean-vpn:devel
 ```
 
 You can even use our docker image to run standalone daemon.
@@ -178,12 +178,12 @@ It can differ in countries over the world but you should follow at last some bas
 You should not allow user to connect to your own network until you are sure you want to. Please refer to [server](SERVER.md) documentation about access lists.
 
 ##### Do not allow bad users to do bad things #####
-This is probably most critical and complex part. Primary goal of entire Lethean project is privacy for users. But, of course, somebody can use privacy to harmful somebody other. 
+This is probably most critical and complex part. Primary goal of entire Lethean project is privacy for users. But, of course, somebody can use privacy to harmful somebody other.
 It is your responsibility as a provider to do maximum against these users. Our project is here for good users which needs privacy. We will implement many features how to help you with this filtering.
 
 ##### Filter traffic #####
 You can filter your traffic for specific sites. Please refer to [server](SERVER.md)
- 
+
 #### Q: As a provider, do I need audit log?
 If somebody does something harmful, you are responsible as an exit node. It is up to you.
 
@@ -191,24 +191,24 @@ If somebody does something harmful, you are responsible as an exit node. It is u
 Both client and server works perfectly on IPv4 network. We are working on full native IPv6 support but for now, see this matrix.
 
 | Client  | Provider | Web        | Support             |
-| ------- | -------- | -------    | ------------------- | 
+| ------- | -------- | -------    | ------------------- |
 | IPv4    | IPv4     | IPv4/IPv6  | Full                |
 | IPv6    | IPv6     | IPv4/IPv6  | No-session-tracking |
 
 ### Client
 
 #### Q: Will Lethean project make me anonymous? ####
-There are lot of next dependencies which you *MUST* follow to be anonymous. Refer to [tor](https://www.torproject.org/). I a short review, your browser, your OS and all other tools around can be used to identify you. 
-At least, use dedicated browser with anonymous mode enabled. 
+There are lot of next dependencies which you *MUST* follow to be anonymous. Refer to [tor](https://www.torproject.org/). I a short review, your browser, your OS and all other tools around can be used to identify you.
+At least, use dedicated browser with anonymous mode enabled.
 
 ## Directories
 
 ### client
  Everything related to client part. More information [here](CLIENT.md)
- 
+
 ### conf
  Example config files and configuration templates.
- 
+
 ### server
  Code related to VPN server part. More information [here](SERVER.md)
 
@@ -219,4 +219,4 @@ At least, use dedicated browser with anonymous mode enabled.
  Various scripts and tools
 
 
- 
+

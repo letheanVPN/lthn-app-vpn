@@ -38,12 +38,12 @@ class ServiceOvpn(Service):
 
         isWindowsWithAdminNeeded = False
         isWindowsWithInteractivePipeReady = False
+        interactiveServicePipeExists = False
         if config.CONFIG.isWindows():
             # are we an admin? if so, we can use bundled openvpn bin
             # if user is not an admin, we need either the openvpn-gui interactive service or admin rights
             if not ctypes.windll.shell32.IsUserAnAdmin():                
                 # use interactive service named pipe, if it exists
-                interactiveServicePipeExists = False
                 ERROR_FILE_NOT_FOUND = 2
                 ERROR_PIPE_BUSY = 231
                 handlePipe = None

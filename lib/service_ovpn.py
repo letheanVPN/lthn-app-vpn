@@ -109,7 +109,7 @@ class ServiceOvpn(Service):
             if config.Config.SUDO_BIN:
                 cmd = [config.Config.SUDO_BIN, config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]
             else:
-                if config.CONFIG.isWindows():
+                if isWindowsWithAdminNeeded:
                     cmd = ["\"" + config.Config.CAP.openvpnBin + "\"", "--config", "\"" + self.cfgfile + "\"", "--writepid", "\"" + self.pidfile + "\"", "--verb", verb]
                 else:
                     cmd = [config.Config.CAP.openvpnBin, "--config", self.cfgfile, "--writepid", self.pidfile, "--verb", verb]

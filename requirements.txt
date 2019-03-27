@@ -6,3 +6,4 @@ jsonpickle
 configargparse
 requests
 dnspython
+urllib3

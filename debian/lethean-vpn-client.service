@@ -1,12 +1,14 @@
 [Unit]
 Description=LTHN VPN client
-ConditionPathExists=/opt/lthn/bin/lthnvpnc
+ConditionPathExists=/usr/bin/lthnvpnc
+ConditionPathExists=/etc/lthn/dispatcher.ini
+ConditionPathExists=/etc/lthn/ca/index.txt
 After=syslog.target
 
 [Service]
-EnvironmentFile=/etc/default/lthnvpnc
+EnvironmentFile=/etc/default/lethean-vpn-client
 Type=simple
-ExecStart=/opt/lthn/bin/lthnvpnc $LTHNVPNC_ARGS
+ExecStart=/usr/bin/lthnvpnc $LTHNVPNC_ARGS ${LTHNVPNC_URI}
 ExecStopPost=rm -f /opt/lthn/var/run/lthnvpnc.pid
 User=lthn
 Restart=always

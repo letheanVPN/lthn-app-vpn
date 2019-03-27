@@ -96,10 +96,16 @@ class Config(object):
 
         if (os.getenv('LTHN_PREFIX')):
             type(self).PREFIX = os.getenv('LTHN_PREFIX')
-        type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"
-        type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
-        type(self).PIDFILE = type(self).PREFIX + "/var/run/lthnvpnd.pid"
-        type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
+        if type(self).PREFIX == "/":
+            type(self).CONFIGFILE = type(self).PREFIX + "/etc/lthn/dispatcher.ini"
+            type(self).SDPFILE = type(self).PREFIX + "/etc/lthn/sdp.json"
+            type(self).PIDFILE = type(self).PREFIX + "/var/run/lthn/lthnvpnd.pid"
+            type(self).AUTHIDSFILE = type(self).PREFIX + '/var/lib/lthn/authids.db'
+        else:
+            type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"
+            type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
+            type(self).PIDFILE = type(self).PREFIX + "/var/run/lthnvpnd.pid"
+            type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
 
         s = SDP()
         self.load(self.CONFIGFILE)

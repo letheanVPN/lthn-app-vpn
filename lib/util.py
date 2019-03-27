@@ -96,7 +96,10 @@ def commonArgs(p):
     p.add_argument('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
     p.add_argument('-p', '--pid',                     dest='p', metavar='PIDFILE', required=None, default=config.Config.PIDFILE, help='PID file')
     p.add_argument('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file.', default="none")
-    p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')        
+    if config.CONFIG.PREFIX=="/":
+        p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/lthn/audit.log')
+    else:
+        p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
     p.add_argument(      '--audit-log-json',          dest='aj', action='store_const', const='aj', metavar='Bool', help='Audit log to JSON', default=None)
     p.add_argument('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
     p.add_argument(       '--service-conf-dir',       dest='serviceDir', metavar='DIR', required=None, default=None, help='Use this directory to save config files for service. Use only for config generation per one service!')

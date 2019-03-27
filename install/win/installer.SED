@@ -33,9 +33,13 @@ UserQuietInstCmd=
 FILE0="Install_LTHN_Service.bat"
 FILE1="openvpn-install-2.4.7-I603.exe"
 FILE2="setup.bat"
+FILE3="vc_redist_x64.exe"
+FILE4="vc_redist_x86.exe"
 [SourceFiles]
 SourceFiles0=\
 [SourceFiles0]
 %FILE0%=
 %FILE1%=
 %FILE2%=
+%FILE3%=
+%FILE4%=

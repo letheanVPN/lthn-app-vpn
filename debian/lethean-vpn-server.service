@@ -7,12 +7,12 @@ After=syslog.target
 EnvironmentFile=/etc/default/lethean-vpn-server
 Type=simple
 ExecStart=/usr/bin/lthnvpnd $LTHNVPND_ARGS
-ExecStopPost=/bin/rm -f /opt/lthn/var/run/lthnvpnd.pid
+ExecStopPost=/bin/rm -f /var/run/lthn/lthnvpnd.pid
 User=lthn
 Restart=always
 StandardOutput=syslog
 StandardError=syslog
-PIDFile=/opt/lthn/var/run/lthnvpnd.pid
+PIDFile=/var/run/lthn/lthnvpnd.pid
 
 [Install]
 WantedBy=multi-user.target

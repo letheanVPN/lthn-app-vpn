@@ -92,7 +92,7 @@ class SDPList(object):
                 jf = open(config.CONFIG.SDPFILE, "r")
                 localSdp = jf.read()
                 localJson = json.loads(localSdp)
-                caf = open(config.CONFIG.PREFIX + "/etc/ca/certs/ca.cert.pem", "r")
+                caf = open(config.CONFIG.CFGDIR + "/ca/certs/ca.cert.pem", "r")
                 localCa = caf.read()
                 localJson['provider']['certificates'] = [ {
                   'cn': 'ignored',

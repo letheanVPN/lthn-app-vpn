@@ -12,7 +12,7 @@ import random
 class ServiceMgmt(Service):
     
     def run(self):
-        self.mgmtfile = config.Config.PREFIX + "/var/run/mgmt"
+        self.mgmtfile = config.Config.RUNDIR + "/mgmt"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
         self.mgmt = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

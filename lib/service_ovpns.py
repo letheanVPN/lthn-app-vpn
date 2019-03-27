@@ -76,7 +76,7 @@ class ServiceOvpnServer(ServiceOvpn):
         self.mgmtfile = self.dir + "/mgmt"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
-        tfile = config.Config.PREFIX + "/etc/openvpn_server.tmpl"
+        tfile = config.Config.CFGDIR + "/openvpn_server.tmpl"
         try:
             tf = open(tfile, "rb")
             tmpl = tf.read()
@@ -138,13 +138,13 @@ class ServiceOvpnServer(ServiceOvpn):
         out = tmpl.decode("utf-8").format(
                           port=self.cfg['port'],
                           proto=self.cfg['proto'].lower(),
-                          f_dh=config.Config.PREFIX + '/etc/dhparam.pem',
+                          f_dh=config.Config.CFGDIR + '/dhparam.pem',
                           tunnode=config.Config.PREFIX + '/dev/net/tun',
                           tundev=tundev,
                           f_ca=f_ca,
                           f_crt=f_crt,
                           f_key=f_key,
-                          unprivip=config.Config.PREFIX + "/bin/unpriv-ip.sh",
+                          unprivip=config.Config.BINDIR + "/unpriv-ip.sh",
                           workdir=self.dir,
                           user="nobody",
                           group="nogroup",

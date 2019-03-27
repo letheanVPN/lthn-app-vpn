@@ -97,15 +97,22 @@ class Config(object):
         if (os.getenv('LTHN_PREFIX')):
             type(self).PREFIX = os.getenv('LTHN_PREFIX')
         if type(self).PREFIX == "/":
-            type(self).CONFIGFILE = type(self).PREFIX + "/etc/lthn/dispatcher.ini"
-            type(self).SDPFILE = type(self).PREFIX + "/etc/lthn/sdp.json"
-            type(self).PIDFILE = type(self).PREFIX + "/var/run/lthn/lthnvpnd.pid"
-            type(self).AUTHIDSFILE = type(self).PREFIX + '/var/lib/lthn/authids.db'
+            type(self).VARDIR = type(self).PREFIX + "/var/lib/lthn"
+            type(self).RUNDIR = type(self).PREFIX + "/var/run/lthn"
+            type(self).CFGDIR = type(self).PREFIX + "/etc/lthn"
+            type(self).BINDIR = type(self).PREFIX + "/usr/bin"
+            type(self).LOGDIR = type(self).PREFIX + "/var/log/lthn"
         else:
-            type(self).CONFIGFILE = type(self).PREFIX + "/etc/dispatcher.ini"
-            type(self).SDPFILE = type(self).PREFIX + "/etc/sdp.json"
-            type(self).PIDFILE = type(self).PREFIX + "/var/run/lthnvpnd.pid"
-            type(self).AUTHIDSFILE = type(self).PREFIX + '/var/authids.db'
+            type(self).VARDIR = type(self).PREFIX + "/var"
+            type(self).RUNDIR = type(self).PREFIX + "/var/run"
+            type(self).CFGDIR = type(self).PREFIX + "/etc"
+            type(self).BINDIR = type(self).PREFIX + "/bin"
+            type(self).LOGDIR = type(self).PREFIX + "/var/log"
+            
+        type(self).CONFIGFILE = type(self).CFGDIR + "/dispatcher.ini"
+        type(self).SDPFILE = type(self).CFGDIR + "/sdp.json"
+        type(self).PIDFILE = type(self).RUNDIR + "/lthnvpnd.pid"
+        type(self).AUTHIDSFILE = type(self).VARDIR + '/authids.db'
 
         s = SDP()
         self.load(self.CONFIGFILE)

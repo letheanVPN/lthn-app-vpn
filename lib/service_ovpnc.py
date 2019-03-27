@@ -45,7 +45,7 @@ class ServiceOvpnClient(ServiceOvpn):
         if (not os.path.exists(self.dir)):
             os.mkdir(self.dir)
         os.chdir(self.dir)
-        tfile = config.Config.PREFIX + "/etc/openvpn_client.tmpl"
+        tfile = config.Config.CFGDIR + "/openvpn_client.tmpl"
         try:
             tf = open(tfile, "rb")
             tmpl = tf.read()

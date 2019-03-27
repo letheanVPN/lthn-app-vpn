@@ -104,7 +104,7 @@ class ServiceHaClient(ServiceHa):
         if (not os.path.exists(self.dir)):
             os.mkdir(self.dir)
         os.chdir(self.dir)
-        tfile = config.Config.PREFIX + "/etc/haproxy_client.tmpl"
+        tfile = config.Config.CFGDIR + "/haproxy_client.tmpl"
         try:
             tf = open(tfile, "rb")
             tmpl = tf.read()
@@ -119,9 +119,9 @@ class ServiceHaClient(ServiceHa):
         except (IOError, OSError):
             log.L.error("Cannot write ca file %s" % (cafile))
             sys.exit(1)
-        shutil.copy(config.Config.PREFIX + '/etc/ha_err_connect.http', self.dir)
-        shutil.copy(config.Config.PREFIX + '/etc/ha_err_badid.http', self.dir)
-        shutil.copy(config.Config.PREFIX + '/etc/ha_info.http', self.dir)
+        shutil.copy(config.Config.CFGDIR + '/ha_err_connect.http', self.dir)
+        shutil.copy(config.Config.CFGDIR + '/ha_err_badid.http', self.dir)
+        shutil.copy(config.Config.CFGDIR + '/ha_info.http', self.dir)
         if (config.Config.CAP.authId):
             paymentid = config.Config.CAP.authId
         else:
@@ -181,7 +181,7 @@ class ServiceHaClient(ServiceHa):
                                           port=self.cfg["port"],
                                           sport=self.cfg['status_port'],
                                           f_sock="127.0.0.1:"+ self.cfg["mgmtport"],
-                                          f_logsocket=config.Config.PREFIX + '/var/run/log local0',
+                                          f_logsocket=config.Config.RUNDIR + '/log local0',
                                           ctrldomain='^(local.lethean|_local_)$',
                                           ctrlpath='/status',
                                           mgmtid=self.cfg['uniqueid'],

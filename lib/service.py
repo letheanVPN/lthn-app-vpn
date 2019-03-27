@@ -40,7 +40,7 @@ class Service(object):
         if (config.CONFIG.CAP.serviceDir):
             self.dir = config.CONFIG.CAP.serviceDir
         else:
-            self.dir = config.Config.PREFIX + "/var/%s_%s/" % (self.type, self.id)
+            self.dir = config.Config.VARDIR + "/%s_%s/" % (self.type, self.id)
 
         self.cfgfile = str(pathlib.Path(self.dir + "/cfg"))
         self.pidfile = str(pathlib.Path(self.dir + "/pid"))

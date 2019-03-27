@@ -96,10 +96,7 @@ def commonArgs(p):
     p.add_argument('-s', '--sdp',                     metavar='SDPFILE', required=None, default=config.Config.SDPFILE, help='SDP file')
     p.add_argument('-p', '--pid',                     dest='p', metavar='PIDFILE', required=None, default=config.Config.PIDFILE, help='PID file')
     p.add_argument('-A', '--authids',                 dest='A', metavar='FILE', help='Authids db file.', default="none")
-    if config.CONFIG.PREFIX=="/":
-        p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/lthn/audit.log')
-    else:
-        p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.PREFIX + '/var/log/audit.log')
+    p.add_argument('-a', '--audit-log',               dest='a', metavar='FILE', help='Audit log file', default=config.CONFIG.LOGDIR + '/audit.log')
     p.add_argument(      '--audit-log-json',          dest='aj', action='store_const', const='aj', metavar='Bool', help='Audit log to JSON', default=None)
     p.add_argument('-lc' ,'--logging-conf',           dest='lc', metavar='FILE', help='Logging config file')
     p.add_argument(       '--service-conf-dir',       dest='serviceDir', metavar='DIR', required=None, default=None, help='Use this directory to save config files for service. Use only for config generation per one service!')
@@ -115,7 +112,7 @@ def commonArgs(p):
     p.add_argument(       '--provider-id',            dest='providerid', metavar='PROVIDERID', required=None, default='<NOID>', help='ProviderID (public ed25519 key)')
     p.add_argument(       '--ca',                     dest='providerCa', metavar="ca.crt", required=None, default='<NOCA>', help='Set certificate authority file')
     p.add_argument(       '--wallet-address',         dest='walletAddr', metavar='ADDRESS', required=None, default='<NOADDR>', help='Provider wallet address')
-    p.add_argument(       '--sdp-cache-dir',          dest='sdpCacheDir', metavar='DIR', required=None, default=config.CONFIG.PREFIX + '/var/', help='SDP cache dir')
+    p.add_argument(       '--sdp-cache-dir',          dest='sdpCacheDir', metavar='DIR', required=None, default=config.CONFIG.VARDIR, help='SDP cache dir')
     p.add_argument(       '--sdp-cache-expiry',       dest='sdpCacheExpiry', metavar='SECONDS', required=None, default=300, help='SDP cache expiry in seconds')
     p.add_argument(       '--compatibility',          dest='comp', metavar='Level', required=None, default="v3", choices=["v3.1", "v3"], help='Compatibility level for remote node. Use v3.1 or v3')
     p.add_argument(       '--vpnd-dns',               dest='vpndDns', metavar='IP', required=None, default=None, help='Use and offer local DNS server for VPN clients')

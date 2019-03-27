@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['client\\lthnvpnc.py'],
-             pathex=['lib', "'C:\\Python37\\Lib\\site-packages'", 'C:\\Users\\jorda\\Desktop\\intense-vpn'],
+             pathex=['lib', "'C:\\Python37\\Lib\\site-packages'", 'C:\\Users\\jorda\\Desktop\\intense-vpn', 'C:\\Windows\\system32\\downlevel'],
              binaries=[('bin/openvpn.exe', 'bin'), ('bin/tstunnel.exe', 'bin'), ('bin/haproxy.exe', 'bin')],
              datas=[('lib', 'lib'), ('conf', 'conf'), ('bin/cygwin1.dll', 'bin'), ('bin/cygcrypto-1.0.0.dll', 'bin'), ('bin/cygz.dll', 'bin'), ('bin/cygpcre-1.dll', 'bin'), ('bin/cygssl-1.0.0.dll', 'bin'), ('bin/liblzo2-2.dll', 'bin'), ('bin/libpkcs11-helper-1.dll', 'bin'), ('bin/libcrypto-1_1-x64.dll', 'bin'), ('bin/libssl-1_1-x64.dll', 'bin'), ('bin/libeay32.dll', 'bin')],
              hiddenimports=[],

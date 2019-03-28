@@ -71,12 +71,8 @@ class ServiceOvpn(Service):
     def mgmtEvent(self, msg):
         p = re.search("^>CLIENT:(CONNECT|REAUTH),(\d*),(\d*)", msg)
         if (p):
-            cid = p.group(1)
-            kid = p.group(2)
-            self.mgmtAuthClient(cid, kid)
-        if (p):
-            cid = p.group(1)
-            kid = p.group(2)
+            cid = p.group(2)
+            kid = p.group(3)
             self.mgmtAuthClient(cid, kid)
         p = re.search("^>PASSWORD:Need 'Auth' username/password", msg)
         if (p):

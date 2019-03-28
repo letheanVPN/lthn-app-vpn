@@ -86,7 +86,7 @@ class ServiceHaServer(ServiceHa):
                           timeout=self.cfg['timeout'],
                           ctimeout=self.cfg['connect_timeout'],
                           ttimeout=random.randint(500,2000),
-                          f_logsocket=config.Config.VARDIR + '/log local0',
+                          f_logsocket=config.Config.RUNDIR + '/log local0',
                           f_sock=self.mgmtfile,
                           s_port=self.cfg['status_port'],
                           max_conns_per_ip = int(self.cfg['max_conns_per_ip']),

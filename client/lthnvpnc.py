@@ -37,6 +37,7 @@ def parseUri(cfg, uri):
     p = re.search("(.*)@(.*)/(.*)", uri) # Uri with fqdn aaa@bb.cc/dd
     if (p):
         cfg.authId = p.group(1).upper()
+        cfg.uniqueId = "_random_"
         providerid = util.parseProvider(p.group(2))
         cfg.serviceId = p.group(3).upper()
         if not providerid:

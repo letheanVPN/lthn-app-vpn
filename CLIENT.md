@@ -12,7 +12,7 @@ make install
 ```
 
 ### Windows native
-We are working on install script for windows.
+We are working on install script for windows. 
 You can use cygwin to compile haproxy binaries. Use our easy-install-cygwin.cmd to easily install cygwin or use your own cygwin.
 
 #### haproxy
@@ -32,9 +32,9 @@ lthnvpnc list [fqdn] [fqdn] ...
 ```
 lthnvpnc connect URI
 # Legacy connect
-lthnvpnc connect 7b08c778af3baaa32185d7cc804b0aaaaac05c9149613dc149dff5f30c8cd989/1a
+lthnvpnc connect 7b08c778af3baaa32185d7cc804b0aaaaac05c9149613dc149dff5f30c8cd989/1a 
 # fqdn connect (uses DNS TXT record)
-lthnvpnc connect some.whe.re/1a
+lthnvpnc connect some.whe.re/1a 
 ```
 
 ## Payments
@@ -62,7 +62,7 @@ authid@provider/service
  * service can be serviceid or service name
  * authid can be ommited so it will be auto-generated. Do not forget that first two characters of authid must be same as serviceid.
 
-If provider is fqdn and not providerid, client will use [DNS](DNSSDP.md) to get info about SDP and provider.
+If provider is fqdn and not providerid, client will use [DNS](DNSSDP.md) to get info about SDP and provider. 
 
 ### More complex URI (provider chaining)
 
@@ -221,7 +221,7 @@ lthnvpnc connect providerid:serviceid --https-proxy-host=host --https-proxy-port
 
 ### Chaining
 This example will connect to provider1 and after connection, it uses first provider as transport proxy for second provider.
-Your connection will be more expensive but you will get more privacy here. Happy chaining!
+Your connection will be more expensive but you will get more privacy here. Happy chaining! 
 ```
 lthnvpnc --fork-on-connect connect provider1:serviceid1 --proxy-port 7777 && \
 lthnvpnc connect provider2:serviceid2 --https-proxy-host 127.0.0.1 --https-proxy-port 7777

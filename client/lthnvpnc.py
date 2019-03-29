@@ -37,6 +37,7 @@ def parseUri(cfg, uri):
     p = re.search("(.*)@(.*)/(.*)", uri) # Uri with fqdn aaa@bb.cc/dd
     if (p):
         cfg.authId = p.group(1).upper()
+        cfg.uniqueId = "_random_"
         providerid = util.parseProvider(p.group(2))
         cfg.serviceId = p.group(3).upper()
         if not providerid:
@@ -88,10 +89,10 @@ def loadService(pid, sid):
         else:
             log.L.error("Provider id %s does not exists!" % (pid))
             return(None)
-
+    
 # Starting here
 def main(argv):
-    config.CONFIG = config.Config("dummy")
+    config.CONFIG = config.Config("dummy")    
     p = configargparse.getArgumentParser(ignore_unknown_config_file_keys=True, fromfile_prefix_chars='@')
     util.commonArgs(p)
     p.add_argument('--authid',                 dest='authId', metavar='AUTHID', required=None, default=None, help='Authentication ID. Use "random" to generate.')
@@ -111,9 +112,9 @@ def main(argv):
     p.add_argument('--proxyc-ssl-noverify',    dest='proxySSLNoVerify', action='store_const', const='proxySSLNoVerify', metavar='Bool', required=None, default=None, help='Do not verify SSL certificate of remote proxy. Dangerous, use only if you know what you are doing!')
     p.add_argument('--vpnc-block-route',       dest='vpncBlockRoute', action='store_const', const='vpncBlockRoute', metavar='Bool', required=None, default=None, help='Filter router changes from server')
     p.add_argument('--vpnc-block-dns',         dest='vpncBlockDns', action='store_const', const='vpncBlockDns', metavar='Bool', required=None, default=None, help='Filter router DNS server from server')
-
+          
     p.add('cmd', metavar='{list|connect|help}', choices=["connect", "list","help"], help='Command to execute.')
-
+        
     (cfg, args) = p.parse_known_args()
     util.parseCommonArgs(p, cfg, 'lthnvpnc')
     config.Config.CAP = cfg
@@ -121,7 +122,7 @@ def main(argv):
     cmd = cfg.cmd
     cfg.O = None
     cfg.L = None
-
+    
     if (cmd == "help"):
         util.helpmsg(p)
         sys.exit()
@@ -130,7 +131,7 @@ def main(argv):
         if len(args)>0:
             for uri in args:
                 cfg = parseUri(cfg, uri)
-
+            
     elif (cmd == "connect"):
         cfg.O = True
         if len(args)==0:
@@ -144,12 +145,12 @@ def main(argv):
         cfg = parseUri(cfg, uri)
         if not cfg:
             sys.exit(1)
-
+            
     if cfg.authId == "_random_":
         cfg.authId = generateAuthId(cfg.serviceId)
     if cfg.uniqueId == "_random_":
         cfg.uniqueId = generateMgmtId()
-
+    
     config.Config.CAP = cfg
 
     # Initialise services
@@ -157,7 +158,7 @@ def main(argv):
     log.A.audit(log.A.START, log.A.SERVICE, "lthnvpnc")
     sdps.SDPS = sdps.SDPList()
     sdps.SDPS.get()
-
+    
     if (cfg.O):
         if (loadService(cfg.providerid, cfg.serviceId)):
             services.SERVICES.syslog.run()
@@ -169,8 +170,8 @@ def main(argv):
             sdp = sdps.SDPS.getProviderSDP(cfg.providerid)
             atexit.register(sid.stop)
             sid.run()
-            sid.connect(sdp)
-
+            sid.connect(sdp)   
+                      
     elif (cfg.L):
         print("SDP,ProviderId/ServiceId,serviceType,ProviderName,ServiceName")
         for pid in sdps.SDPS.list():
@@ -187,7 +188,7 @@ def main(argv):
     else:
         log.L.error("You must specify command (list|connect|show)")
         sys.exit(1)
-
+            
 if __name__ == "__main__":
     main(sys.argv[1:])
-
+    

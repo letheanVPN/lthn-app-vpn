@@ -234,8 +234,13 @@ class Service(object):
                 filterByPid = "PID eq %s" % pid
                 pidStr = str(pid)
                 cmd = ["cmd", "/c", "tasklist", "/FI", filterByPid, "|", "findstr",  pidStr]
-                result = subprocess.call(cmd, stdout=subprocess.DEVNULL)
-                return (result == 0)
+                try:
+                    result = subprocess.check_output(cmd)
+                    return (result == 0)
+                except subprocess.CalledProcessError:
+                    return False
+                except OSError:
+                    return False
             else:
                 return False
         else:

@@ -1,4 +1,12 @@
 @echo off
+:: Delete OpenVPN-GUI Startup key (done as local user)
+set StartupKeyName="HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run"
+REG.exe QUERY %StartupKeyName% /v "OPENVPN-GUI" > NUL
+if %ERRORLEVEL% NEQ 1 (
+	REG.exe DELETE "%StartupKeyName%" /v "OPENVPN-GUI" /F
+	echo OpenVPN startup key deleted.
+)
+
 :: Obtain elevated command prompt
 set "params=%*"
 cd /d "%~dp0" && ( if exist "%temp%\getadmin.vbs" del "%temp%\getadmin.vbs" ) && fsutil dirty query %systemdrive% 1>nul 2>nul || (  echo Set UAC = CreateObject^("Shell.Application"^) : UAC.ShellExecute "cmd.exe", "/k cd ""%~sdp0"" && %~s0 %USERPROFILE% %params%", "", "runas", 1 >> "%temp%\getadmin.vbs" && "%temp%\getadmin.vbs" && echo Requesting admin prompt. You may close this window. && exit /B )

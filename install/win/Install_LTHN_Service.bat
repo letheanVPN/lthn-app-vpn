@@ -39,8 +39,9 @@ echo New registry keys:
 REG.exe QUERY "%KeyNameNew%"
 
 :: Create service
-sc query "OpenVPNServiceInteractive$%SvcName%" | find "does not exist" > NUL
-if %ERRORLEVEL% EQU 0 (
+sc query "OpenVPNServiceInteractive$%SvcName%" > NUL
+:: 1060 = service not installed
+if %ERRORLEVEL% EQU 1060 (
 
 	echo Creating service "OpenVPNServiceInteractive$%SvcName%"
 	sc create "OpenVPNServiceInteractive$%SvcName%" ^

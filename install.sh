@@ -7,10 +7,10 @@ if [ -z "$CLIENT" ] && [ -z "$SERVER" ]; then
     CLIENT=y
 fi
 
-if [ "$USER" = "root" ]; then
+if [ "`whoami`" = "root" ]; then
     echo "Do not run install as root! It will invoke sudo automatically. Exiting!"
     exit 2
-fi 
+fi
 
 if [ -z "$LTHN_PREFIX" ]; then
     echo "You must configure intense-vpn!"
@@ -71,7 +71,7 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$LTHN_PREFIX/lib/
 
 # Copy dist configs
 (cd conf; for f in *tmpl *ips *doms *http; do
-    sudo install -C -o "$LTHN_USER" -g "$LTHN_GROUP" -m 440 ./$f $INSTALL_PREFIX/$LTHN_PREFIX/etc/ 
+    sudo install -C -o "$LTHN_USER" -g "$LTHN_GROUP" -m 440 ./$f $INSTALL_PREFIX/$LTHN_PREFIX/etc/
 done)
 
 if [ -n "$SERVER" ]; then
@@ -110,7 +110,7 @@ fi
 if [ -n "$SERVER" ]; then
   if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/sdp.json ]; then
     echo "ERROR: No SDP config file found. You can use lvmgmt --generate-sdp to create it for you."
-    ERRORS=true 
+    ERRORS=true
   fi
 fi
 
@@ -121,7 +121,7 @@ if [ -n "$SERVER" ]; then
             cp -R build/ca/* $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/
         else
             echo "CA directory $INSTALL_PREFIX/$LTHN_PREFIX/etc/ca/ not prepared! You should generate by configure or use your own CA!"
-            ERRORS=true 
+            ERRORS=true
         fi
   fi
 fi

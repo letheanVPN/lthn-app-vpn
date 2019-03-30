@@ -43,7 +43,7 @@ wget http://download.lethean.io/node/easy-deploy-nodepi3.sh
 
 chmod +x easy-deploy-nodepi3.sh
 
-BRANCH=develop ./easy-deploy-nodepi3.sh
+BRANCH=master ./easy-deploy-nodepi3.sh
 
 
 Edit dispatcher.ini and sdp.json at /opt/lthn/etc
@@ -54,12 +54,6 @@ Server instructions:
 https://github.com/LetheanMovement/lethean-vpn/blob/master/SERVER.md
 
 Pay 10 LTHN and upload your sdp.json
-
-./lvmgmt --upload-sdp --sdp-server-uri https://sdp.staging.cloud.lethean.io/v1 
-
-(Till v3.1 go out)
-
-then you van simply :
  
 ./lvmgmt --upload-sdp
 

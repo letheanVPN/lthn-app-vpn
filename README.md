@@ -139,11 +139,11 @@ Connect to URI:
 See [here](CLIENT.md) for information about URI format
 
 ```
- docker run  -p 8186:8186 --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
+ docker run  -p 8180:8180 --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
 ```
 Test proxy:
 ```
-curl -x http://localhost:8186 -L https://lethean.io/
+curl -x http://localhost:8180 -L https://lethean.io/
 ```
 
 ### Recomended steps to use lethean daemon

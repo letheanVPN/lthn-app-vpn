@@ -48,7 +48,13 @@ class Config(object):
     
     def __init__(self, action="read", services=None):
         if self.isWindows():
-            prefix = str(pathlib.Path(os.getenv('HOMEDRIVE') + os.getenv('HOMEPATH') + '/lthn'))
+            homeDir = ''
+            if (os.getenv('USERPROFILE')):
+                homeDir = os.getenv('USERPROFILE')
+            elif (os.getenv('HOMEDRIVE') and os.getenv('HOMEPATH')):
+                homeDir = os.getenv('HOMEDRIVE') + os.getenv('HOMEPATH')
+
+            prefix = str(pathlib.Path(homeDir + '/lthn'))
             type(self).PREFIX = prefix
             if getattr(sys, 'frozen', False):
                 binprefix = str(pathlib.Path(sys._MEIPASS + "/bin"))

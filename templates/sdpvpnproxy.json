@@ -8,11 +8,11 @@
             "id": 0
          }
       ],
-      "id": "befcf2ed5612323rgty650747eb7708e0541326342d887784aba2dfa513",
+      "id": "YOURPROVIDERID",
       "name": "VPN PROXY Template",
       "nodeType": "commercial",
       "terms": "See https://yoursite.com",
-      "wallet": "iz5whrQx45AYP1QRW4ectsdf5235gJe4RNsLUUS34kBzqZAkjCKaeasdr43r5P8uXGuMLay3HYRv4VpKex1jaGJdxLC"
+      "wallet": "YOURWALLET"
    },
    "services": [
       {

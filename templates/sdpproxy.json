@@ -8,11 +8,11 @@
             "id": 0
          }
       ],
-      "id": "7b08c778af3b289123444d7cc804b0cf399c05c9149613dc149dff5f30c8cd989",
+      "id": "YOURPROVIDERID",
       "name": "LTHN Proxy Template",
       "nodeType": "residential",
       "terms": "Only Proxy Template",
-      "wallet": "iz4Wvd64hya8zdsdsterGE8aXaxMKNyWbG54nnARZ8gM85p9H4YZbpnA4oUCZKP5fx1aFSGNykd7ZXQUPg2FvsPmh15VSBetjS"
+      "wallet": "YOURWALLET"
    },
    "services": [
       {

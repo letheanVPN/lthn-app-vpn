@@ -108,8 +108,8 @@ class AuthId(object):
             else:
                 return(True)
         elif self.getTimeSpent()>int(s.json["firstPrePaidMinutes"]) and self.isActivated():
-            if self.getTimeLeft()<int(s.json["subsequentPrePaidMinutes"]):
-                log.L.info("Not enough credit for authid %s and service %s (subsequentPrePaidMinutes=%s, balance=%s), need at least %s" % (self.getId(), self.getServiceId(), int(s.json["firstPrePaidMinutes"]), self.getBalance(), int(s.json["subsequentPrePaidMinutes"]) * s.getCost()))
+            if self.getTimeLeft() <= 0:
+                log.L.info("Not enough credit for authid %s and service %s (subsequentPrePaidMinutes=%s, balance=%s), need at least 0" % (self.getId(), self.getServiceId(), int(s.json["firstPrePaidMinutes"]), self.getBalance()))
                 return(None)
             else:
                 if self.getConfirmations()<int(s.json["subsequentVerificationsNeeded"]):

@@ -13,7 +13,7 @@ fi
 [ -z "$BRANCH" ] && BRANCH=master
 [ -z "$PROVIDERID" ] && PROVIDERID=""
 [ -z "$PROVIDERKEY" ] && PROVIDERKEY=""
-[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://download.lethean.io/lethean-cli-linux-arm-v3.1.tar.bz2"
+[ -z "$DAEMON_BIN_URL" ] && DAEMON_BIN_URL="https://download.lethean.io/cli/lethean-cli-linux-arm-v3.1.tar.bz2"
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="sync.lethean.io"
 [ -z "$WALLETFILE" ] && WALLETFILE="$LTHNPREFIX/etc/vpn"
 [ -z "$WALLETPASS" ] && WALLETPASS="abcd1234"

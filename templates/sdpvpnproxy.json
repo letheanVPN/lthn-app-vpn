@@ -1,0 +1,123 @@
+{
+   "protocolVersion": 1,
+   "provider": {
+      "certificates": [
+         {
+            "cn": "ignored",
+            "content": "-----BEGIN CERTIFICATE-----MIIFGDCCAwCgAwIBAgIJAMuvSrsjRVLHMA0GCSqGSIb3DQEBCwUAMBkxFzAVBgNVBAMMDklUTlNFYXN5RGVwbG95MB4XDTE4MTAwMjEyMTIzMFoXDTM4MDkyNzEyMTIzMFowGTEXMBUGA1UEAwwOSVROU0Vhc3lEZXBsb3kwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCaEOpMnw3GT0qnD2ExngabfZkbir1AgXkiP04usY6HpgAJlm43+Dt3uzRz5OObkdUz9eeeHYgeEwtejRLhM4ikflkBpmdpIPzxRmRrdHLGrApkNfeLudjzaSZIZjoxxZx4AvmQ8yN1vn7q6Z8Fwb7J7cwcz/WYXWuCf/f89Ja1NiBiJ0cS0yYutWeBkJnoT2IB7hb6ls9RMFPZ1yz9T2g34dogqpSifARfen7uOP1v4kwA5w1GaFZ4zXTOL0Wd8PPXLJNBlR7EydRFfyDq3vhNYcDKhU8vd42n/EvJ7VSujURUyRJCI/5/QtIf1MCLeOtIr36T+2BPdvjl5T9PRkokiWEp438Dql0gudnX2WZw1v7Nkxy24lZ0cXuoFC+Vg5VOxN8mWn3O+StuiSLdilZWzr/ee0p2JZiuTm4XsIG/NoZgjd1lXADzQS9ifgeiay+XnGeL4LFtELi4huzVk4VT8+2boda4WkP5JW+KK/E3Co95nfuiY8nTbYEAHqj35fKpFpLHTUK18T2ZdBoKIAibVosSXM3Z4YNzO87XdLB6LAZGK6fWGxyUly8EKaGJtGQAoZhsrRIeDOEfc99VpNx3pDTRaFnZ17jvtIPWw+uKWBeZsDUgz9pwl5lH6UkjTzTaJZYvlxmU+1NX06ie/hvU5C8Eu73IpONTTDlF61jtdQIDAQABo2MwYTAdBgNVHQ4EFgQUxV2ufYadVyqwxcQ/gLKk8Jld3dkwHwYDVR0jBBgwFoAUxV2ufYadVyqwxcQ/gLKk8Jld3dkwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAYYwDQYJKoZIhvcNAQELBQADggIBACc58Ce8Hsl/P8R4qdh/uJEBrK3chtvW0cUJsm9bTe7dnR13uPDFmwC63bzswQnEuZMRoZIEdJE+2XTDpVM6CwhIShTzZhtRvrMnir/bH22ZhxvXpLpIh57Lv4X7y+9/DjnlriVEBRs/3ljChS8edJwe/qEbOkjyVtH5ek7c0ALpKrILRi4KP2kVUpBqdAo4bG+YEPG4Qo80l27SdlHzrAWLo4CD7w9vyBXEtYAfCWImInJILuI7Ens4OvO6G/Qsmp+62caM88aLjk/oF75aSkNcl5IbAkwOhTYEk0J+ZjaNVUw60PHAcCt4f4ncI0uwkFYri2LStzHShh3WIYifqtegYaWYuNgiBCMcdmIFojml+3F9uD8xbwQtRRl1JnuswiLS7RA8LjVM5MtYTx1jR4YGscEeFzJp6AdiCrxtQ5cWtNL7a4d9EiA8PCLS85BLIxz2ozrdNlMpBuCDf8Xn/pbGGT+hGEvELXaLwg5XBgthzVWtmz864L+GjOpd6Z7jia4Jk0gCasyUO0RWx/0zCu/ys/o7PeDATBuo6YzY1+PO+QZWydGOsxhdCkFiGfP5LbjvmJqgwCvPzBvA6hQFrWfRPkuDmbk4wuwt1FwsvvYbOZM5oOLVd5Ra79rJf0cgNhIS1ozQ5GlStbJhjgW6n/pApjg7kECAHg0FtoedoUvT-----END CERTIFICATE-----",
+            "id": 0
+         }
+      ],
+      "id": "YOURPROVIDERID",
+      "name": "VPN PROXY Template",
+      "nodeType": "commercial",
+      "terms": "See https://yoursite.com",
+      "wallet": "YOURWALLET"
+   },
+   "services": [
+      {
+         "allowRefunds": false,
+         "certificates": [
+            {
+               "id": 0
+            }
+         ],
+         "cost": "0.05000000",
+         "disable": false,
+         "downloadSpeed": 100000000,
+         "firstPrePaidMinutes": 30,
+         "firstVerificationsNeeded": 0,
+         "id": "1A",
+         "name": "PROXY1",
+         "proxy": [
+            {
+               "endpoint": "test.lethean.io",
+               "port": "8180/TCP"
+            }
+         ],
+         "subsequentPrePaidMinutes": 30,
+         "subsequentVerificationsNeeded": 1,
+         "type": "proxy",
+         "uploadSpeed": 100000000,
+         "vpn": []
+      },
+      {
+         "allowRefunds": false,
+         "certificates": [
+            {
+               "id": 0
+            }
+         ],
+         "cost": "0.05000000",
+         "disable": false,
+         "downloadSpeed": 100000000,
+         "firstPrePaidMinutes": 30,
+         "firstVerificationsNeeded": 0,
+         "id": "1B",
+         "name": "PROXY2",
+         "proxy": [
+            {
+               "endpoint": "test.lethean.io",
+               "port": "8080/TCP"
+            }
+         ],
+         "subsequentPrePaidMinutes": 30,
+         "subsequentVerificationsNeeded": 1,
+         "type": "proxy",
+         "uploadSpeed": 100000000,
+         "vpn": []
+      },
+      {
+         "allowRefunds": false,
+         "certificates": [
+            {
+               "id": 0
+            }
+         ],
+         "cost": "0.05000000",
+         "disable": false,
+         "downloadSpeed": 100000000,
+         "firstPrePaidMinutes": 30,
+         "firstVerificationsNeeded": 0,
+         "id": "1C",
+         "name": "PROXY3",
+         "proxy": [
+            {
+               "endpoint": "test.lethean.io",
+               "port": "8880/TCP"
+            }
+         ],
+         "subsequentPrePaidMinutes": 30,
+         "subsequentVerificationsNeeded": 1,
+         "type": "proxy",
+         "uploadSpeed": 100000000,
+         "vpn": []
+      },
+      {
+         "allowRefunds": false,
+         "certificates": [
+            {
+               "id": 0
+            }
+         ],
+         "cost": "0.10000000",
+         "disable": false,
+         "downloadSpeed": 100000000,
+         "firstPrePaidMinutes": 30,
+         "firstVerificationsNeeded": 0,
+         "id": "1D",
+         "name": "VPN",
+         "vpn": [
+            {
+               "endpoint": "test.lethean.io",
+               "port": "20001/UDP"
+            }
+         ],
+         "subsequentPrePaidMinutes": 30,
+         "subsequentVerificationsNeeded": 1,
+         "type": "vpn",
+         "uploadSpeed": 100000000,
+         "proxy": []
+      }
+   ]
+}

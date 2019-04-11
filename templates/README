@@ -1,0 +1,15 @@
+### VPN Node Configuration Tempates README
+
+### Templates for Proxy Only or Mixed instalation VPN / PROXY
+### Ajust your installed dispatcher.ini and sdp.json according you needs.
+
+## Template for Proxy Only
+
+* dispatcherproxy.ini 
+* sdpproxy.json
+
+## Template for VPN and Proxy
+
+* dispatchervpnproxy.ini 
+* sdpvpnproxy.json
+

@@ -172,7 +172,7 @@ optional arguments:
   --https-proxy-port PORT
                         Use this https proxy port. (default: 3128)
   --proxy-port PORT     Use this port as local bind port for proxy. (default:
-                        8186)
+                        8180)
   --proxy-bind IP       Use this host as local bind for proxy. (default:
                         127.0.0.1)
   --connect-timeout S   Timeout for connect to service. (default: 30)

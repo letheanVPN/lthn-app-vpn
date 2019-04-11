@@ -99,6 +99,11 @@ You may need to invoke lthnvpnd using `python3` if you receive dependency errors
 python3 /opt/lthn/bin/lthnvpnd ...
 ```
 
+### Configuration Templates
+### You can use one of the templates for proxy, vpn or mixed instalations.
+** Just adapt according your node setup.
+** Templates avaliable here https://github.com/LetheanMovement/lethean-vpn/tree/feature/luis/pi3v4/templates
+
 ### Private configuration - dispatcher.ini
 */opt/lthn/etc/dispatcher.ini* is a local file containing private information needed to run the  dispatcher. Do not upload it anywhere or share it with anyone as it contains private keys. You should also create a backup of this file.
 By default, *make install* will generate a default file for you but you need to configure it to suit your needs.

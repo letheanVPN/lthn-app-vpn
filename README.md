@@ -16,7 +16,7 @@ Client will show only instructions what to pay. We do not want to have any conne
 More information about client mode is [here](CLIENT.md)
 
 ## Server mode
-As a server, dispatcher helps you to create, publish and run your service as a provider. More info about server mode is [here](SERVER.md)
+As a server, dispatcher helps you to create, publish and run your service as a provider. More info about server mode is [here](SERVER.md) or installation on Raspberry PI [here](PI3SERVER)
 
 ## Docker
 We have prepared docker images for you. It is probably easiest way how to run client or exit node.

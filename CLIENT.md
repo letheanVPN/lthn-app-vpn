@@ -6,7 +6,7 @@ If you are searching GUI client, please refer [here](https://github.com/LetheanM
 Use docker or native way. Docker info [here](README.md)
 
 ### Linux native
-## Requirements
+#### Requirements
  * python3
  * python3-pip
  * haproxy
@@ -20,7 +20,7 @@ On debian, use standard packager:
 sudo apt-get install python3 python3-pip haproxy openvpn
 
 ```
-## Configure and install
+#### Configure and install
 ```bash
 git clone https://github.com/LetheanMovement/lethean-vpn.git
 cd lethean-vpn

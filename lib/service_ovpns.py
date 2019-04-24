@@ -89,9 +89,9 @@ class ServiceOvpnServer(ServiceOvpn):
         with open (self.cfg["crtkey"], "r") as f:
             f_key = "".join(f.readlines())
         if (config.Config.CAP.vpndDns):
-            dns = "dhcp-option dns " + config.Config.CAP.vpndDns
+            dns = '"dhcp-option DNS ' + config.Config.CAP.vpndDns + '"'
         elif ('dns' in self.cfg):
-            dns = "dhcp-option dns " + self.cfg['dns']
+            dns = '"dhcp-option DNS ' + self.cfg['dns'] + '"'
         else:
             dns = ""
         if "tundev" in self.cfg:

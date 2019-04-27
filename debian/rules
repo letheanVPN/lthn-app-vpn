@@ -4,25 +4,9 @@ DH_VERBOSE = 1
 %:
 	dh $@ --with=systemd
 
-configargparse-deb:
-	git clone https://github.com/bw2/ConfigArgParse
-	echo configargparse >ConfigArgParse/requirements.txt
-	cd ConfigArgParse && py2deb -r $(PWD)/../.. -- -r requirements.txt
-	touch configargparse-deb
-
-ed25519-deb:
-	git clone https://github.com/warner/python-ed25519
-	echo ed25519 >python-ed25519/requirements.txt
-	cd python-ed25519 && py2deb -r $(PWD)/../.. -- -r requirements.txt
-	touch ed25519-deb
-
-syslogmp-deb:
-	git clone https://github.com/homeworkprod/syslogmp.git
-	echo syslogmp >syslogmp/requirements.txt
-	cd syslogmp && py2deb -r $(PWD)/../.. -- -r requirements.txt
-	touch syslogmp-deb
-
 override_dh_auto_install:
+	chmod +x ./configure.sh
+	./configure.sh --client
 	make install INSTALL_PREFIX=$(PWD)/debian/lethean-vpn NOSUDO=1 LTHN_USER=lthn LTHN_GROUP=lthn LTHN_PREFIX=/
 	for b in $(PWD)/debian/lethean-vpn/usr/bin/*; do \
 	  sed -i 's^#!/usr/bin/python^#!/usr/bin/python3^' $$b; \

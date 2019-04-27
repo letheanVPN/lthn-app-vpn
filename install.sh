@@ -142,7 +142,7 @@ else
 fi
 
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
-  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/etc/dispatcher.ini ]; then
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/dispatcher.ini ]; then
     echo "ERROR: No dispatcher config file found. You have to create $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/dispatcher.ini"
     echo "Use conf/dispatcher_example.ini as example"
     ERRORS=true
@@ -157,26 +157,26 @@ if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
 fi
 
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
-  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNV_PREFIX/ca/index.txt ]; then
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/ca/index.txt ]; then
         if [ -f ./build/ca/index.txt ]; then
-            install_dir $LTHNV_PREFIX/ca
-            cp -R build/ca/* $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNV_PREFIX/ca/
+            install_dir $LTHNC_PREFIX/ca
+            cp -R build/ca/* $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/ca/
         else
-            echo "CA directory $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNV_PREFIX/ca/ not prepared! You should generate by configure or use your own CA!"
+            echo "CA directory $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/ca/ not prepared! You should generate by configure or use your own CA!"
             ERRORS=true 
         fi
   fi
 fi
 
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
-  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNV_PREFIX/dhparam.pem ] && [ -f build/dhparam.pem ]; then
-    install_lib build/dhparam.pem $LTHNV_PREFIX/
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/dhparam.pem ] && [ -f build/dhparam.pem ]; then
+    install_lib build/dhparam.pem $LTHNC_PREFIX/
   fi
 fi
 
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
-  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNV_PREFIX/openvpn.tlsauth ] && [ -n "$OPENVPN_BIN" ] ; then
-    "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNV_PREFIX/openvpn.tlsauth
+  if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/openvpn.tlsauth ] && [ -n "$OPENVPN_BIN" ] ; then
+    "$OPENVPN_BIN" --genkey --secret $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/openvpn.tlsauth
   fi
 fi
 

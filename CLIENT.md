@@ -6,7 +6,24 @@ If you are searching GUI client, please refer [here](https://github.com/LetheanM
 Use docker or native way. Docker info [here](README.md)
 
 ### Linux native
+#### Requirements
+ * python3
+ * python3-pip
+ * haproxy
+ * openvpn (optional)
+ * sudo installed and configured
+
+There are more required python classes but they will be installed automatically during install.
+
+On debian, use standard packager:
+```bash
+sudo apt-get install python3 python3-pip haproxy openvpn
 ```
+#### Configure and install
+```bash
+git clone https://github.com/LetheanMovement/lethean-vpn.git
+cd lethean-vpn
+pip3 install -r requirements.txt
 ./configure.sh --client
 make install
 ```
@@ -172,7 +189,7 @@ optional arguments:
   --https-proxy-port PORT
                         Use this https proxy port. (default: 3128)
   --proxy-port PORT     Use this port as local bind port for proxy. (default:
-                        8186)
+                        8180)
   --proxy-bind IP       Use this host as local bind for proxy. (default:
                         127.0.0.1)
   --connect-timeout S   Timeout for connect to service. (default: 30)

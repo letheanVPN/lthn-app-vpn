@@ -69,10 +69,10 @@ class ServiceOvpn(Service):
         return(super().mgmtConnect("127.0.0.1", self.cfg["mgmtport"]))
         
     def mgmtEvent(self, msg):
-        p = re.search("^>CLIENT:CONNECT,(\d*),(\d*)", msg)
+        p = re.search("^>CLIENT:(CONNECT|REAUTH),(\d*),(\d*)", msg)
         if (p):
-            cid = p.group(1)
-            kid = p.group(2)
+            cid = p.group(2)
+            kid = p.group(3)
             self.mgmtAuthClient(cid, kid)
         p = re.search("^>PASSWORD:Need 'Auth' username/password", msg)
         if (p):

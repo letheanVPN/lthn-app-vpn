@@ -12,7 +12,7 @@ LTHN_PREFIX=/opt/lthn/
 
 # General usage help
 usage() {
-   echo 
+   echo
    echo "To configure server:"
    echo $0 "--server [--openvpn-bin bin] [--openssl-bin bin] [--haproxy-bin bin] [--python-bin bin] [--pip-bin bin] [--runas-user user] [--runas-group group] [--prefix prefix] [--with-capass pass] [--with-cn commonname] [--with-wallet-address address] [--with-wallet-rpc-pass pass] [--with-wallet-rpc-user user] [--with-wallet-rpc-uri uri] [--generate-ca] [--generate-dh] [--install-service] [--generate-ini] [--generate-providerid] [--with-providerid id --with-providerkey key]"
    echo
@@ -61,8 +61,8 @@ defaults() {
     findcmd pip3 PIP_BIN optional
     findcmd sudo SUDO_BIN optional
 
-    [ -z "$LTHN_USER" ] && LTHN_USER=$USER
-    [ -z "$LTHN_GROUP" ] && LTHN_GROUP=$USER
+    [ -z "$LTHN_USER" ] && LTHN_USER="`whoami`"
+    [ -z "$LTHN_GROUP" ] && LTHN_GROUP="$LTHN_USER"
     wallet_address="izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     wallet_rpc_uri=http://127.0.0.1:14660/json_rpc
     wallet_rpc_user=dispatcher
@@ -288,9 +288,7 @@ while [[ $# -gt 0 ]]; do
     --easy)
         cert_pass="1234"
         cert_cn="LTHNEasyDeploy"
-        if [ -n "$USER" ]; then
-            LTHN_USER="$USER"
-        fi
+        LTHN_USER="`whoami`"
         install_service=1
         generate_providerid=1
         generate_ca=1
@@ -370,7 +368,7 @@ fi
 mkdir -p build/etc
 
 if [ -n "$generate_dh" ]; then
-    if ! [ -f  build/etc/dhparam.pem ]; then 
+    if ! [ -f  build/etc/dhparam.pem ]; then
       "$OPENSSL_BIN" dhparam -out build/etc/dhparam.pem 2048
     fi
 fi
@@ -399,12 +397,12 @@ if [ -n "$generate_ini" ]; then
         -e "s#{wallet_rpc_pass}#$wallet_rpc_pass#g" \
         -e "s#{wallet_address}#$wallet_address#g" \
         -e "s#{wallet_rpc_uri}#$wallet_rpc_uri#g" \
-      <conf/dispatcher.ini.tmpl >build/etc/dispatcher.ini 
+      <conf/dispatcher.ini.tmpl >build/etc/dispatcher.ini
     if [ -n "$cfg_wallet" ]; then
-       sed -i -e "s#^;wallet-address#wallet-address#g" build/etc/dispatcher.ini 
-       sed -i -e "s#^;wallet-rpc-uri#wallet-rpc-uri#g" build/etc/dispatcher.ini 
-       sed -i -e "s#^;wallet-username#wallet-username#g" build/etc/dispatcher.ini 
-       sed -i -e "s#^;wallet-password#wallet-password#g" build/etc/dispatcher.ini 
+       sed -i -e "s#^;wallet-address#wallet-address#g" build/etc/dispatcher.ini
+       sed -i -e "s#^;wallet-rpc-uri#wallet-rpc-uri#g" build/etc/dispatcher.ini
+       sed -i -e "s#^;wallet-username#wallet-username#g" build/etc/dispatcher.ini
+       sed -i -e "s#^;wallet-password#wallet-password#g" build/etc/dispatcher.ini
     fi
 fi
 

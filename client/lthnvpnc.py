@@ -38,6 +38,7 @@ def parseUri(cfg, uri):
     p = re.search("(.*)@(.*)/(.*)", uri) # Uri with fqdn aaa@bb.cc/dd
     if (p):
         cfg.authId = p.group(1).upper()
+        cfg.uniqueId = "_random_"
         providerid = util.parseProvider(p.group(2))
         cfg.serviceId = p.group(3).upper()
         if not providerid:
@@ -100,7 +101,7 @@ def main(argv):
     p.add_argument('--stunnel-port',           dest='stunnelPort', metavar='PORT', required=None, default=8187, help='Use this stunnel local port for connections over proxy.')
     p.add_argument('--outbound-proxy-host',    dest='httpsProxyHost', metavar='HOST', required=None, default=None, help='Use this https proxy host.')
     p.add_argument('--outbound-proxy-port',    dest='httpsProxyPort', metavar='PORT', required=None, default=3128, help='Use this https proxy port.')
-    p.add_argument('--proxy-port',             dest='proxyPort', metavar='PORT', required=None, default=8186, help='Use this port as local bind port for proxy.')
+    p.add_argument('--proxy-port',             dest='proxyPort', metavar='PORT', required=None, default=8180, help='Use this port as local bind port for proxy.')
     p.add_argument('--proxy-bind',             dest='proxyBind', metavar='IP', required=None, default="127.0.0.1", help='Use this host as local bind for proxy.')
     p.add_argument('--connect-timeout',        dest='connectTimeout', metavar='S', required=None, default=30, help='Timeout for connect to service.')
     p.add_argument('--payment-timeout',        dest='paymentTimeout', metavar='S', required=None, default=1200, help='Timeout for payment to service.')

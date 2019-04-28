@@ -12,7 +12,7 @@ fi
 if [ "$(whoami)" = "root" ] && [ -z "$NOSUDO" ]; then
     echo "Do not run install as root! It will invoke sudo automatically. Exiting!"
     exit 2
-fi 
+fi
 
 if [ -z "$LTHN_PREFIX" ]; then
     echo "You must configure intense-vpn!"
@@ -113,7 +113,7 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$LTHN_PREFIX/$LTH
 
 # Copy dist configs
 (cd conf; for f in *tmpl *ips *doms *http; do
-    install_lib ./$f $LTHNC_PREFIX/ 
+    sudo install -C -o "$LTHN_USER" -g "$LTHN_GROUP" -m 440 ./$f $INSTALL_PREFIX/$LTHN_PREFIX/etc/
 done)
 
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
@@ -152,7 +152,7 @@ fi
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
   if ! [ -f $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/sdp.json ]; then
     echo "ERROR: No SDP config file found. You can use lvmgmt --generate-sdp to create it for you."
-    ERRORS=true 
+    ERRORS=true
   fi
 fi
 

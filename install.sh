@@ -65,6 +65,23 @@ install_lib() {
     fi
 }
 
+install_cfg() {
+    if [ -n "$NOSUDO" ]; then
+      install -m 440 "$1" "$INSTALL_PREFIX/$LTHN_PREFIX/$2"
+    else
+      sudo install -m 440 -o "$LTHN_USER" -g "$LTHN_GROUP" "$1" "$INSTALL_PREFIX/$LTHN_PREFIX/$2"
+    fi
+}
+
+# Install cfg only if it was not modified
+install_cfg_nm() {
+    if [ -n "$NOSUDO" ]; then
+      install -v -C -m 440 "$1" "$INSTALL_PREFIX/$LTHN_PREFIX/$2"
+    else
+      sudo install -v -C -m 440 -o "$LTHN_USER" -g "$LTHN_GROUP" "$1" "$INSTALL_PREFIX/$LTHN_PREFIX/$2"
+    fi
+}
+
 nopip() {
     echo 'You have to manually install python packages '$*
 }
@@ -113,7 +130,7 @@ sed -i 's^/usr/sbin/haproxy^'"$HAPROXY_BIN"'^' $INSTALL_PREFIX/$LTHN_PREFIX/$LTH
 
 # Copy dist configs
 (cd conf; for f in *tmpl *ips *doms *http; do
-    sudo install -C -o "$LTHN_USER" -g "$LTHN_GROUP" -m 440 ./$f $INSTALL_PREFIX/$LTHN_PREFIX/etc/
+    install_cfg ./$f $LTHNC_PREFIX/
 done)
 
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then
@@ -136,9 +153,13 @@ fi
 
 # Copy generated configs
 if [ -n "$FORCE" ]; then
-    mysudo cp -va build/etc/* $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/
+    for c in build/etc/*; do
+      install_cfg_nm $c $LTHNC_PREFIX/
+    done
 else
-    mysudo cp -nva build/etc/* $INSTALL_PREFIX/$LTHN_PREFIX/$LTHNC_PREFIX/
+    for c in build/etc/*; do
+      install_cfg $c $LTHNC_PREFIX/
+    done
 fi
 
 if [ -n "$SERVER" ] && [ -z "$NOSUDO" ]; then

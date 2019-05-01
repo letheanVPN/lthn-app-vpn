@@ -67,13 +67,13 @@ class ServiceHaServer(ServiceHa):
         os.chdir(self.dir)
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
-        tfile = config.Config.PREFIX + "/etc/haproxy_server.tmpl"
+        tfile = config.Config.CFGDIR + "/haproxy_server.tmpl"
         try:
             tf = open(tfile, "rb")
             tmpl = tf.read()
         except (IOError, OSError):
             log.L.error("Cannot open haproxy template file %s" % (tfile))
-        shutil.copy(config.Config.PREFIX + '/etc/ha_credit.http', self.dir + '/ha_credit.http')
+        shutil.copy(config.Config.CFGDIR + '/ha_credit.http', self.dir + '/ha_credit.http')
         proxy_host, proxy_port = self.cfg['backend_proxy_server'].split(":")
         if ('port' in self.cfg):
             port=self.cfg['port']
@@ -86,7 +86,7 @@ class ServiceHaServer(ServiceHa):
                           timeout=self.cfg['timeout'],
                           ctimeout=self.cfg['connect_timeout'],
                           ttimeout=random.randint(500,2000),
-                          f_logsocket=config.Config.PREFIX + '/var/run/log local0',
+                          f_logsocket=config.Config.RUNDIR + '/log local0',
                           f_sock=self.mgmtfile,
                           s_port=self.cfg['status_port'],
                           max_conns_per_ip = int(self.cfg['max_conns_per_ip']),
@@ -104,21 +104,21 @@ class ServiceHaServer(ServiceHa):
                           disp_http_host=self.cfg['dispatcher_http_host'],
                           disp_http_port=self.cfg['dispatcher_http_port'],
                           providerid=config.Config.CAP.providerid,
-                          f_dh=config.Config.PREFIX + '/etc/dhparam.pem',
-                          cabase=config.Config.PREFIX + '/etc/ca/certs',
-                          crtbase=config.Config.PREFIX + '/etc/ca/certs',
+                          f_dh=config.Config.CFGDIR + '/dhparam.pem',
+                          cabase=config.Config.CFGDIR + '/ca/certs',
+                          crtbase=config.Config.CFGDIR + '/ca/certs',
                           f_sdp=config.CONFIG.SDPFILE,
-                          f_status=config.Config.PREFIX + '/etc/ha_info.http',
-                          f_err_connect=config.Config.PREFIX + '/etc/ha_err_connect.http',
-                          f_err_badid=config.Config.PREFIX + '/etc/ha_err_badid.http',
-                          f_err_nopayment=config.Config.PREFIX + '/etc/ha_err_nopayment.http',
-                          f_err_overlimit=config.Config.PREFIX + '/etc/ha_err_overlimit.http',
-                          f_err_generic=config.Config.PREFIX + '/etc/ha_err_generic.http',
+                          f_status=config.Config.CFGDIR + '/ha_info.http',
+                          f_err_connect=config.Config.CFGDIR + '/ha_err_connect.http',
+                          f_err_badid=config.Config.CFGDIR + '/ha_err_badid.http',
+                          f_err_nopayment=config.Config.CFGDIR + '/ha_err_nopayment.http',
+                          f_err_overlimit=config.Config.CFGDIR + '/ha_err_overlimit.http',
+                          f_err_generic=config.Config.CFGDIR + '/ha_err_generic.http',
                           f_site_pem=self.cfg['crtkey'],
-                          f_allow_src_ips=config.Config.PREFIX + '/etc/src_allow.ips',
-                          f_deny_src_ips=config.Config.PREFIX + '/etc/src_deny.ips',
-                          f_deny_dst_ips=config.Config.PREFIX + '/etc/dst_deny.ips',
-                          f_deny_dst_doms=config.Config.PREFIX + '/etc/dst_deny.doms'
+                          f_allow_src_ips=config.Config.CFGDIR + '/src_allow.ips',
+                          f_deny_src_ips=config.Config.CFGDIR + '/src_deny.ips',
+                          f_deny_dst_ips=config.Config.CFGDIR + '/dst_deny.ips',
+                          f_deny_dst_doms=config.Config.CFGDIR + '/dst_deny.doms'
                           )
         try:
             cf = open(self.cfgfile, "wb")

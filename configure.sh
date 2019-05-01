@@ -2,7 +2,9 @@
 
 # set PATH to find all binaries
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-export TOPDIR=$(realpath $(dirname $0))
+if [ -z "$TOPDIR" ]; then
+  export TOPDIR=$(realpath $(dirname $0))
+fi
 export PARMS="$@"
 
 # Static defaults
@@ -147,6 +149,7 @@ OPENVPN_BIN=$OPENVPN_BIN
 PYTHON_BIN=$PYTHON_BIN
 PIP_BIN=$PIP_BIN
 SUDO_BIN=$SUDO_BIN
+LVMGMT_BIN=$LVMGMT_BIN
 HAPROXY_BIN=$HAPROXY_BIN
 OPENSSL_BIN=$OPENSSL_BIN
 LTHN_USER=$LTHN_USER
@@ -197,6 +200,11 @@ while [[ $# -gt 0 ]]; do
     ;;
     --sudo-bin)
         SUDO_BIN="$2"
+        shift
+        shift
+    ;;
+    --lvmgmt-bin)
+        LVMGMT_BIN="$2"
         shift
         shift
     ;;
@@ -312,16 +320,30 @@ if [ -z "$client" ] && [ -z "$server" ]; then
     exit 1
 fi
 
-bin_dir=${LTHN_PREFIX}/bin/
-sysconf_dir=${LTHN_PREFIX}/etc/
-ca_dir=${LTHN_PREFIX}/etc/ca/
-data_dir=${LTHN_PREFIX}/var/
-tmp_dir=${LTHN_PREFIX}/tmp/
+if [ "${LTHN_PREFIX}" != "/" ]; then
+  bin_dir=${LTHN_PREFIX}/bin/
+  sysconf_dir=${LTHN_PREFIX}/etc/
+  ca_dir=${LTHN_PREFIX}/etc/ca/
+  data_dir=${LTHN_PREFIX}/var/
+  tmp_dir=${LTHN_PREFIX}/tmp/
+else
+  bin_dir=${LTHN_PREFIX}usr/bin/
+  sysconf_dir=${LTHN_PREFIX}etc/lthn/
+  ca_dir=${LTHN_PREFIX}etc/lthn/ca/
+  data_dir=${LTHN_PREFIX}var/lib/lthn/
+  tmp_dir=${LTHN_PREFIX}tmp/
+fi
 
 if ! $HAPROXY_BIN -v | grep -qE "version 1.7|version 1.6|version 1.8"; then
     echo "Incompatible version of haproxy! You need 1.6.x, 1.7.x or 1.8.x version for now."
     $HAPROXY_BIN -v
     exit 1
+fi
+
+if [ -f server/lvmgmt.py ]; then
+  LVMGMT_BIN=server/lvmgmt.py
+else
+  LVMGMT_BIN=/usr/bin/lvmgmt
 fi
 
 mkdir -p build
@@ -356,7 +378,7 @@ if [ -n "$PROVIDERID" ]; then
     echo $PROVIDERKEY >build/etc/provider.private
 else
     if [ -n "$generate_providerid" ]; then
-        "$PYTHON_BIN" server/lvmgmt.py --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
+        "$PYTHON_BIN" "$LVMGMT_BIN" --wallet-address 'izxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' --audit-log build/audit.log --ca '' -f conf/dispatcher.ini.tmpl --generate-providerid build/etc/provider || exit 1
     fi
 fi
 

@@ -1,0 +1,7 @@
+. /etc/profile
+
+LTHNVPNC_ARGS=""
+
+# Uri to connect. Default needs to be set
+LTHNVPNC_URI="nowhere@localhost/srv"
+

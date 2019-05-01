@@ -27,6 +27,7 @@ install: env.mk
 	LTHN_GROUP=$(LTHN_GROUP) \
 	CLIENT=$(CLIENT) \
 	SERVER=$(SERVER) \
+	NOSUDO=$(NOSUDO) \
 	./install.sh
 	
 install-client:
@@ -72,4 +73,20 @@ lthnvpnc:
 	  --noconfirm --log-level=WARN --onefile --nowindow \
 	  client/lthnvpnc.py
 
-	
+
+python-pkg-deb:
+	mkdir -p $(TMP_DIR)
+	if ! [ -d $(TMP_DIR)/$(PKG_NAME) ]; then git clone $(PKG_GIT_URL) $(TMP_DIR)/$(PKG_NAME); fi
+	echo $(PKG_NAME) >$(TMP_DIR)/$(PKG_NAME)/requirements.txt
+	cd $(TMP_DIR)/$(PKG_NAME) && py2deb -r $(PWD)/.. -- -r requirements.txt
+
+configargparse-deb:
+	$(MAKE) python-pkg-deb TMP_DIR=debian/tmp PKG_NAME=configargparse PKG_GIT_URL=https://github.com/bw2/ConfigArgParse
+
+ed25519-deb:
+	$(MAKE) python-pkg-deb TMP_DIR=debian/tmp PKG_NAME=ed25519 PKG_GIT_URL=https://github.com/warner/python-ed25519
+
+syslogmp-deb:
+	$(MAKE) python-pkg-deb TMP_DIR=debian/tmp PKG_NAME=syslogmp PKG_GIT_URL=https://github.com/homeworkprod/syslogmp.git
+
+python-debs: configargparse-deb ed25519-deb syslogmp-deb

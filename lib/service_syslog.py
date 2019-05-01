@@ -11,7 +11,7 @@ import re
 class ServiceSyslog(Service):
     
     def run(self):
-        self.mgmtfile = config.Config.PREFIX + "/var/run/log"
+        self.mgmtfile = config.Config.RUNDIR + "/log"
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
         if not config.CONFIG.isWindows():

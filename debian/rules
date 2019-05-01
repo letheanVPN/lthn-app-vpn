@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+DH_VERBOSE = 1
+
+%:
+	dh $@ --with=systemd
+
+override_dh_auto_install:
+	chmod +x ./configure.sh
+	./configure.sh --client --server
+	make install INSTALL_PREFIX=$(PWD)/debian/lethean-vpn NOSUDO=1 LTHN_USER=lthn LTHN_GROUP=lthn LTHN_PREFIX=/
+	for b in $(PWD)/debian/lethean-vpn/usr/bin/*; do \
+	  sed -i 's^#!/usr/bin/python^#!/usr/bin/python3^' $$b; \
+	done
+	cp $(PWD)/debian/lthn-easy-deploy-node.sh $(PWD)/debian/lethean-vpn/usr/bin/
+	dh_installinit
+	mkdir -p $(PWD)/debian/lethean-vpn/etc/sudoers.d
+	cp $(PWD)/conf/sudoers-lthn.conf $(PWD)/debian/lethean-vpn/etc/sudoers.d/lthn
+	chmod 440 $(PWD)/debian/lethean-vpn/etc/sudoers.d/lthn
+
+override_dh_installinit:
+	dh_installinit --name lethean-vpn-client
+	dh_installinit --name lethean-vpn-server

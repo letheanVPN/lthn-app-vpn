@@ -1,0 +1,19 @@
+[Unit]
+Description=LTHN VPN server
+ConditionPathExists=/usr/bin/lthnvpnd
+After=syslog.target
+
+[Service]
+EnvironmentFile=/etc/default/lethean-vpn-server
+Type=simple
+ExecStart=/usr/bin/lthnvpnd $LTHNVPND_ARGS
+ExecStopPost=/bin/rm -f /var/run/lthn/lthnvpnd.pid
+User=lthn
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+PIDFile=/var/run/lthn/lthnvpnd.pid
+
+[Install]
+WantedBy=multi-user.target
+

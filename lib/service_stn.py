@@ -65,7 +65,7 @@ class ServiceStunnel(Service):
         os.chdir(self.dir)
         if (os.path.exists(self.mgmtfile)):
             os.remove(self.mgmtfile)
-        tfile = config.Config.PREFIX + "/etc/stunnel.tmpl"
+        tfile = config.Config.CFGDIR + "/stunnel.tmpl"
         try:
             tf = open(tfile, "rb")
             tmpl = tf.read()

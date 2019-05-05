@@ -76,7 +76,7 @@ Parameters:
     Type: Number
     Description: >
       The upload bandwidth rate limit.
-    Default: 500
+    Default: 1000
 
 
 Mappings:
@@ -217,7 +217,23 @@ Resources:
         - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet0'}
         - !ImportValue {'Fn::Sub': '${VPCStack}-Subnet1'}
 
-  DNS:
+  SyncDNS:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Join [., [!FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone], '']]
+      Name: !Join [., [
+        sync,
+        !FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone]
+      ]]
+      Type: CNAME
+      ResourceRecords:
+        - !Ref 'RPCDNS'
+      TTL: 60
+      Region: !Ref 'AWS::Region'
+      SetIdentifier: !Join ['-', [!Ref 'AWS::StackName', !Ref 'AWS::Region']]
+      HealthCheckId: !Ref 'RPCHealthCheck'
+
+  RPCDNS:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneName: !Join [., [!FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone], '']]
@@ -231,7 +247,8 @@ Resources:
         HostedZoneId: !GetAtt 'LoadBalancer.CanonicalHostedZoneID'
         DNSName: !GetAtt 'LoadBalancer.DNSName'
       Weight: !Ref 'InitialDNSWeight'
-      SetIdentifier: !Ref 'AWS::StackName'
+      SetIdentifier: !Join ['-', [!Ref 'AWS::StackName', !Ref 'AWS::Region']]
+      HealthCheckId: !Ref 'RPCHealthCheck'
 
   RPCListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -250,7 +267,7 @@ Resources:
       HealthCheckIntervalSeconds: 30
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 29
-      UnhealthyThresholdCount: 3
+      UnhealthyThresholdCount: 2
       HealthyThresholdCount: 2
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
@@ -264,6 +281,42 @@ Resources:
         !Select ['0', !Split ['-', !Select ['2', !Split [/, !Ref 'AWS::StackId']]]],
         RPC
       ]]
+
+  RPCHealthyHostsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join ['-', [health, !Ref 'AWS::StackName', !Ref 'AWS::Region']]
+      MetricName: HealthyHostCount
+      Namespace: AWS/ApplicationELB
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Join [':', ['arn:aws:sns', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'slack']]
+      InsufficientDataActions:
+        - !Join [':', ['arn:aws:sns', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'slack']]
+      OKActions:
+        - !Join [':', ['arn:aws:sns', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'slack']]
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt 'LoadBalancer.LoadBalancerFullName'
+        - Name: TargetGroup
+          Value: !GetAtt 'RPCTargetGroup.TargetGroupFullName'
+
+  RPCHealthCheck:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        AlarmIdentifier:
+          Name: !Ref 'RPCHealthyHostsAlarm'
+          Region: !Ref 'AWS::Region'
+        InsufficientDataHealthStatus: LastKnownStatus
+        Type: CLOUDWATCH_METRIC
+      HealthCheckTags:
+        - Key: Name
+          Value: !Join ['-', [health, !Ref 'AWS::StackName', !Ref 'AWS::Region']]
 
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate

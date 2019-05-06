@@ -78,6 +78,14 @@ Parameters:
       The upload bandwidth rate limit.
     Default: 1000
 
+  CreateSyncLatencyDNS:
+    Type: String
+    Default: false
+    Description: Create an alias A record for geographic latency
+    AllowedValues:
+      - true
+      - false
+
 
 Mappings:
   RegionMap:
@@ -110,21 +118,25 @@ Mappings:
       S3Bucket: prod.cloud.lethean.io
       AttachToTempSecurityGroup: false
       HostedZone: cloud.lethean.io
+      HostedZoneId: Z1XBJYKLZINMT7
 
     dev:
       S3Bucket: dev.cloud.lethean.io
       AttachToTempSecurityGroup: true
       HostedZone: dev.cloud.lethean.io
+      HostedZoneId: Z3JT335KNJ66AQ
 
     test:
       S3Bucket: test.cloud.lethean.io
       AttachToTempSecurityGroup: true
       HostedZone: test.cloud.lethean.io
+      HostedZoneId: Z3I7L8J1ECVZJK
 
 
 Conditions:
   SeedBlockchainFromS3: !Equals [!Ref 'SeedBlockchain', fromS3]
   AttachToTempSecurityGroup: !Equals [!FindInMap [DeploymentMap, !Ref 'DeploymentType', AttachToTempSecurityGroup], true]
+  CreateSyncLatencyDNS: !Equals [!Ref 'CreateSyncLatencyDNS', true]
 
 
 Metadata:
@@ -145,6 +157,7 @@ Metadata:
           - SeedBlockchain
           - Branch
           - DaemonBinUrl
+          - CreateSyncLatencyDNS
 
 
 Resources:
@@ -219,19 +232,21 @@ Resources:
 
   SyncDNS:
     Type: AWS::Route53::RecordSet
+    DeletionPolicy: Retain
+    Condition: CreateSyncLatencyDNS
     Properties:
       HostedZoneName: !Join [., [!FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone], '']]
       Name: !Join [., [
         sync,
         !FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone]
       ]]
-      Type: CNAME
-      ResourceRecords:
-        - !Ref 'RPCDNS'
-      TTL: 60
+      Type: A
+      AliasTarget:
+        HostedZoneId: !FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZoneId]
+        DNSName: !Ref 'RPCDNS'
+        EvaluateTargetHealth: true
       Region: !Ref 'AWS::Region'
       SetIdentifier: !Join ['-', [!Ref 'AWS::StackName', !Ref 'AWS::Region']]
-      HealthCheckId: !Ref 'RPCHealthCheck'
 
   RPCDNS:
     Type: AWS::Route53::RecordSet
@@ -284,6 +299,8 @@ Resources:
 
   RPCHealthyHostsAlarm:
     Type: AWS::CloudWatch::Alarm
+    DependsOn:
+      - AutoScalingGroup
     Properties:
       AlarmName: !Join ['-', [health, !Ref 'AWS::StackName', !Ref 'AWS::Region']]
       MetricName: HealthyHostCount
@@ -307,6 +324,8 @@ Resources:
 
   RPCHealthCheck:
     Type: AWS::Route53::HealthCheck
+    DependsOn:
+      - AutoScalingGroup
     Properties:
       HealthCheckConfig:
         AlarmIdentifier:
@@ -548,7 +567,7 @@ Resources:
        - !Ref 'RPCTargetGroup'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT15M
+        Timeout: PT30M
 
 Outputs:
   LoadBalancerURL:

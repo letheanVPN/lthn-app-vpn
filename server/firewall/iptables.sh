@@ -224,8 +224,9 @@ iptables -P FORWARD DROP
 # Note the tun+ interfaces from VPN clients are not concidered as trusted.
 
 # Docker containers are allowed to use all outgoing ports everywhere
-iptables -A fw-interfaces -i docker0 -j ACCEPT
-iptables -A fw-interfaces -i br_dns -j ACCEPT
+# Docker is not used on this raspberry pi so these two commands are commented out.
+# iptables -A fw-interfaces -i docker0 -j ACCEPT
+# iptables -A fw-interfaces -i br_dns -j ACCEPT
 
 # Now, we have to alter all outgoing packets so that they have our public IP address as the source address, 
 # instead of the local LAN address. To do this, we use the MASQUERADE target

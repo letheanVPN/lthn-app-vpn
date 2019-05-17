@@ -4,7 +4,7 @@
 # It uses unencrypted DNS and have a local DNS caching unbound server (localhost port 53)
 # It allows other public unencrypted DNS too (port 53) for OpenVPN users.
 # It is setup for one proxy service on port 8081 and one OpenVPN on UDP port 20001
-# Remember to enable port forwarding in sysctl settings.
+# Remember to enable forwarding in sysctl settings.
 # Here we are using minimum policy which could be suitable for a home exit node.
 
 # You should always check that the firewall setup created

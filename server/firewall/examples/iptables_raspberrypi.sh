@@ -240,11 +240,14 @@ fi
 if [ ! -z "$IPRANGE_TUN2" ]; then
    iptables -t nat -A POSTROUTING -s $IPRANGE_TUN2 -o $EXTIF -j MASQUERADE
 fi
+
 # Docker
-iptables -t nat -A POSTROUTING -s 172.17.0.1/16 -o $EXTIF -j MASQUERADE
+# is not used on this raspberry pi so it is commented out
+#iptables -t nat -A POSTROUTING -s 172.17.0.1/16 -o $EXTIF -j MASQUERADE
 
 # Special docker bridge br_dns used for DNS servers and squid containers
-iptables -t nat -A POSTROUTING -s 172.28.0.1/24 -o $EXTIF -j MASQUERADE
+# Not used on this raspberry pi
+#iptables -t nat -A POSTROUTING -s 172.28.0.1/24 -o $EXTIF -j MASQUERADE
 
 # Let's assume we have another subnet, 10.3.0.0/16 (which means all addresses 10.3.*.*),
 # on the interface eth1. We add the same rules as above again:

@@ -423,6 +423,10 @@ Resources:
                   kill $pid
                   sleep 5
 
+                  # Flush tx pool
+                  echo -e "flush_txpool\nexit" | letheand
+                  sleep 5
+
                   # Copy files
                   echo "Uploading files to S3"
                   /usr/local/bin/aws s3 cp --no-progress /home/ubuntu/${DATA_DIR}/lmdb/data.mdb s3://${AWS::Region}.${BUCKET}/${PREFIX}lmdb/data.mdb

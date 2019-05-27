@@ -78,6 +78,14 @@ Parameters:
       The upload bandwidth rate limit.
     Default: 1000
 
+  CreateSyncLatencyDNS:
+    Type: String
+    Default: false
+    Description: Create an alias A record for geographic latency
+    AllowedValues:
+      - true
+      - false
+
 
 Mappings:
   RegionMap:
@@ -110,21 +118,25 @@ Mappings:
       S3Bucket: prod.cloud.lethean.io
       AttachToTempSecurityGroup: false
       HostedZone: cloud.lethean.io
+      HostedZoneId: Z1XBJYKLZINMT7
 
     dev:
       S3Bucket: dev.cloud.lethean.io
       AttachToTempSecurityGroup: true
       HostedZone: dev.cloud.lethean.io
+      HostedZoneId: Z3JT335KNJ66AQ
 
     test:
       S3Bucket: test.cloud.lethean.io
       AttachToTempSecurityGroup: true
       HostedZone: test.cloud.lethean.io
+      HostedZoneId: Z3I7L8J1ECVZJK
 
 
 Conditions:
   SeedBlockchainFromS3: !Equals [!Ref 'SeedBlockchain', fromS3]
   AttachToTempSecurityGroup: !Equals [!FindInMap [DeploymentMap, !Ref 'DeploymentType', AttachToTempSecurityGroup], true]
+  CreateSyncLatencyDNS: !Equals [!Ref 'CreateSyncLatencyDNS', true]
 
 
 Metadata:
@@ -145,6 +157,7 @@ Metadata:
           - SeedBlockchain
           - Branch
           - DaemonBinUrl
+          - CreateSyncLatencyDNS
 
 
 Resources:
@@ -219,19 +232,21 @@ Resources:
 
   SyncDNS:
     Type: AWS::Route53::RecordSet
+    DeletionPolicy: Retain
+    Condition: CreateSyncLatencyDNS
     Properties:
       HostedZoneName: !Join [., [!FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone], '']]
       Name: !Join [., [
         sync,
         !FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZone]
       ]]
-      Type: CNAME
-      ResourceRecords:
-        - !Ref 'RPCDNS'
-      TTL: 60
+      Type: A
+      AliasTarget:
+        HostedZoneId: !FindInMap [DeploymentMap, !Ref 'DeploymentType', HostedZoneId]
+        DNSName: !Ref 'RPCDNS'
+        EvaluateTargetHealth: true
       Region: !Ref 'AWS::Region'
       SetIdentifier: !Join ['-', [!Ref 'AWS::StackName', !Ref 'AWS::Region']]
-      HealthCheckId: !Ref 'RPCHealthCheck'
 
   RPCDNS:
     Type: AWS::Route53::RecordSet
@@ -284,6 +299,8 @@ Resources:
 
   RPCHealthyHostsAlarm:
     Type: AWS::CloudWatch::Alarm
+    DependsOn:
+      - AutoScalingGroup
     Properties:
       AlarmName: !Join ['-', [health, !Ref 'AWS::StackName', !Ref 'AWS::Region']]
       MetricName: HealthyHostCount
@@ -307,6 +324,8 @@ Resources:
 
   RPCHealthCheck:
     Type: AWS::Route53::HealthCheck
+    DependsOn:
+      - AutoScalingGroup
     Properties:
       HealthCheckConfig:
         AlarmIdentifier:
@@ -548,7 +567,145 @@ Resources:
        - !Ref 'RPCTargetGroup'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT15M
+        Count: !Ref 'DesiredNumberOfNodes'
+        Timeout: PT30M
+
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Join ['-', [!Ref 'AWS::StackName', !Ref 'AWS::Region']]
+      DashboardBody: !Sub
+        - |
+          {
+            "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 3,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                [ "AWS/ApplicationELB", "HealthyHostCount", "TargetGroup", "${TargetGroup}", "LoadBalancer", "${LoadBalancer}" ],
+                [ ".", "UnHealthyHostCount", ".", ".", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "HealthyHostCount",
+                "period": 300,
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                },
+                "annotations": {
+                  "horizontal": [
+                  {
+                    "value": 2
+                  }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 6,
+              "y": 3,
+              "width": 9,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                [ "AWS/EC2", "CPUCreditBalance", "AutoScalingGroupName", "${AutoScalingGroup}", { "yAxis": "left", "stat": "Average", "period": 300 } ],
+                [ ".", "CPUUtilization", ".", ".", { "yAxis": "right", "period": 300 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "showUnits": false
+                  },
+                  "right": {
+                    "min": 0,
+                    "max": 100
+                  }
+                },
+                "title": "CPUCreditBalance, CPUUtilization",
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 9,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                [ "AWS/ApplicationELB", "RequestCount", "LoadBalancer", "${LoadBalancer}", { "stat": "Sum", "yAxis": "left", "period": 60 } ],
+                [ ".", "ProcessedBytes", ".", ".", { "stat": "Sum", "yAxis": "right", "period": 60 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "showUnits": true
+                  },
+                  "right": {
+                    "min": 0,
+                    "showUnits": true
+                  }
+                },
+                "title": "ProcessedBytes, RequestCount",
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 15,
+              "y": 3,
+              "width": 9,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                [ "AWS/ApplicationELB", "NewConnectionCount", "LoadBalancer", "${LoadBalancer}", { "period": 60, "stat": "Sum" } ],
+                [ ".", "ActiveConnectionCount", ".", ".", { "color": "#2ca02c", "period": 60, "stat": "Sum" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "title": "ConnectionCount",
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 3,
+              "properties": {
+                "metrics": [
+                [ "AWS/ApplicationELB", "HTTPCode_Target_2XX_Count", "LoadBalancer", "${LoadBalancer}", { "color": "#2ca02c", "stat": "Sum", "period": 604800 } ],
+                [ ".", "HTTPCode_Target_4XX_Count", ".", ".", { "stat": "Sum", "period": 604800 } ],
+                [ ".", "HTTPCode_ELB_5XX_Count", ".", ".", { "color": "#d62728", "stat": "Sum", "period": 604800 } ]
+                ],
+                "view": "singleValue",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "title": "Response Status",
+                "period": 300
+              }
+            }
+            ]
+          }
+        - LoadBalancer: !GetAtt 'LoadBalancer.LoadBalancerFullName'
+          TargetGroup: !GetAtt 'RPCTargetGroup.TargetGroupFullName'
+          AutoScalingGroup: !Ref 'AutoScalingGroup'
 
 Outputs:
   LoadBalancerURL:

@@ -154,6 +154,11 @@ iptables -A VPN_TCP -p tcp --dport 8443 -j ACCEPT
 iptables -A VPN_TCP -p tcp --dport 48772 -j ACCEPT
 iptables -A VPN_TCP -i tun+ -p tcp --dport 48782 -j ACCEPT
 
+# Open port 5060 TCP and UDP to make speedtest.net work better
+# People want to check the speed :-)
+iptables -A VPN_TCP -p tcp --dport 5060 -j ACCEPT
+iptables -A VPN_UDP -p udp --dport 5060 -j ACCEPT
+
 
 # ipv6 is disabled on this raspberry pi
 # See https://wiki.archlinux.org/index.php/IPv6#Disable_IPv6

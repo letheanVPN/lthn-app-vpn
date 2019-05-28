@@ -12,11 +12,11 @@ PROXYPORT1=8081    # This is the endport port set in sdp.json for the first prox
 PROXYPORT2=8086    # This is the endport port set in sdp.json for the second proxy service
 PROXYPORT3=8088    # This is the endport port set in sdp.json for the third proxy service
 
-VPNPORT_UDP1=20001 # This is the endpoint port set in sdp.json for the first OpenVPN service if using UDP
+VPNPORT_UDP1=      # This is the endpoint port set in sdp.json for the first OpenVPN service if using UDP
 VPNPORT_UDP2=20006 # This is the endpoint port set in sdp.json for the second OpenVPN service if using UDP
 VPNPORT_UDP3=20008 # This is the endpoint port set in sdp.json for the third OpenVPN service if using UDP
 
-VPNPORT_TCP1=      # This is the endpoint port set in sdp.json for the first OpenVPN service if using TCP
+VPNPORT_TCP1=443   # This is the endpoint port set in sdp.json for the first OpenVPN service if using TCP
 VPNPORT_TCP2=      # This is the endpoint port set in sdp.json for the first OpenVPN service if using TCP
 VPNPORT_TCP3=      # This is the endpoint port set in sdp.json for the first OpenVPN service if using TCP
 
@@ -26,7 +26,8 @@ DNS3=172.28.0.18   # IP-address to DNS server that is forced to be used on VPN3 
 
 HOSTDNS=false      # Set to true if the exit node have a "bare metal" DNS server like unbound, dnsmasq or bind
                    # and you want to allow VPN clients on tun interfaces to use that DNS server (on 127.0.0.1 port 53)
-                   # When the service is run directly on host and not in a container, we must use INPUT chain instead of FORWARD
+                   # When the service is run directly on host and not in a container
+                   # then  we must use INPUT chain instead of FORWARD
 
 PUBLICDNS=no       # If set to yes it permits VPN clients to use unencrypted public DNS.
                    # Beware of the risk of man-in-the-middle attacks!
@@ -79,15 +80,6 @@ iptables -P OUTPUT ACCEPT
 
 # Set default INPUT policy to drop
 iptables -P INPUT DROP
-
-# exempt udp dns of connection tracking
-# See how to do it here: https://jeanbruenn.info/2017/04/30/conntrack-and-udp-dns-with-iptables/
-# See why to do it here: https://kb.isc.org/docs/aa-01183
-iptables -t raw -A PREROUTING -p udp --sport 53 -j NOTRACK
-iptables -t raw -A PREROUTING -p udp --dport 53 -j NOTRACK
-iptables -t raw -A OUTPUT -p udp --sport 53 -j NOTRACK
-iptables -t raw -A OUTPUT -p udp --dport 53 -j NOTRACK
-
 
 # Allow traffic that belongs to established connections
 iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
@@ -185,7 +177,6 @@ fi
 
 # Now we set up a rule with the conntrack match, identical to the one in the INPUT chain
 iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -m conntrack --ctstate UNTRACKED -j ACCEPT # For UDP DNS, untracked
 
 # The next step is to enable forwarding for trusted interfaces and to make all packets pass the fw-open chain.
 iptables -A FORWARD -j fw-interfaces
@@ -235,7 +226,7 @@ fi
 # Docker
 iptables -t nat -A POSTROUTING -s 172.17.0.1/16 -o $EXTIF -j MASQUERADE
 
-# Special docker bridge br_dns used for DNS servers and squid containers
+# Special docker bridge br_dns used for DNS servers and tinyproxy containers
 iptables -t nat -A POSTROUTING -s 172.28.0.1/24 -o $EXTIF -j MASQUERADE
 
 # Let's assume we have another subnet, 10.3.0.0/16 (which means all addresses 10.3.*.*),
@@ -304,6 +295,10 @@ iptables -A VPN_TCP -p tcp --dport 8443 -j ACCEPT
 # Allow  Lethean daemon and remote node connections for vpn clients
 iptables -A VPN_TCP -p tcp --dport 48772 -j ACCEPT
 iptables -A VPN_TCP -p tcp --dport 48782 -j ACCEPT
+
+# Open port 5060 to make speedtest.net work better
+iptables -A VPN_TCP -p tcp --dport 5060 -j ACCEPT
+iptables -A VPN_UDP -p udp --dport 5060 -j ACCEPT
 
 # DNS
 # We are only allowing DNS over TLS from local DNS servers so port 53 should not be opened to internet for VPN clients.

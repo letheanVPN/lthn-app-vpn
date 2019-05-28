@@ -507,7 +507,7 @@ Resources:
           - DeviceName: /dev/sda1
             Ebs:
               VolumeSize: 32
-              VolumeType: gp2
+              VolumeType: standard
         CreditSpecification:
           CpuCredits:
             unlimited

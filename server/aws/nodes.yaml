@@ -181,6 +181,11 @@ Resources:
           FromPort: 48782
           ToPort: 48782
           CidrIp: 0.0.0.0/0
+        - Description: 'Alternative RPC port'
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
       VpcId: !ImportValue {'Fn::Sub': '${VPCStack}-VpcId'}
 
   S3ReadOnlyAccessInstanceProfile:
@@ -265,7 +270,7 @@ Resources:
       SetIdentifier: !Join ['-', [!Ref 'AWS::StackName', !Ref 'AWS::Region']]
       HealthCheckId: !Ref 'RPCHealthCheck'
 
-  RPCListener:
+  RPCListener48782:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
@@ -275,6 +280,15 @@ Resources:
       Port: 48782
       Protocol: HTTP
 
+  RPCListener80:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref 'RPCTargetGroup'
+          Type: forward
+      LoadBalancerArn: !Ref 'LoadBalancer'
+      Port: 80
+      Protocol: HTTP
 
   RPCTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup

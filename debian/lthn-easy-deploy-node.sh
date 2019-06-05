@@ -21,6 +21,11 @@ else
   fi
 fi
 
+if [ -f /etc/lthn/dispatcher.ini ]; then
+  echo "dispatcher.ini already exists! Stopping. To continue, remove old /etc/lthn/dispatcher.ini and run again by yourself!"
+  exit 2
+fi
+
 # Set defaults. Can be overriden by env variables
 [ -z "$LTHNPREFIX" ] && LTHNPREFIX=/
 [ -z "$PROVIDERID" ] && PROVIDERID=""
@@ -138,7 +143,7 @@ TOPDIR=$(pwd) /usr/lib/lthn/lthn-configure.sh --generate-providerid --with-walle
 PROVIDERID=$(cat build/etc/provider.public)
 PROVIDERKEY=$(cat build/etc/provider.private)
 
-if ! [ -f /etc/lthn/dispatcher.ini ]; then
+
 cat >/etc/lthn/dispatcher.ini <<EOF
 [global]
 ;log-level=DEBUG
@@ -168,10 +173,6 @@ reneg=60
 enabled=false
 
 EOF
-else
-  echo "dispatcher.ini already exists! Stopping. To continue, remove old /etc/lthn/dispatcher.ini and run again by yourself!"
-  exit 2
-fi
 
 rm -f build/etc/dispatcher.ini
 if [ -d /etc/lthn/ca/ ]; then

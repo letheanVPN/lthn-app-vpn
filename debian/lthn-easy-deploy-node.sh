@@ -4,6 +4,8 @@ set -e
 
 if [ "$(whoami)" == "root" ]; then
   sleep 1
+  chown -R lthn:lthn /etc/lthn
+  chmod -R o-rwx /etc/lthn
   sudo -E -u lthn bash $(realpath "$0") "$@"
   systemctl disable haproxy
   systemctl stop haproxy

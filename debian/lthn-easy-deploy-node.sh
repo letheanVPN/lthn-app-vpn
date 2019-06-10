@@ -6,13 +6,13 @@ if [ "$(whoami)" == "root" ]; then
   sleep 1
   chown -R lthn:lthn /etc/lthn
   chmod -R o-rwx /etc/lthn
-  sudo -E -u lthn bash $(realpath "$0") "$@"
   systemctl disable haproxy
   systemctl stop haproxy
   systemctl disable openvpn
   systemctl stop openvpn
   systemctl enable tinyproxy
   systemctl start tinyproxy
+  sudo -E -u lthn bash $(realpath "$0") "$@"
   exit
 else
   if [ "$(whoami)" != "lthn" ]; then
@@ -33,6 +33,10 @@ fi
 [ -z "$DAEMON_HOST" ] && DAEMON_HOST="sync.lethean.io"
 [ -z "$WALLETFILE" ] && WALLETFILE="/var/lib/lthn/wallet"
 [ -z "$WALLETPASS" ] && WALLETPASS="walletpass"
+[ -z "$WALLETRPCUSER" ] && WALLETRPCUSER="user"
+[ -z "$WALLETRPCPASS" ] && WALLETRPCPASS="pass"
+[ -z "$WALLETRPCHOST" ] && WALLETRPCHOST="127.0.0.1"
+[ -z "$WALLETRPCPORT" ] && WALLETRPCPORT="13660"
 [ -z "$CAPASS" ] && CAPASS=1234
 [ -z "$CACN" ] && CACN=ITNSFakeNode
 [ -z "$ENDPOINT" ] && ENDPOINT="1.2.3.4"
@@ -45,7 +49,15 @@ else
   DAEMON_ARG="--daemon-host $DAEMON_HOST"
 fi
 
-export LTHNPREFIX BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL DAEMON_BIN_URL DAEMON_HOST WALLETPASS PROVIDERID PROVIDERKEY ZABBIX_SERVER ZABBIX_PSK ZABBIX_PORT ZABBIX_META USER HOME HTTP_PROXY HTTPS_PROXY
+export LTHNPREFIX BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL DAEMON_BIN_URL DAEMON_HOST WALLETPASS \
+  WALLETRPCUSER WALLETRPCPASS \
+  PROVIDERID PROVIDERKEY ZABBIX_SERVER ZABBIX_PSK ZABBIX_PORT ZABBIX_META USER HOME HTTP_PROXY HTTPS_PROXY
+
+cat <<EOF >/etc/default/lethean-wallet-vpn-rpc
+RPCPORT=$WALLETRPCPORT
+DAEMONHOST=$DAEMON_HOST
+WALLETPASS="$WALLETPASS"
+EOF
 
 #rm -rf /tmp/lthn-easy
 mkdir -p /tmp/lthn-easy
@@ -154,12 +166,13 @@ provider-name=Provider
 provider-terms=Some Terms
 
 wallet-address=$WALLET
-wallet-username=user
-wallet-password=pass
+wallet-username=$WALLETRPCUSER
+wallet-password=$WALLETRPCPASS
+wallet-rpc-uri=http://$WALLETRPCHOST:$WALLETRPCPORT/json_rpc
 
 [service-1A]
 name=Proxy
-backend_proxy_server=localhost:8888
+backend_proxy_server=127.0.0.1:8888
 crt=/etc/lthn/ca/certs/ha.cert.pem
 key=/etc/lthn/ca/private/ha.key.pem
 crtkey=/etc/lthn/ca/certs/ha.both.pem

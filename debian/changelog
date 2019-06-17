@@ -1,12 +1,13 @@
-lethean-vpn (3.1.0-4) UNRELEASED; urgency=medium
+lethean-vpn (3.1.0-5) UNRELEASED; urgency=medium
 
   * Non-maintainer upload.
   * Reworked dependencies and install
   * Reworked paths
   * Repaired log path
   * Added sudoers
+  * Repaired #110 and #111
 
- -- Lukas Macura <lm@lindev-jso-cz.jso.local>  Wed, 05 Jun 2019 14:49:16 +0200
+ -- Lukas Macura <lm@lindev-jso-cz.jso.local>  Mon, 17 Jun 2019 19:00:10 +0200
 
 lethean-vpn (3.1.0-1) unstable; urgency=medium
 

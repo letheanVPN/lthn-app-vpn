@@ -604,8 +604,8 @@ Resources:
               "height": 6,
               "properties": {
                 "metrics": [
-                [ "AWS/ApplicationELB", "HealthyHostCount", "TargetGroup", "${TargetGroup}", "LoadBalancer", "${LoadBalancer}" ],
-                [ ".", "UnHealthyHostCount", ".", ".", ".", "." ]
+                [ "AWS/ApplicationELB", "HealthyHostCount", "TargetGroup", "${TargetGroup}", "LoadBalancer", "${LoadBalancer}", { "period": 60 } ],
+                [ ".", "UnHealthyHostCount", ".", ".", ".", ".", { "period": 60 } ]
                 ],
                 "view": "timeSeries",
                 "stacked": false,
@@ -628,9 +628,9 @@ Resources:
             },
             {
               "type": "metric",
-              "x": 6,
-              "y": 3,
-              "width": 9,
+              "x": 0,
+              "y": 9,
+              "width": 6,
               "height": 6,
               "properties": {
                 "metrics": [
@@ -656,9 +656,9 @@ Resources:
             },
             {
               "type": "metric",
-              "x": 0,
-              "y": 9,
-              "width": 24,
+              "x": 6,
+              "y": 3,
+              "width": 9,
               "height": 6,
               "properties": {
                 "metrics": [
@@ -717,6 +717,55 @@ Resources:
                 "region": "${AWS::Region}",
                 "title": "Response Status",
                 "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 6,
+              "y": 9,
+              "width": 9,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                [ "AWS/ApplicationELB", "TargetResponseTime", "LoadBalancer", "${LoadBalancer}", { "period": 900 } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "showUnits": true
+                  }
+                },
+                "annotations": {
+                  "horizontal": [
+                  {
+                    "value": 5,
+                    "fill": "above"
+                  }
+                  ]
+                },
+                "title": "TargetResponseTime"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 15,
+              "y": 9,
+              "width": 9,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                [ "AWS/ApplicationELB", "HTTPCode_ELB_5XX_Count", "LoadBalancer", "${LoadBalancer}", { "stat": "Sum", "period": 3600, "color": "#ff7f0e" } ],
+                [ ".", "HTTPCode_ELB_4XX_Count", ".", ".", { "stat": "Sum", "period": 3600, "color": "#d62728" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": true,
+                "region": "${AWS::Region}",
+                "title": "Errors",
+                "period": 300,
+                "liveData": true
               }
             }
             ]

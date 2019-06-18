@@ -155,6 +155,34 @@ TOPDIR=$(pwd) /usr/lib/lthn/lthn-configure.sh --generate-providerid --with-walle
 PROVIDERID=$(cat build/etc/provider.public)
 PROVIDERKEY=$(cat build/etc/provider.private)
 
+if ! [ -f /etc/tinyproxy/tinyprox.conf.dpkg ]; then
+  cp /etc/tinyproxy/tinyprox.conf /etc/tinyproxy/tinyprox.conf.dpkg
+  cat >/etc/tinyproxy/tinyprox.conf <<EOF
+User tinyproxy
+Group tinyproxy
+Port 8888
+Timeout 600
+DefaultErrorFile "/usr/share/tinyproxy/default.html"
+StatFile "/usr/share/tinyproxy/stats.html"
+Logfile "/var/log/tinyproxy/tinyproxy.log"
+LogLevel Info
+PidFile "/run/tinyproxy/tinyproxy.pid"
+MaxClients 100
+MinSpareServers 5
+MaxSpareServers 20
+StartServers 10
+MaxRequestsPerChild 0
+Allow 127.0.0.1
+ViaProxyName "tinyproxy"
+DisableViaHeader Yes
+ConnectPort 80
+ConnectPort 443
+ConnectPort 5060
+ConnectPort 8443
+EOF
+else
+  echo "Tinyproxy already configured. Not touching its conf file. Remove /etc/tinyproxy/tinyprox.conf.dpkg to initialise again."
+fi
 
 cat >/etc/lthn/dispatcher.ini <<EOF
 [global]

@@ -12,6 +12,7 @@ if [ "$(whoami)" == "root" ]; then
   systemctl stop openvpn
   systemctl enable tinyproxy
   systemctl start tinyproxy
+  chown lthn /etc/default/lethean-wallet-vpn-rpc
   sudo -E -u lthn bash $(realpath "$0") "$@"
   exit
 else

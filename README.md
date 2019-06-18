@@ -228,12 +228,17 @@ Best and quickest way how to help is prepare pull request for us to review.
 git clone ...
 cd lethean-vpn
 sudo pip3 install -r requirements.txt
-sudo apt-get install dpkg-dev
+sudo apt-get install dpkg-dev devscripts
 sudo pip3 install py2deb
 make python-debs
 dpkg-buildpackage .
 ```
 This should place all packages in upper directory '..'
+Do not forget that you need to change subversion of debs if you want force
+apt-get update and upgrade to work
+```
+dch -i
+```
 To create repository, copy debs to clean directory, cd to there and do
 ```
 dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz

@@ -16,6 +16,7 @@ override_dh_auto_install:
 	mkdir -p $(PWD)/debian/lethean-vpn/etc/sudoers.d
 	cp $(PWD)/conf/sudoers-lthn.conf $(PWD)/debian/lethean-vpn/etc/sudoers.d/lthn
 	chmod 440 $(PWD)/debian/lethean-vpn/etc/sudoers.d/lthn
+	rm -f $(PWD)/debian/lethean-vpn/etc/lthn/dispatcher.ini
 
 override_dh_installinit:
 	dh_installinit --name lethean-vpn-client

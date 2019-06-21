@@ -58,8 +58,8 @@ docker-shell:
 	mkdir -p build/etc
 	mkdir -p build/bcdata
 	docker run -i -t \
-	  --mount type=bind,source=$$(pwd)/build/etc,target=/opt/lthn/etc \
-   	  --mount type=bind,source=$$(pwd)/build/bcdata,target=/home/lthn \
+	  --mount type=bind,source=$$(pwd)/build/etc,target=/etc//lthn \
+   	  --mount type=bind,source=$$(pwd)/build/bcdata,target=/var/lib/lthn \
 	  lethean/lethean-vpn:devel sh
 
 lthnvpnc:

@@ -4,15 +4,17 @@ set -e
 
 if [ "$(whoami)" == "root" ]; then
   sleep 1
-  chown -R lthn:lthn /etc/lthn
+  chown -R lthn:lthn /etc/lthn /etc/tinyproxy
   chmod -R o-rwx /etc/lthn
-  systemctl disable haproxy
-  systemctl stop haproxy
-  systemctl disable openvpn
-  systemctl stop openvpn
-  systemctl enable tinyproxy
-  systemctl start tinyproxy
-  chown lthn /etc/default/lethean-wallet-vpn-rpc
+  if which systemctl >/dev/null; then
+    systemctl disable haproxy
+    systemctl stop haproxy
+    systemctl disable openvpn
+    systemctl stop openvpn
+    systemctl enable tinyproxy
+    systemctl start tinyproxy
+  fi
+  if [ -f /etc/default/lethean-wallet-vpn-rpc ]; then chown lthn /etc/default/lethean-wallet-vpn-rpc; fi
   sudo -E -u lthn bash $(realpath "$0") "$@"
   exit
 else
@@ -44,6 +46,8 @@ fi
 [ -z "$PORT" ] && PORT="8080"
 [ -z "$PROVTYPE" ] && PROVTYPE="residential"
 
+export WALLETRPCURI="http://$WALLETRPCHOST:$WALLETRPCPORT"
+
 if [ -z "$DAEMON_HOST" ]; then
   DAEMON_ARG=""
 else
@@ -58,6 +62,8 @@ cat <<EOF >/etc/default/lethean-wallet-vpn-rpc
 RPCPORT=$WALLETRPCPORT
 DAEMONHOST=$DAEMON_HOST
 WALLETPASS="$WALLETPASS"
+WALLETRPCURI="$WALLETRPCURI"
+RPCLOGIN="dispatcher:reigh7aNgaixee0leewiehuTh9kaicop"
 EOF
 
 #rm -rf /tmp/lthn-easy
@@ -156,9 +162,9 @@ TOPDIR=$(pwd) /usr/lib/lthn/lthn-configure.sh --generate-providerid --with-walle
 PROVIDERID=$(cat build/etc/provider.public)
 PROVIDERKEY=$(cat build/etc/provider.private)
 
-if ! [ -f /etc/tinyproxy/tinyprox.conf.dpkg ]; then
-  cp /etc/tinyproxy/tinyprox.conf /etc/tinyproxy/tinyprox.conf.dpkg
-  cat >/etc/tinyproxy/tinyprox.conf <<EOF
+if ! [ -f /etc/tinyproxy/tinyproxy.conf.dpkg ]; then
+  cp /etc/tinyproxy/tinyproxy.conf /etc/tinyproxy/tinyproxy.conf.dpkg
+  cat >/etc/tinyproxy/tinyproxy.conf <<EOF
 User tinyproxy
 Group tinyproxy
 Port 8888
@@ -197,7 +203,7 @@ provider-terms=Some Terms
 wallet-address=$WALLET
 wallet-username=$WALLETRPCUSER
 wallet-password=$WALLETRPCPASS
-wallet-rpc-uri=http://$WALLETRPCHOST:$WALLETRPCPORT/json_rpc
+wallet-rpc-uri=$WALLETRPCURI/json_rpc
 
 [service-1A]
 name=Proxy

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 export CONF=/etc/lthn
 export HOME=/var/lib/lthn
 
@@ -22,12 +24,18 @@ runDaemon(){
 
 runWalletVpnRpc(){
     . /etc/default/lethean-wallet-vpn-rpc
-    lethean-wallet-vpn-rpc --vpn-rpc-bind-port ${RPCPORT} --password ${WALLETPASS} --rpc-login ${RPCLOGIN} --daemon-host ${DAEMONHOST} --wallet-file ${LETHEANWALLET} --log-file /var/log/lthn/wallet-rpc.log
-    tail -20 /var/log/syslog /var/log/lthn/wallet-vpn-rpc.log
+    rm -f /var/lib/lthn/lethean-wallet-vpn-rpc.*.login
+    lethean-wallet-vpn-rpc --vpn-rpc-bind-port ${RPCPORT} --password ${WALLETPASS} --rpc-login ${RPCLOGIN} --daemon-host ${DAEMONHOST} --wallet-file ${LETHEANWALLET} --log-file /dev/stdout &
 }
 
 runWalletCli(){
     lethean-wallet-cli "$@"
+}
+
+refreshWallet(){
+    [ -z "$WALLETRESTOREHEIGHT" ] && WALLETRESTOREHEIGHT="464227"
+    . /etc/default/lethean-wallet-vpn-rpc
+    lethean-wallet-cli --wallet $WALLETFILE --daemon-host ${DAEMONHOST} --restore-height "$WALLETRESTOREHEIGHT" --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command refresh
 }
 
 testServerConf(){
@@ -88,6 +96,9 @@ EOF
 
 case $1 in
 easy-deploy)
+    if ! [ -f /etc/lthn/dispatcher.ini ]; then
+        cp /etc/skel/lthn/* /etc/lthn/
+    fi
     chown -R lthn:lthn /var/lib/lthn /etc/lthn
     lthn-easy-deploy-node.sh
     echo >&2
@@ -120,6 +131,7 @@ lthnvpnd|run)
     if [ -z "$DAEMON_HOST" ]; then
         runDaemon
     fi
+    refreshWallet
     runWalletVpnRpc
     unset HTTP_PROXY
     unset http_proxy
@@ -129,12 +141,17 @@ lthnvpnd|run)
         sleep 5
     done
     echo "Starting dispatcher" >&2
-    exec lthnvpnd --wallet-rpc-uri "$WALLETRPCURI" --syslog "$@"
+    exec su -s /bin/sh lthn -c "lthnvpnd --wallet-rpc-uri '$WALLETRPCURI' --syslog $@"
     ;;
 
 wallet-vpn-rpc)
     shift
     runWalletVpnRpc "$@"
+    ;;
+
+wallet-refresh)
+    shift
+    refreshWallet
     ;;
 
 wallet-cli)

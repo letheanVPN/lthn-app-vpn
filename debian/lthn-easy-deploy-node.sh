@@ -40,13 +40,14 @@ fi
 [ -z "$WALLETRPCPASS" ] && WALLETRPCPASS="pass"
 [ -z "$WALLETRPCHOST" ] && WALLETRPCHOST="127.0.0.1"
 [ -z "$WALLETRPCPORT" ] && WALLETRPCPORT="13660"
+[ -z "$WALLETRESTOREHEIGHT" ] && WALLETRESTOREHEIGHT="464227"
 [ -z "$CAPASS" ] && CAPASS=1234
 [ -z "$CACN" ] && CACN=ITNSFakeNode
 [ -z "$ENDPOINT" ] && ENDPOINT="1.2.3.4"
 [ -z "$PORT" ] && PORT="8080"
 [ -z "$PROVTYPE" ] && PROVTYPE="residential"
 
-export WALLETRPCURI="http://$WALLETRPCHOST:$WALLETRPCPORT"
+export WALLETRPCURI="http://$WALLETRPCHOST:$WALLETRPCPORT/json_rpc"
 
 if [ -z "$DAEMON_HOST" ]; then
   DAEMON_ARG=""
@@ -63,7 +64,8 @@ RPCPORT=$WALLETRPCPORT
 DAEMONHOST=$DAEMON_HOST
 WALLETPASS="$WALLETPASS"
 WALLETRPCURI="$WALLETRPCURI"
-RPCLOGIN="dispatcher:reigh7aNgaixee0leewiehuTh9kaicop"
+RPCLOGIN="$WALLETRPCUSER:$WALLETRPCPASS"
+LETHEANWALLET="$WALLETFILE"
 EOF
 
 #rm -rf /tmp/lthn-easy
@@ -148,9 +150,10 @@ if [ -z "$DAEMON_HOST" ]; then
 fi
 
 if ! [ -f "$WALLETFILE" ]; then
-  lethean-wallet-cli --mnemonic-language English --generate-new-wallet $WALLETFILE $DAEMON_ARG --restore-height 254293 --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit
+  lethean-wallet-cli --mnemonic-language English --generate-new-wallet $WALLETFILE $DAEMON_ARG --restore-height "$WALLETRESTOREHEIGHT" --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit
 fi
 WALLET=$(cat ${WALLETFILE}.address.txt)
+lethean-wallet-cli --wallet $WALLETFILE $DAEMON_ARG --restore-height "$WALLETRESTOREHEIGHT" --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command refresh
 
 cat >conf/dispatcher.ini.tmpl <<EOF
 [global]

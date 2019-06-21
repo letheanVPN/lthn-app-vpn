@@ -69,6 +69,9 @@ USER root
 RUN apt-get update && apt-get install -y apt-utils pwgen joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen
 RUN  echo  'deb [trusted=yes] http://monitor.lethean.io/dl/stretch/ ./' >/etc/apt/sources.list.d/lethean.list && \
    apt-get update && apt-get install -y lethean-vpn lethean-wallet-cli lethean-wallet-rpc lethean-wallet-vpn-rpc
+
+COPY lethean-vpn*deb /tmp/
+RUN dpkg -i /tmp/lethean-vpn*deb
 RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \
    dpkg -i zabbix-release_4.0-2+stretch_all.deb
 RUN apt-get update && apt-get install -y zabbix-agent zabbix-sender && mkdir /var/run/zabbix && chown -R lthn /var/log/zabbix /var/run/zabbix
@@ -77,6 +80,8 @@ RUN chmod +x /entrypiont-lethean-vpn.sh
 
 RUN ln -sf /etc/lthn/lethean-wallet-rpc.default /etc/default/lethean-wallet-rpc
 RUN ln -sf /etc/lthn/lethean-wallet-vpn-rpc.default /etc/default/lethean-wallet-vpn-rpc
+
+RUN mkdir /etc/skel/lthn; cp /etc/lthn/* /etc/skel/lthn/
 
 COPY debian/lthn-easy-deploy-node.sh /usr/bin/
 RUN chmod +x /usr/bin/lthn-easy-deploy-node.sh

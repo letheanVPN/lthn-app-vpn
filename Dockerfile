@@ -1,4 +1,4 @@
-FROM python:3.7.1-stretch
+FROM python:3.7.1-stretch as letheanvpn
 MAINTAINER Lukas Macura <lukas@lethean.io>
 
 LABEL "io.lethean.vpn-server"="Lethean.IO"
@@ -11,6 +11,9 @@ ARG PORT="8080"
 ARG ZSYNC_URL="https://monitor.lethean.io/bc/data.mdb.zsync"
 ARG ZSYNC_DATA_URL="http://monitor.lethean.io/bc/data.mdb"
 ARG ZSYNC_DATA_SHA="http://monitor.lethean.io/bc/data.mdb.sha256"
+
+# Debian packages to install (needs to be in same directory)
+ARG DEBS=""
 
 # Daemon host. Set to empty string to use local daemon with complete copy of blockchain.
 ENV DAEMON_HOST="$DAEMON_HOST"
@@ -52,7 +55,6 @@ ENV ENDPOINT="127.0.0.1"
 ENV PORT="$PORT"
 
 
-
 # Zabbix parameters
 ENV ZABBIX_SERVER="zabbix"
 ENV ZABBIX_HOSTNAME="lethean-vpn"
@@ -67,21 +69,30 @@ CMD ["run"]
 
 USER root
 RUN apt-get update && apt-get install -y apt-utils pwgen joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen
-RUN  echo  'deb [trusted=yes] http://monitor.lethean.io/dl/stretch/ ./' >/etc/apt/sources.list.d/lethean.list && \
-   apt-get update && apt-get install -y lethean-vpn lethean-wallet-cli lethean-wallet-rpc lethean-wallet-vpn-rpc
+RUN  echo  'deb [trusted=yes] http://monitor.lethean.io/dl/stretch/ ./' >/etc/apt/sources.list.d/lethean.list
+RUN apt-get update
 
-COPY lethean-vpn*deb /tmp/
-RUN dpkg -i /tmp/lethean-vpn*deb
+RUN rm -f /tmp/*deb
+COPY Dockerfile *.deb /tmp/
+RUN rm -f /tmp/*dbgsym*deb
+RUN if [ -n "${DEBS}" ]; then \
+     dpkg -i /tmp/*.deb; apt-get install -y -f;  \
+    else \
+      apt-get install -y lethean-vpn lethean-wallet-cli lethean-wallet-rpc lethean-wallet-vpn-rpc; \
+    fi
+
 RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \
    dpkg -i zabbix-release_4.0-2+stretch_all.deb
 RUN apt-get update && apt-get install -y zabbix-agent zabbix-sender && mkdir /var/run/zabbix && chown -R lthn /var/log/zabbix /var/run/zabbix
 COPY ./server/docker-run.sh /entrypiont-lethean-vpn.sh
+
 RUN chmod +x /entrypiont-lethean-vpn.sh
 
 RUN ln -sf /etc/lthn/lethean-wallet-rpc.default /etc/default/lethean-wallet-rpc
 RUN ln -sf /etc/lthn/lethean-wallet-vpn-rpc.default /etc/default/lethean-wallet-vpn-rpc
 
 RUN mkdir /etc/skel/lthn; cp /etc/lthn/* /etc/skel/lthn/
+RUN rm -rf /tmp/*deb
 
 COPY debian/lthn-easy-deploy-node.sh /usr/bin/
 RUN chmod +x /usr/bin/lthn-easy-deploy-node.sh

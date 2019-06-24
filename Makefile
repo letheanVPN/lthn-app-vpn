@@ -1,6 +1,7 @@
 PASS=1234
 CN=ItnsVPNFakeCN
 DOCKER=docker
+DEBS=$(wildcard $(PWD)/*deb)
 
 -include env.mk
 
@@ -47,7 +48,7 @@ build/ca/index.txt: env.mk
 	./configure.sh --generate-ca --with-capass "$(PASS)" --with-cn "$CN"
 
 docker-img:
-	docker build -t lethean/lethean-vpn:devel .
+	 docker build --build-arg DEBS="$(DEBS)" -t lethean/lethean-vpn:devel .
 
 docker: docker-img
 

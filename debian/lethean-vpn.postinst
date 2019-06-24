@@ -1,6 +1,13 @@
 #!/bin/sh -e
 
 if [ "$1" = "configure" ]; then
+    if ! getent group netdev >/dev/null; then
+    	 addgroup --system --quiet netdev
+    fi
+    if ! getent user tun >/dev/null; then
+         adduser --system --quiet tun
+         adduser --quiet tun netdev
+    fi
     if ! getent group netdev | grep lthn > /dev/null 2>&1 ; then
         adduser --quiet lthn netdev
     fi

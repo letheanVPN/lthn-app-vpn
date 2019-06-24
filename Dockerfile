@@ -68,7 +68,7 @@ ENTRYPOINT ["/entrypiont-lethean-vpn.sh"]
 CMD ["run"]
 
 USER root
-RUN apt-get update && apt-get install -y apt-utils pwgen joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen
+RUN apt-get update && apt-get install -y apt-utils pwgen joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen rsyslog
 RUN  echo  'deb [trusted=yes] http://monitor.lethean.io/dl/stretch/ ./' >/etc/apt/sources.list.d/lethean.list
 RUN apt-get update
 

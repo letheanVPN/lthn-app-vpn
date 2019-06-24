@@ -12,7 +12,23 @@ errorExit(){
 }
 
 prepareConf(){
-    echo
+    cat >/etc/lthn/rsyslog.conf <<EOF
+
+module(load="imuxsock") # provides support for local system logging
+module(load="imklog")   # provides kernel logging support
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+$FileOwner root
+$FileGroup adm
+$FileCreateMode 0640
+$DirCreateMode 0755
+$Umask 0022
+
+$WorkDirectory /var/spool/rsyslog
+
+*.*                        /dev/console
+
+EOF
 }
 
 runDaemon(){
@@ -119,6 +135,8 @@ lthnvpnd|run)
     if ! [ -f $CONF/zabbix_agentd.conf ]; then
       prepareZabbix || { errorExit 2 "Cannot create $CONF/zabbix_agentd.conf! "; }
     fi
+    echo "Starring syslog" >&2
+    rsyslogd -f /etc/lthn/rsyslog.conf
     if [ -x /usr/sbin/zabbix_agentd ]; then
        echo "Starting zabbix agent" >&2
        zabbix_agentd -c $CONF/zabbix_agentd.conf
@@ -140,6 +158,7 @@ lthnvpnd|run)
         echo "Waiting for walet rpc server."
         sleep 5
     done
+
     echo "Starting dispatcher" >&2
     exec su -s /bin/sh lthn -c "lthnvpnd --wallet-rpc-uri '$WALLETRPCURI' --syslog $@"
     ;;
@@ -189,7 +208,7 @@ connect|lthnvpnc)
         prepareConf
     fi
     shift
-    exec lthnvpnc connect "$@"
+    exec lthnvpnc connect --syslog "$@"
     ;;
 
 list)

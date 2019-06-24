@@ -206,7 +206,7 @@ provider-terms=Some Terms
 wallet-address=$WALLET
 wallet-username=$WALLETRPCUSER
 wallet-password=$WALLETRPCPASS
-wallet-rpc-uri=$WALLETRPCURI/json_rpc
+wallet-rpc-uri=$WALLETRPCURI
 
 [service-1A]
 name=Proxy

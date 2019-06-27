@@ -2,33 +2,6 @@
 
 set -e
 
-if [ "$(whoami)" == "root" ]; then
-  sleep 1
-  chown -R lthn:lthn /etc/lthn /etc/tinyproxy
-  chmod -R o-rwx /etc/lthn
-  if which systemctl >/dev/null; then
-    systemctl disable haproxy
-    systemctl stop haproxy
-    systemctl disable openvpn
-    systemctl stop openvpn
-    systemctl enable tinyproxy
-    systemctl start tinyproxy
-  fi
-  if [ -f /etc/default/lethean-wallet-vpn-rpc ]; then chown lthn /etc/default/lethean-wallet-vpn-rpc; fi
-  sudo -E -u lthn bash $(realpath "$0") "$@"
-  exit
-else
-  if [ "$(whoami)" != "lthn" ]; then
-    echo "Must be run as root, not $(whoami). Exiting"
-    exit 2
-  fi
-fi
-
-if [ -f /etc/lthn/dispatcher.ini ]; then
-  echo "dispatcher.ini already exists! Stopping. To continue, remove old /etc/lthn/dispatcher.ini and run again by yourself!"
-  exit 2
-fi
-
 # Set defaults. Can be overriden by env variables
 [ -z "$LTHNPREFIX" ] && LTHNPREFIX=/
 [ -z "$PROVIDERID" ] && PROVIDERID=""
@@ -58,6 +31,49 @@ fi
 export LTHNPREFIX BRANCH CAPASS CACN ENDPOINT PORT PROVTYPE WALLET EMAIL DAEMON_BIN_URL DAEMON_HOST WALLETPASS \
   WALLETRPCUSER WALLETRPCPASS \
   PROVIDERID PROVIDERKEY ZABBIX_SERVER ZABBIX_PSK ZABBIX_PORT ZABBIX_META USER HOME HTTP_PROXY HTTPS_PROXY
+  
+sysdctl(){
+  if [ "$(whoami)" == "root" ]; then
+    if which systemctl >/dev/null; then
+      systemctl $*
+    else
+      echo "Not running systemctl "$* >&2
+    fi
+  fi
+}
+
+if [ "$(whoami)" == "root" ]; then
+  sleep 1
+  chown -R lthn:lthn /etc/lthn /etc/tinyproxy
+  chmod -R o-rwx /etc/lthn
+  sysdctl disable haproxy
+  sysdctl stop haproxy
+  sysdctl disable openvpn
+  sysdctl stop openvpn
+  sysdctl enable tinyproxy
+  sysdctl start tinyproxy
+  if [ -f /etc/default/lethean-wallet-vpn-rpc ]; then chown lthn /etc/default/lethean-wallet-vpn-rpc; fi
+  sudo -E -u lthn bash $(realpath "$0") "$@"
+  if [ -z "$DAEMON_HOST" ]; then
+    sysdctl enable lethean-daemon
+    sysdctl start lethean-daemon
+  fi
+  if [ "$WALLETRPCHOST" = "127.0.0.1" ]; then
+    sysdctl enable lethean-wallet-vpn-rpc
+    sysdctl start lethean-wallet-vpn-rpc
+  fi
+  exit
+else
+  if [ "$(whoami)" != "lthn" ]; then
+    echo "Must be run as root, not $(whoami). Exiting"
+    exit 2
+  fi
+fi
+
+if [ -f /etc/lthn/dispatcher.ini ]; then
+  echo "dispatcher.ini already exists! Stopping. To continue, remove old /etc/lthn/dispatcher.ini and run again by yourself!"
+  exit 2
+fi
 
 cat <<EOF >/etc/default/lethean-wallet-vpn-rpc
 RPCPORT=$WALLETRPCPORT
@@ -144,10 +160,6 @@ commonName              = supplied
 emailAddress            = optional
 EOF
 
-if [ -z "$DAEMON_HOST" ]; then
-  sysctl enable lethean-daemon
-  sysctl start lethean-daemon
-fi
 
 if ! [ -f "$WALLETFILE" ]; then
   lethean-wallet-cli --mnemonic-language English --generate-new-wallet $WALLETFILE $DAEMON_ARG --restore-height "$WALLETRESTOREHEIGHT" --password "$WALLETPASS" --log-file /dev/stdout --log-level 4 --command exit
@@ -243,4 +255,4 @@ lvmgmt --generate-sdp \
      --sdp-service-prepaid-mins 10 --sdp-service-verifications 0
 
 cat /etc/lthn/sdp.json
-lvmgmt --upload-sdp
+echo "Send payment to SDP service for subscription and run 'lvmgmt --upload-sdp' after" >&2

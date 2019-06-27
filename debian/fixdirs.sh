@@ -7,6 +7,6 @@ if ! [ -f /dev/net/tun ]; then
 fi
 
 mkdir -p /var/run/lthn
-chmod 660 /var/run/lthn
+chmod 770 /var/run/lthn
 chown lthn:lthn /var/run/lthn
 

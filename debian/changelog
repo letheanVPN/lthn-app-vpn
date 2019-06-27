@@ -1,4 +1,4 @@
-lethean-vpn (3.1.0-13) UNRELEASED; urgency=medium
+lethean-vpn (3.1.0-14) UNRELEASED; urgency=medium
 
   * Non-maintainer upload.
   * Reworked dependencies and install
@@ -14,8 +14,9 @@ lethean-vpn (3.1.0-13) UNRELEASED; urgency=medium
   * Fixing docker
   * Added internal syslog for non-linux docker installations
   * Added subversion
+  * Repaired typo
 
- -- Lukas Macura <lm@lindev-jso-cz.jso.local>  Thu, 27 Jun 2019 09:36:28 +0200
+ -- Lukas Macura <lm@lindev-jso-cz.jso.local>  Thu, 27 Jun 2019 10:14:06 +0200
 
 lethean-vpn (3.1.0-1) unstable; urgency=medium
 

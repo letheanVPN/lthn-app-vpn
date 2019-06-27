@@ -11,7 +11,7 @@ if [ "$1" = "configure" ]; then
     if ! getent group netdev | grep lthn > /dev/null 2>&1 ; then
         adduser --quiet lthn netdev
     fi
-    /usr/lib/lthn/fixdevnet.sh
+    /usr/lib/lthn/fixdirs.sh
 fi
 
 

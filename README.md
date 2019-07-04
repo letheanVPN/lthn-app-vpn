@@ -1,8 +1,9 @@
 # lethean-vpn
-This repository contains code needed to setup and run an exit node on the Lethean Virtual Private Network (VPN) or to use Lethean service as client in CLI mode.
+This repository contains code needed to setup and run an exit node on the Lethean Virtual Private Network (VPN) or to use the Lethean network as a client in CLI mode.
 If you are looking for GUI, please look [here](https://github.com/LetheanMovement/lethean-gui)
 
-**This is development version! If you are seeking for stable version, use** [latest release](https://github.com/LetheanMovement/lethean-vpn/releases/tag/v3.0.0.b2). 
+**Lethean uses gitflow. The master branch is the most stable/current release.**
+
 **The exit node is currently only supported on Linux.**
 
 # Design

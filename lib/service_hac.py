@@ -69,8 +69,13 @@ class ServiceHaClient(ServiceHa):
         if (code<0):
             return code
         if (code==self.OK_NOPAYMENT):
-            log.L.warning("Now you need to pay to provider's wallet.")
-            log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], anon="no")
+            cost=0.0
+            for serviceItem in sdp["services"]:
+                if serviceItem["id"] == self.cfg["paymentid"][:2]:
+                    cost=serviceItem["cost"]
+                    log.L.warning("Now you need to pay to provider's wallet. The cost of service is %s LTHN per minute. The minimum initial payment is %s minutes, for a total of %.8f LTHN." % (serviceItem["cost"], serviceItem["firstPrePaidMinutes"], float(serviceItem["cost"]) * float(serviceItem["firstPrePaidMinutes"])))
+                    break            
+            log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], cost_per_min=cost, anon="no")
             code = self.waitForPayment(providerid)
             if (code<0):
                 return code

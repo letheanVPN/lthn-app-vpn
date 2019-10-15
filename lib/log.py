@@ -55,7 +55,7 @@ class Audit(object):
         self.logger.setLevel(logging.INFO)
         self.anon = anon
         
-    def audit(self, action, type, obj=None, anon=None, lthn=None, wallet=None, paymentid=None, sessionid=None, srcip=None, srcport=None, dstport=None, dstip=None, msg=None, method=None, uri=None, serviceid=None, cmd=None):
+    def audit(self, action, type, obj=None, anon=None, lthn=None, wallet=None, paymentid=None, cost_per_min=None, sessionid=None, srcip=None, srcport=None, dstport=None, dstip=None, msg=None, method=None, uri=None, serviceid=None, cmd=None):
         if (anon=="yes" or (anon is None and self.anon is True)):
             if paymentid:
                 paymentid = util.anonymise_paymentid(paymentid)
@@ -81,6 +81,8 @@ class Audit(object):
             json['wallet'] = wallet
         if paymentid:
             json['paymentid'] = paymentid
+        if cost_per_min:
+            json['cost_per_min'] = cost_per_min
         if sessionid:
             json['sessionid'] = sessionid
         if srcip:

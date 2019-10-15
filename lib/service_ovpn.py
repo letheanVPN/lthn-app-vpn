@@ -87,7 +87,13 @@ class ServiceOvpn(Service):
         p = re.search("^>STATE:(\d*),RECONNECTING,auth-failure,,", msg)
         if (p and self.isClient()):
             if self.initphase==1:
-                log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=self.sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], anon="no")
+                cost=0.0
+                for serviceItem in self.sdp["services"]:
+                    if serviceItem["id"] == self.cfg["paymentid"][:2]:
+                        cost=serviceItem["cost"]
+                        log.L.warning("Now you need to pay to provider's wallet. The cost of service is %s LTHN per minute. The minimum initial payment is %s minutes, for a total of %.8f LTHN." % (serviceItem["cost"], serviceItem["firstPrePaidMinutes"], float(serviceItem["cost"]) * float(serviceItem["firstPrePaidMinutes"])))
+                        break
+                log.A.audit(log.A.NPAYMENT, log.A.PWALLET, wallet=self.sdp["provider"]["wallet"], paymentid=self.cfg["paymentid"], cost_per_min=cost, anon="no")
                 self.initphase += 1
             elif time.time()-self.starttime>float(config.Config.CAP.paymentTimeout):
                 log.L.error("Timeout waiting for payment!")

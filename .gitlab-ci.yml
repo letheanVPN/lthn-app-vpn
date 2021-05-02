@@ -30,3 +30,4 @@ docker-build-develop:
     - docker push $CI_REGISTRY_IMAGE:develop
   only:
     - develop
+    - docker-compose

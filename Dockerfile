@@ -46,7 +46,7 @@ WORKDIR /home/lethean
 # Service port
 EXPOSE ${PORT}
 
-
+ENTRYPOINT exec docker-run.sh sh
 #WORKDIR /usr/src/lethean-vpn/build
 #
 #RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \

@@ -1,4 +1,5 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.04 as base
+
 MAINTAINER Lethean.io <contact@lethean.io>
 LABEL "io.lethean.vpn-server"="Lethean.IO"
 LABEL version="2.0"
@@ -10,28 +11,37 @@ RUN apt update && apt install -y build-essential openvpn haproxy stunnel python3
 WORKDIR /usr/local/src/lethean.io/vpn/exit-node
 COPY . .
 
+COPY ./server/docker-run.sh /usr/local/bin/docker-run.sh
+
 RUN pip3 install -r requirements.txt
 
-RUN useradd -ms /bin/bash lthn; \
-  echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers;
+RUN adduser --system --group --disabled-password lethean; \
+	mkdir -p /home/lethean/.intensecoin /opt/lethean/var/log /opt/lethean/var/run; \
+	chown -R lethean:lethean /home/lethean /usr/local/src/lethean.io/vpn/exit-node/; \
+    chmod +x /usr/local/bin/docker-run.sh configure.sh install.sh; \
+    echo "lethean ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers;
 
-COPY ./server/docker-run.sh /home/lthn/entrypiont-lethean-vpn.sh
+VOLUME /home/lethean
 
-RUN chown -R lthn /usr/local/src/lethean.io/vpn/exit-node/; \
-  chmod +x /home/lthn/entrypiont-lethean-vpn.sh; \
-  chmod +x /usr/local/src/lethean.io/vpn/exit-node/install.sh
 RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
 
-USER lthn
+COPY --from=registry.gitlab.com/lethean.io/blockchain/lethean:latest /home/lethean/bin /home/lethean/blockchain
 
-RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --client
+
+USER lethean
+RUN ./configure.sh --runas-user lethean --runas-group lethean --client --server
+
 RUN make install SERVER=1 CLIENT=1
-RUN rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \
-        /opt/lthn/var/* \
-        /usr/local/src/lethean.io/vpn/exit-node/build /usr/local/src/lethean.io/vpn/exit-node/env.mk ; \
-      mkdir -p /opt/lthn/var/log /opt/lthn/var/run;
 
-WORKDIR /home/lthn
+RUN sudo rm -rf /opt/lethean/etc/ca /opt/lethean/etc/*.ini /opt/lethean/etc/*.json /opt/lethean/etc/*.pem /opt/lethean/etc/*.tlsauth /opt/lethean/etc/*.keys /opt/lethean/etc/provider* \
+        /opt/lethean/var/* /usr/local/src/lethean.io/vpn/exit-node/build /usr/local/src/lethean.io/vpn/exit-node/env.mk ;
+
+RUN sudo mkdir -p /opt/lethean/var/log /opt/lethean/var/run;
+
+
+WORKDIR /home/lethean
+
+
 
 # Service port
 EXPOSE ${PORT}

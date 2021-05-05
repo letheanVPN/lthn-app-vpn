@@ -1,6 +1,5 @@
 syslogmp
 ed25519
-pprint
 psutil
 jsonpickle
 configargparse

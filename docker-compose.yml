@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  exit-node:
+    env_file:
+      - config.env
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - 'data:/home/lethean'
+  lethean-cli:
+    ports:
+      - "48782:48782"
+      - "48772:48772"
+      - "14660:14660"
+    image: "registry.gitlab.com/lethean.io/blockchain/lethean:latest"
+    volumes:
+      - 'data:/home/lethean'
+
+volumes:
+  data:

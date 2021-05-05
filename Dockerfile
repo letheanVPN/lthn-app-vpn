@@ -15,38 +15,36 @@ COPY ./server/docker-run.sh /usr/local/bin/docker-run.sh
 
 RUN pip3 install -r requirements.txt
 
-RUN adduser --system --group --disabled-password lethean; \
-	mkdir -p /home/lethean/.intensecoin /opt/lethean/var/log /opt/lethean/var/run; \
-	chown -R lethean:lethean /home/lethean /usr/local/src/lethean.io/vpn/exit-node/; \
+RUN adduser --system --group --disabled-password lthn; \
+	mkdir -p /home/lthn/.intensecoin /opt/lthn/var/log /opt/lthn/var/run; \
+	chown -R lthn:lthn /home/lthn /usr/local/src/lethean.io/vpn/exit-node/; \
     chmod +x /usr/local/bin/docker-run.sh configure.sh install.sh; \
-    echo "lethean ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers;
+    echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers;
 
-VOLUME /home/lethean
+VOLUME /home/lthn
 
 RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
 
-COPY --from=registry.gitlab.com/lethean.io/blockchain/lethean:latest /home/lethean/bin /home/lethean/blockchain
 
-
-USER lethean
-RUN ./configure.sh --runas-user lethean --runas-group lethean --client --server
+USER lthn
+RUN ./configure.sh --runas-user lthn --runas-group lthn --client --server
 
 RUN make install SERVER=1 CLIENT=1
 
-RUN sudo rm -rf /opt/lethean/etc/ca /opt/lethean/etc/*.ini /opt/lethean/etc/*.json /opt/lethean/etc/*.pem /opt/lethean/etc/*.tlsauth /opt/lethean/etc/*.keys /opt/lethean/etc/provider* \
-        /opt/lethean/var/* /usr/local/src/lethean.io/vpn/exit-node/build /usr/local/src/lethean.io/vpn/exit-node/env.mk ;
+RUN sudo rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \
+        /opt/lthn/var/* /usr/local/src/lethean.io/vpn/exit-node/build /usr/local/src/lethean.io/vpn/exit-node/env.mk ;
 
-RUN sudo mkdir -p /opt/lethean/var/log /opt/lethean/var/run;
+RUN sudo mkdir -p /opt/lthn/var/log /opt/lthn/var/run;
 
 
-WORKDIR /home/lethean
+WORKDIR /home/lthn
 
 
 
 # Service port
 EXPOSE ${PORT}
 
-ENTRYPOINT exec docker-run.sh sh
+ENTRYPOINT  ["docker-run.sh", "run"]
 #WORKDIR /usr/src/lethean-vpn/build
 #
 #RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \

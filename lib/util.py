@@ -211,7 +211,10 @@ def parseProvider(provider):
                     continue
                 log.L.debug("Processing DNS TXT record %s" % (txt))
                 for v in variables:
-                    name, value = v.split("=")
+                    try:
+                        name, value = v.split("=")
+                    except ValueError:
+                        continue
                     if (name=="lv"):
                         continue
                     if (name=="sdp"):

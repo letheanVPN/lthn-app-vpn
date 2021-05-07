@@ -5,3 +5,7 @@ build/*
 env.mk
 bin/*
 dist/*
+debian/*debhelper
+debian/*substvars
+debian/lethean-vpn/*
+debian/files

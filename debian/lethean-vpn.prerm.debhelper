@@ -1,5 +1,0 @@
-# Automatically added by dh_systemd_start/12.1.1
-if [ -d /run/systemd/system ]; then
-	deb-systemd-invoke stop 'lethean-vpn-client.service' 'lethean-vpn-server.service' >/dev/null || true
-fi
-# End automatically added section

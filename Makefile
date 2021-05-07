@@ -75,6 +75,7 @@ lthnvpnc:
 
 
 python-pkg-deb:
+	pip3 install -r requirements.txt
 	mkdir -p $(TMP_DIR)
 	if ! [ -d $(TMP_DIR)/$(PKG_NAME) ]; then git clone $(PKG_GIT_URL) $(TMP_DIR)/$(PKG_NAME); fi
 	echo $(PKG_NAME) >$(TMP_DIR)/$(PKG_NAME)/requirements.txt
@@ -90,3 +91,7 @@ syslogmp-deb:
 	$(MAKE) python-pkg-deb TMP_DIR=debian/tmp PKG_NAME=syslogmp PKG_GIT_URL=https://github.com/homeworkprod/syslogmp.git
 
 python-debs: configargparse-deb ed25519-deb syslogmp-deb
+
+deb:
+	dpkg-buildpackage
+  

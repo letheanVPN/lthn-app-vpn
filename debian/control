@@ -6,7 +6,9 @@ Build-Depends: debhelper (>= 9),
                dh-python,
                python3-all,
                python3-setuptools,
-               dh-systemd
+               dh-systemd, 
+               openvpn,
+               haproxy
 Standards-Version: 4
 Homepage: https://lethean.io/
 

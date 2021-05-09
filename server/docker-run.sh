@@ -225,7 +225,7 @@ upload-sdp)
     ;;
 
 lthnvpnd|run)
-    cd /opt/lthn/var
+    cd /opt/lthn/var || errorExit 2 "Cannot cd from $(pwd) to /opt/lthn/var";
     testServerConf
     if ! [ -f $CONF/zabbix_agentd.conf.conf ]; then
       prepareZabbix || { errorExit 2 "Cannot create $CONF/zabbix_agentd.conf! "; }
@@ -265,13 +265,9 @@ wallet-cli)
     ;;
 
 zsync-make)
-    if [ -d "$LMDB" ]; then
-        cd $LMDB
-        zsyncmake -v -b 262144 -f data.mdb -u "$ZSYNC_DATA_URL" data.mdb
-        sha256sum data.mdb | cut -d ' ' -f 1 >data.mdb.sha256
-    else
-        errorExit 2 "LMDB database does not exist!"
-    fi
+    cd $LMDB || errorExit 2 "LMDB database does not exist!"
+    zsyncmake -v -b 262144 -f data.mdb -u "$ZSYNC_DATA_URL" data.mdb
+    sha256sum data.mdb | cut -d ' ' -f 1 >data.mdb.sha256
     ;;
 
 sync-bc)
@@ -306,7 +302,7 @@ lvmgmt)
     ;;
 
 root)
-    cd /home/lthn
+    cd /home/lthn || return
     su --preserve-environment lthn
     ;;
 

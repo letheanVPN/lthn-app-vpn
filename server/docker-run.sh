@@ -227,7 +227,7 @@ upload-sdp)
 lthnvpnd|run)
     cd /opt/lthn/var || errorExit 2 "Cannot cd from $(pwd) to /opt/lthn/var";
     testServerConf
-    if ! [ -f $CONF/zabbix_agentd.conf.conf ]; then
+    if ! [ -f $CONF/zabbix_agentd.conf ]; then
       prepareZabbix || { errorExit 2 "Cannot create $CONF/zabbix_agentd.conf! "; }
     fi
     if [ -x /usr/sbin/zabbix_agentd ]; then

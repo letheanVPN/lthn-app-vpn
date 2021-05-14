@@ -92,12 +92,6 @@ runWalletCli(){
     fi    
 }
 
-testServerConf(){
-    if ! [ -f /opt/lthn/etc/sdp.json ] || ! [ -f /opt/lthn/etc/dispatcher.ini ]; then
-        errorExit 1 "We are not configured! Exiting! Run easy-deploy first or configure manually"
-    fi
-}
-
 prepareSquid(){
 cat >$CONF/squid.conf <<EOF
 acl SSL_ports port 443
@@ -158,8 +152,46 @@ generateEnv(){
     echo "WALLET_RPC_URI='$WALLET_RPC_URI'"
 }
 
+printWelcome() {
+cat <<EOF
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*     ___      _______  __   __  __    _        ___   _______     *
+*    |   |    |       ||  | |  ||  |  | |      |   | |       |    *
+*    |   |    |_     _||  |_|  ||   |_| |      |   | |   _   |    *
+*    |   |      |   |  |       ||       |      |   | |  | |  |    *
+*    |   |___   |   |  |   _   ||  _    | ___  |   | |  |_|  |    *
+*    |       |  |   |  |  | |  || | |   ||   | |   | |       |    *
+*    |_______|  |___|  |__| |__||_|  |__||___| |___| |_______|    *
+*                                                                 *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                                                 *
+*          Welcome to Lethean! We are glad to see you!            *
+*                                                                 *
+*   We are updating the code, taking advantage of improvements    *
+*   not around in 2017. Join our discord and keep track!          *
+*                                                                 *
+*         Help Docs: https://vpn.lethean.help                     *
+*         Discord:   https://discord.lt.hn                        *
+*                                                                 *
+*           PLEASE CONFIGURE IF YOU KEEP SEEING THIS              *
+*                                                                 *
+*              docker run lthn/vpn config                         *
+*                                                                 *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+EOF
+
+}
+
+testServerConf(){
+    if ! [ -f /opt/lthn/etc/sdp.json ] || ! [ -f /opt/lthn/etc/dispatcher.ini ]; then
+        printWelcome
+        exit
+    fi
+}
+
+
 case $1 in
-easy-deploy)
+config|easy-deploy)
     cd /usr/src/lethean-vpn
 
     if [ -z "$WALLET_PASSWORD" ]; then

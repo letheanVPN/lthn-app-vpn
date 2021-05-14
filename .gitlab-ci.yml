@@ -5,7 +5,9 @@ Docker Hub:
   stage: deploy
   image: docker
   services:
-    - docker:dind
+    - name: docker:dind
+      command: [ "--experimental" ]
+
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:

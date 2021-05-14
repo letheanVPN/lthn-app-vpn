@@ -4,7 +4,7 @@ include:
 Docker Hub:
   stage: deploy
   script:
-    - docker build --pull -t "lthn/vpn" .
+    - docker build --squash -t "lthn/vpn" .
     - docker push "lthn/vpn"
   environment:
     name: docker.io

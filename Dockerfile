@@ -1,5 +1,6 @@
 FROM python:3.7.1-stretch
 MAINTAINER Lukas Macura <lukas@lethean.io>
+MAINTAINER Snider <snider@lethean.io>
 
 LABEL "io.lethean.vpn-server"="Lethean.IO"
 LABEL version="1.0"
@@ -65,9 +66,6 @@ ENV ZSYNC_URL="$ZSYNC_URL"
 ENV ZSYNC_DATA_URL="$ZSYNC_DATA_URL"
 ENV ZSYNC_DATA_SHA="$ZSYNC_DATA_SHA"
 
-ENTRYPOINT ["/entrypiont-lethean-vpn.sh"]
-CMD ["run"]
-
 RUN useradd -ms /bin/bash lthn; \
   apt-get update; \
   apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen; \
@@ -107,3 +105,6 @@ RUN rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/e
       mkdir -p /opt/lthn/var/log /opt/lthn/var/run;
 
 WORKDIR /home/lthn
+
+ENTRYPOINT ["/entrypiont-lethean-vpn.sh", "run"]
+#CMD ["sh"]

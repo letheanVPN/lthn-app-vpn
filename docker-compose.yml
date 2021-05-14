@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  exit-node:
+    build: .
+    image: lthn/vpn
+    ports:
+      - "48782:48782"
+      - "48772:48772"
+      - "5000:5000"
+    volumes:
+      - "data:/home/lthn"
+      - "data:/opt/lthn/etc"
+      - "data:/opt/lthn/logs"
+volumes:
+  data:

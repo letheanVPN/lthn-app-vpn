@@ -6,6 +6,8 @@ Docker Hub:
   image: docker
   services:
     - docker-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - docker build --squash -t "lthn/vpn" .
     - docker push "lthn/vpn"

@@ -15,10 +15,10 @@ if [ "$(whoami)" = "root" ] && [ -z "$NOSUDO" ]; then
 fi
 
 if [ -z "$LTHN_PREFIX" ]; then
-    echo "You must configure intense-vpn!"
+    echo "You must configure lethean-vpn!"
     exit 1
 fi
-
+echo $BIN_DIR
 if [ "$LTHN_PREFIX" != "/" ]; then
   LTHNB_PREFIX="/bin/"
   LTHNL_PREFIX="/lib/"

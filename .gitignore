@@ -9,3 +9,4 @@ debian/*debhelper
 debian/*substvars
 debian/lethean-vpn/*
 debian/files
+venv

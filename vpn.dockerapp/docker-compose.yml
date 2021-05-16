@@ -3,12 +3,12 @@ version: "3.9"
 services:
   exit-node:
     env_file:
-      - config.env
+      - ../config.env
     build: .
     ports:
       - "5000:5000"
     volumes:
-      - 'data:/home/lethean'
+      - 'data:/home/lthn'
   lethean-cli:
     ports:
       - "48782:48782"
@@ -16,7 +16,7 @@ services:
       - "14660:14660"
     image: "registry.gitlab.com/lthn.io/projects/chain/lethean:develop"
     volumes:
-      - 'data:/home/lethean'
+      - 'data:/home/lthn'
 
 volumes:
   data:

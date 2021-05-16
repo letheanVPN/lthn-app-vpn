@@ -25,7 +25,7 @@ VOLUME /home/lethean
 
 RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
 
-COPY --from=registry.gitlab.com/lethean.io/blockchain/lethean:latest /home/lethean/bin /home/lethean/blockchain
+COPY --from=registry.gitlab.com/lthn.io/projects/chain/lethean:latest /home/lethean/bin /home/lethean/blockchain
 
 
 USER lethean

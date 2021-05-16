@@ -14,13 +14,14 @@ ARG ZSYNC_URL="https://monitor.lethean.io/bc/data.mdb.zsync"
 ARG ZSYNC_DATA_URL="http://monitor.lethean.io/bc/data.mdb"
 ARG ZSYNC_DATA_SHA="http://monitor.lethean.io/bc/data.mdb.sha256"
 ENV BASE_DIR="/home/lthn"
-ENV VPN_DIR="/home/lthn/vpn"
-ENV WALLET_DIR="${BASE_DIR}/wallet"
-ENV BIN_DIR="${BASE_DIR}/bin"
-ENV CONF_DIR="${BASE_DIR}/config"
-ENV LOG_DIR="${BASE_DIR}/log"
+ENV IMG_TAG="vpn"
+ENV WALLET_DIR="${BASE_DIR}/wallet/${IMG_TAG}"
+ENV BIN_DIR="${BASE_DIR}/bin/${IMG_TAG}"
+ENV CONF_DIR="${BASE_DIR}/config/${IMG_TAG}"
+ENV LOG_DIR="${BASE_DIR}/log/${IMG_TAG}"
+ENV SRC_DIR="${BASE_DIR}/src/${IMG_TAG}"
 
-RUN mkdir -p $WALLET_DIR $VPN_DIR $CONF_DIR $LOG_DIR
+RUN mkdir -p $WALLET_DIR $BIN_DIR $CONF_DIR $LOG_DIR $SRC_DIR
 
 # Daemon host. Set to empty string to use local daemon with complete copy of blockchain.
 ENV DAEMON_HOST="$DAEMON_HOST"
@@ -63,19 +64,19 @@ RUN useradd -ms /bin/bash lthn; \
   apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen; \
   echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 
-WORKDIR $VPN_DIR
+WORKDIR $SRC_DIR
 
 COPY . .
 
 ### good example of what wasnt avlible back then that would have changed things up for them
 # RUN wget -nc -c $DAEMON_BIN_URL && tar --strip-components 1 -C /usr/bin/ -xjvf $(basename $DAEMON_BIN_URL)
-COPY --from=registry.gitlab.com/lthn.io/projects/chain/lethean:develop /usr/local/bin $BASE_DIR/chain/bin
+COPY --from=registry.gitlab.com/lthn.io/projects/chain/lethean:develop /usr/local/bin /home/lthn/chain/bin
 
 RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \
    dpkg -i zabbix-release_4.0-2+stretch_all.deb
 
 RUN apt-get update && apt-get install -y zabbix-agent zabbix-sender \
-        && chown -R lthn $VPN_DIR $WALLET_DIR $CONF_DIR $LOG_DIR
+        && chown -R lthn $WALLET_DIR $BIN_DIR $CONF_DIR $LOG_DIR $SRC_DIR
 RUN sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME/" /etc/zabbix/zabbix_agentd.conf; \
   sed -i "s/Server=(.*)/Server=$ZABBIX_SERVER/" /etc/zabbix/zabbix_agentd.conf; \
   sed -i "s/ServerActive=(.*)/ServerActive=$ZABBIX_SERVER/" /etc/zabbix/zabbix_agentd.conf; \
@@ -83,24 +84,23 @@ RUN sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME/" /etc/zabbix/zabbix_agent
   sed -i "s/HostMetadata=(.*)/HostMetadata=$ZABBIX_META/" /etc/zabbix/zabbix_agentd.conf;
 
 
-RUN pip3 install -r $VPN_DIR/requirements.txt
+RUN pip3 install -r ${SRC_DIR}/requirements.txt
 
-RUN cp $VPN_DIR/server/docker-run.sh $BASE_DIR/lthn-vpn.sh
+RUN cp $SRC_DIR/server/docker-run.sh $BASE_DIR/lthn-vpn.sh
 
-RUN chown -R lthn $VPN_DIR $BASE_DIR/bin; \
-  chmod +x $BASE_DIR/lthn-vpn.sh $VPN_DIR/install.sh
+RUN chown -R lthn $BASE_DIR; \
+  chmod +x $BASE_DIR/lthn-vpn.sh $SRC_DIR/install.sh
 
 RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
 
 USER lthn
-WORKDIR $VPN_DIR
-RUN chmod +x $VPN_DIR/configure.sh; $VPN_DIR/configure.sh --runas-user lthn --runas-group lthn --client
+WORKDIR $SRC_DIR
+RUN chmod +x $SRC_DIR/configure.sh; $SRC_DIR/configure.sh --runas-user lthn --runas-group lthn --client
 RUN make install SERVER=1 CLIENT=1
-RUN rm -rf $CONF_DIR/ca $CONF_DIR/*.ini $CONF_DIR/*.json $CONF_DIR/*.pem $CONF_DIR/*.tlsauth $CONF_DIR/*.keys $CONF_DIR/provider* \
-        $VPN_DIRr/* \
-        $VPN_DIR; \
+
+RUN rm -rf $SRC_DIR/*
 
 
-WORKDIR /home/lthn
+WORKDIR $SRC_DIR
 CMD ["run"]
 ENTRYPOINT ["/entrypiont-lethean-vpn.sh"]

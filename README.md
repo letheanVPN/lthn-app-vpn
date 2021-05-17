@@ -23,6 +23,10 @@ As a server, dispatcher helps you to create, publish and run your service as a p
 We have prepared docker images for you. It is probably easiest way how to run client or exit node.
 There is directory which needs to be mounted to host: /opt/lthn/etc . If you want to get syslog events from docker, you must bind /dev/log too.
 
+```shell
+docker build --no-cache -t snider/vpn . && docker run -v ~/lethean:/home/lthn snider/vpn
+```
+
 ### General usage
 ```
  ENV1=value [ENV2=value2] docker run -p expose:internal \

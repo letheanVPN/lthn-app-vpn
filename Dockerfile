@@ -6,6 +6,15 @@ LABEL "io.lethean.vpn-server"="Lethean.IO"
 LABEL version="1.0"
 LABEL description="Letehan.io VPN server"
 
+RUN useradd -ms /bin/bash lthn; \
+  apt-get update; \
+  apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen; \
+  echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
+
+WORKDIR /home/lthn/src/vpn
+
+COPY . .
+
 ARG DAEMON_BIN_URL="https://github.com/LetheanMovement/lethean/releases/download/v3.1.0/lethean-cli-linux-64bit-v3.1.tar.bz2"
 ARG DAEMON_HOST="sync.lethean.io"
 ARG PORT="8080"
@@ -59,23 +68,16 @@ ENV ZSYNC_URL="$ZSYNC_URL"
 ENV ZSYNC_DATA_URL="$ZSYNC_DATA_URL"
 ENV ZSYNC_DATA_SHA="$ZSYNC_DATA_SHA"
 
-RUN useradd -ms /bin/bash lthn; \
-  apt-get update; \
-  apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen; \
-  echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 
-WORKDIR $SRC_DIR
-
-COPY . .
 
 ### good example of what wasnt avlible back then that would have changed things up for them
 # RUN wget -nc -c $DAEMON_BIN_URL && tar --strip-components 1 -C /usr/bin/ -xjvf $(basename $DAEMON_BIN_URL)
-COPY --from=registry.gitlab.com/lthn.io/projects/chain/lethean:develop /usr/local/bin /home/lthn/chain/bin
+COPY --from=registry.gitlab.com/lthn.io/projects/chain/lethean/develop:latest /usr/local/bin /home/lthn/chain/bin
 
 RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \
    dpkg -i zabbix-release_4.0-2+stretch_all.deb
 
-RUN apt-get update && apt-get install -y zabbix-agent zabbix-sender \
+RUN apt-get update && apt-get install -y --no-install-recommends zabbix-agent zabbix-sender \
         && chown -R lthn $WALLET_DIR $BIN_DIR $CONF_DIR $LOG_DIR $SRC_DIR
 RUN sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME/" /etc/zabbix/zabbix_agentd.conf; \
   sed -i "s/Server=(.*)/Server=$ZABBIX_SERVER/" /etc/zabbix/zabbix_agentd.conf; \
@@ -92,15 +94,13 @@ RUN chown -R lthn $BASE_DIR; \
   chmod +x $BASE_DIR/lthn-vpn.sh $SRC_DIR/install.sh
 
 RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
-
 USER lthn
-WORKDIR $SRC_DIR
 RUN chmod +x $SRC_DIR/configure.sh; $SRC_DIR/configure.sh --runas-user lthn --runas-group lthn --client
 RUN make install SERVER=1 CLIENT=1
 
 RUN rm -rf $SRC_DIR/*
 
+WORKDIR $BASE_DIR
 
-WORKDIR $SRC_DIR
+ENTRYPOINT ["lthn-vpn.sh"]
 CMD ["run"]
-ENTRYPOINT ["/entrypiont-lethean-vpn.sh"]

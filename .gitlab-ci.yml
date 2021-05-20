@@ -1,33 +1,33 @@
-stages:
-  - build
+include:
+  - template: Auto-DevOps.gitlab-ci.yml
 
-docker-build-master:
-  # Official docker image.
-  image: docker:19.03.12
-  stage: build
+Docker Hub:
+  stage: deploy
+  image: docker
   services:
-    - docker:19.03.12-dind
+    - name: docker:dind
+      command: [ "--experimental" ]
+
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker pull $CI_REGISTRY_IMAGE:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:latest
+    - docker build --squash -t "lthn/vpn" .
+    - docker push "lthn/vpn"
+  environment:
+    name: docker.io
   only:
     - master
 
-docker-build-develop:
-  # Official docker image.
-  image: docker:19.03.12
-  stage: build
-  services:
-    - docker:19.03.12-dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:develop || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:develop --tag $CI_REGISTRY_IMAGE:develop .
-    - docker push $CI_REGISTRY_IMAGE:develop
-  only:
-    - develop
-    - docker-compose
+deploy to staging:
+  stage: deploy
+  script: make deploy
+  environment:
+    name: staging
+    url: https://vpn.staging.eu-north.pods.lthn.io/
+
+deploy to production:
+  stage: deploy
+  script: make deploy
+  environment:
+    name: production
+    url: https://vpn.production.eu-north.pods.lthn.io/

@@ -24,6 +24,8 @@ deploy to staging:
   environment:
     name: staging
     url: https://vpn.staging.eu-north.pods.lthn.io/
+  only:
+    - develop
 
 deploy to production:
   stage: deploy
@@ -31,3 +33,5 @@ deploy to production:
   environment:
     name: production
     url: https://vpn.production.eu-north.pods.lthn.io/
+  only:
+    - master

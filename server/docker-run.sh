@@ -292,7 +292,7 @@ lthnvpnd | run)
   unset http_proxy
   shift
   while ! curl "$WALLET_RPC_URI" >/dev/null 2>/dev/null; do
-    echo "Waiting for walet rpc server."
+    echo "Waiting for wallet rpc server."
     sleep 5
   done
   echo "Starting dispatcher" >&2

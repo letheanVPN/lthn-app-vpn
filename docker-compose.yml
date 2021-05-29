@@ -8,15 +8,16 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - 'data:/home/lthn'
+      - 'vpn:/home/lthn/data/vpn'
   lethean-cli:
     ports:
       - "48782:48782"
       - "48772:48772"
       - "14660:14660"
-    image: "registry.gitlab.com/lthn.io/projects/chain/lethean:develop"
+    image: "lthn/chain"
     volumes:
-      - 'data:/home/lthn'
+      - 'chain:/home/lthn/data/chain'
 
 volumes:
-  data:
+  chain:
+  vpn:

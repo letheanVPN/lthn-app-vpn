@@ -1,7 +1,2 @@
-*.pyc
-*~
-build/*
-*.log
-env.mk
-bin/*
-dist/*
+settings
+!settings/.gitkeep

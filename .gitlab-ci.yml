@@ -17,7 +17,7 @@ Docker Hub:
     name: docker.io
   only:
     - master
-    -
+
 build:
   stage: build
   image: docker
@@ -29,5 +29,3 @@ build:
   script:
     - make build
     - make push
-  only:
-    - master

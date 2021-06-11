@@ -219,10 +219,10 @@ class ServiceHaClient(ServiceHa):
             try:
                 log.L.warning("Waiting for local proxy...")
                 r = requests.get("http://localhost:%s/stats" % (self.cfg["proxy_port"]),
-                         proxies={"http": None, "https": None},
-                         headers={config.Config.CAP.mgmtHeader: self.cfg["uniqueid"]},
-                         timeout=timeout
-                         )
+                                 proxies={"http": None, "https": None},
+                                 headers={config.Config.CAP.mgmtHeader: self.cfg["uniqueid"]},
+                                 timeout=timeout
+                                 )
                 if (r.status_code == 200):
                     log.L.warning("Local proxy OK")
                     return self.OK
@@ -251,7 +251,8 @@ class ServiceHaClient(ServiceHa):
                          headers=headers,
                          timeout=timeout
                          )  
-                log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s]" % (config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason))
+                log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s]" % (
+                config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason))
                 if 'X-LTHN-Status' in r.headers:
                     reason=r.headers['X-LTHN-Status']
                 elif 'X-ITNS-Status' in r.headers:
@@ -297,7 +298,8 @@ class ServiceHaClient(ServiceHa):
                     reason=r.headers['X-ITNS-Status']
                 else:
                     reason = r.reason
-                log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s,%s]" % (config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason, reason))
+                log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s,%s]" % (
+                config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason, reason))
                 if (r.status_code == 200):
                     log.L.warning("Payment arrived. Happy flying!")
                     return self.OK
@@ -341,7 +343,8 @@ class ServiceHaClient(ServiceHa):
                 reason=r.headers['X-ITNS-Status']
             else:
                 reason = r.reason
-            log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s,%s]" % (config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason, reason))
+            log.L.debug("Request http://remote.lethean/status (%s: %s, %s: %s) => %s [%s,%s]" % (
+            config.Config.CAP.mgmtHeader, providerid, config.Config.CAP.authidHeader, self.cfg["paymentid"], r.status_code, r.reason, reason))
             if (r.status_code == 200):
                 log.L.warning("Payment OK!")
                 log.L.debug(r.text)

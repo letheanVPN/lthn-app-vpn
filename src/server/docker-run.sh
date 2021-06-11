@@ -175,7 +175,7 @@ cat <<EOF
 *                                                                 *
 *           PLEASE CONFIGURE IF YOU KEEP SEEING THIS              *
 *                                                                 *
-*              docker run lthn/vpn config                         *
+*              docker run lthn/vpn easy-deploy                    *
 *                                                                 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 EOF

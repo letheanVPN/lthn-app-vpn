@@ -32,7 +32,7 @@ class ServiceStunnel(Service):
     
     def run(self):
         self.createConfig()
-        cmd = [ config.Config.CAP.stunnelBin, self.cfgfile ]
+        cmd = [config.Config.CAP.stunnelBin, self.cfgfile]
         if not os.path.isfile(config.Config.CAP.stunnelBin):
             log.L.error("Stunnel binary %s not found. Cannot continue!" % (config.Config.CAP.stunnelBin))
             sys.exit(1)

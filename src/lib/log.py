@@ -104,7 +104,7 @@ class Audit(object):
         if (config.Config.CAP.aj):
             txt = util.valuesToJson(json)
         else:
-            txt = util.valuesToString(json,'=',',','')
+            txt = util.valuesToString(json, '=', ',', '')
             
         return(self.logger.info(txt))
 

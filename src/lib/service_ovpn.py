@@ -20,9 +20,9 @@ class ServiceOvpn(Service):
     
     def run(self):
         self.createConfig()
-        if config.Config.CAP.d=='INFO':
+        if config.Config.CAP.d== 'INFO':
             verb="2"
-        elif config.Config.CAP.d=='DEBUG':
+        elif config.Config.CAP.d== 'DEBUG':
             verb="3"
         else:
             verb="1"

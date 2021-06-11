@@ -50,14 +50,14 @@ class Service(object):
             self.cfg = {}
         for o in self.OPTS:
             if o in self.cfg:
-                log.L.debug("Setting service %s parameter %s to %s" % (id,o,self.cfg[o]))
+                log.L.debug("Setting service %s parameter %s to %s" % (id, o, self.cfg[o]))
             else:
                 if (self.OPTS[o]):
-                    log.L.debug("Setting service %s parameter %s to default (%s)" % (id,o,self.OPTS[o]))
+                    log.L.debug("Setting service %s parameter %s to default (%s)" % (id, o, self.OPTS[o]))
                     self.cfg[o] = "%s" % (self.OPTS[o])
         for c in self.cfg:
             if c not in self.OPTS.keys():
-                log.L.warning("Unknown parameter %s for service %s" % (c,id))
+                log.L.warning("Unknown parameter %s for service %s" % (c, id))
         if id is not "00":
             for o in self.OPTS_REQUIRED:
                 if o not in self.cfg:

@@ -25,7 +25,7 @@ class ServiceHa(Service):
         
     def run(self):
         self.createConfig()
-        cmd = [ config.Config.CAP.haproxyBin, "-Ds", "-p", self.pidfile, "-f", self.cfgfile ]
+        cmd = [config.Config.CAP.haproxyBin, "-Ds", "-p", self.pidfile, "-f", self.cfgfile]
         if (os.path.isfile(self.pidfile)):
             os.remove(self.pidfile)
         os.chdir(self.dir)

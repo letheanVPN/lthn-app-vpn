@@ -74,6 +74,7 @@ RUN useradd -ms /bin/bash lthn; \
   chown -R lthn /usr/src/lethean-vpn
 
 WORKDIR /usr/src/lethean-vpn/build
+
 RUN wget -nc -c $DAEMON_BIN_URL && \
    tar --strip-components 1 -C /usr/bin/ -xjvf $(basename $DAEMON_BIN_URL)
 RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \
@@ -85,18 +86,24 @@ RUN sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME/" /etc/zabbix/zabbix_agent
   sed -i "s/Hostname=(.*)/Hostname=$ZABBIX_HOSTNAME/" /etc/zabbix/zabbix_agentd.conf; \
   sed -i "s/HostMetadata=(.*)/HostMetadata=$ZABBIX_META/" /etc/zabbix/zabbix_agentd.conf;
 
-USER root
-COPY ./ /usr/src/lethean-vpn/
+COPY . /usr/src/lethean-vpn/
+
 RUN rm -rf /usr/src/lethean-vpn/build/
-RUN pip3 install -r /usr/src/lethean-vpn/requirements.txt
-COPY ./server/docker-run.sh /entrypiont-lethean-vpn.sh
+
+RUN pip3 install --user -r /usr/src/lethean-vpn/requirements.txt
+
+COPY server/docker-run.sh /lethean-vpn.sh
+
 RUN chown -R lthn /usr/src/; \
-  chmod +x /entrypiont-lethean-vpn.sh; \
+  chmod +x /lethean-vpn.sh; \
   chmod +x /usr/src/lethean-vpn/install.sh
 RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
 
+RUN rm -rf /cache/apt
+
 USER lthn
 WORKDIR /usr/src/lethean-vpn/
+
 RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --client
 RUN make install SERVER=1 CLIENT=1
 RUN rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \
@@ -106,5 +113,5 @@ RUN rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/e
 
 WORKDIR /home/lthn
 
-ENTRYPOINT ["/entrypiont-lethean-vpn.sh", "run"]
-#CMD ["sh"]
+ENTRYPOINT ["/lethean-vpn.sh"]
+CMD ["run"]

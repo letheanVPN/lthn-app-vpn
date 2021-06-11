@@ -20,12 +20,15 @@ Docker Hub:
 
 build:
   stage: build
-  image: docker
+  image: ubuntu:20.04
   services:
+    - name: docker
+      command: [ "--experimental" ]
     - name: docker:dind
       command: [ "--experimental" ]
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - apk update && apk add make
   script:
     - make build
     - make push

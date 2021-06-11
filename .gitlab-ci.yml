@@ -16,8 +16,10 @@ Docker Hub:
     - docker push lthn/vpn
   environment:
     name: docker.io
-  only:
-    - master
+  rules:
+    - if: "$CI_COMMIT_BRANCH == 'master'"
+    - changes:
+        - src
 
 build:
   stage: build
@@ -32,3 +34,7 @@ build:
   script:
     - docker build -t $CI_REGISTRY_IMAGE src
     - docker push $CI_REGISTRY_IMAGE
+  rules:
+    - if: "$CI_COMMIT_BRANCH == 'master'"
+    - changes:
+        - src

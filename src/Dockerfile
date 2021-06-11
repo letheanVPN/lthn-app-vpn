@@ -76,7 +76,7 @@ RUN useradd -ms /bin/bash lthn; \
 
 WORKDIR /usr/src/lethean-vpn/build
 
-COPY --from=lthn/chain /home/lthn/chain/bin /usr/bin
+COPY --from=lthn/chain /home/lthn/bin/chain /usr/bin
 
 RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \
    dpkg -i zabbix-release_4.0-2+stretch_all.deb

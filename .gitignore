@@ -1,2 +1,7 @@
 settings
 !settings/.gitkeep
+/.idea/.gitignore
+/.idea/modules.xml
+/.idea/node.iml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/vcs.xml

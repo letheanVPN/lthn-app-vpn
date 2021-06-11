@@ -24,6 +24,5 @@ build:
 
 .PHONY: push
 push:
-	docker login
 	docker push lthn/vpn:latest
 

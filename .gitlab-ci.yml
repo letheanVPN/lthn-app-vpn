@@ -13,7 +13,7 @@ Docker Hub:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - make build
-    - make push
+    - docker push lthn/vpn
   environment:
     name: docker.io
   only:
@@ -31,4 +31,4 @@ build:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - make build
-    - make push
+    - docker push lthn/vpn

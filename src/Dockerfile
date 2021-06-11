@@ -76,8 +76,8 @@ RUN useradd -ms /bin/bash lthn; \
 
 WORKDIR /usr/src/lethean-vpn/build
 
-RUN wget -nc -c $DAEMON_BIN_URL && \
-   tar --strip-components 1 -C /usr/bin/ -xjvf $(basename $DAEMON_BIN_URL)
+COPY --from=lthn/chain /home/lthn/chain/bin /usr/bin
+
 RUN wget https://repo.zabbix.com/zabbix/4.0/debian/pool/main/z/zabbix-release/zabbix-release_4.0-2+stretch_all.deb && \
    dpkg -i zabbix-release_4.0-2+stretch_all.deb
 RUN apt-get update && apt-get install -y zabbix-agent zabbix-sender && mkdir /var/run/zabbix && chown -R lthn /var/log/zabbix /var/run/zabbix

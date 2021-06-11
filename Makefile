@@ -1,3 +1,4 @@
+all: build
 
 .PHONY: config
 config:

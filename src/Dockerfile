@@ -69,6 +69,7 @@ ENV ZSYNC_DATA_SHA="$ZSYNC_DATA_SHA"
 RUN useradd -ms /bin/bash lthn; \
   apt-get update; \
   apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen; \
+  rm -rf /var/lib/apt/lists/*; \
   echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers; \
   mkdir /usr/src/lethean-vpn; \
   chown -R lthn /usr/src/lethean-vpn

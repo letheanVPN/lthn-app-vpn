@@ -11,23 +11,9 @@ Docker Hub:
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker build --squash -t "lthn/vpn" .
-    - docker push "lthn/vpn"
+    - make build
+    - make push
   environment:
     name: docker.io
   only:
     - master
-
-deploy to staging:
-  stage: deploy
-  script: make deploy
-  environment:
-    name: staging
-    url: https://vpn.staging.eu-north.pods.lthn.io/
-
-deploy to production:
-  stage: deploy
-  script: make deploy
-  environment:
-    name: production
-    url: https://vpn.production.eu-north.pods.lthn.io/

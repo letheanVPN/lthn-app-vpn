@@ -7,7 +7,8 @@ Docker Hub:
   services:
     - name: docker:dind
       command: [ "--experimental" ]
-
+  variables:
+    DOCKER_HOST: tcp://docker:2375
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
@@ -21,6 +22,8 @@ Docker Hub:
 build:
   stage: build
   image: lthn/build
+  variables:
+    DOCKER_HOST: tcp://docker:2375
   services:
     - name: docker:dind
       command: [ "--experimental" ]

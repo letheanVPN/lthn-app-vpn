@@ -48,16 +48,22 @@ extra:
       link: https://gitlab.com/lthn.io
   alternate:
     - name: English
-      link: ./en/
+      link: https://vpn.lethean.help/en/
       lang: en
     - name: Deutsch
-      link: de/
+      link: https://vpn.lethean.help/de/
       lang: de
     - name: Russian
-      link: ru/
+      link: https://vpn.lethean.help/ru/
       lang: ru
 
 plugins:
+  - i18n:
+      default_language: en
+      languages:
+        en: English
+        de: Deutsch
+        ru: Pусский
   - git-revision-date-localized:
        fallback_to_build_date: true
        enable_creation_date: true

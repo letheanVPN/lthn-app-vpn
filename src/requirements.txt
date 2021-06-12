@@ -1,5 +1,6 @@
 syslogmp
 ed25519
+cryptography
 psutil
 jsonpickle
 configargparse

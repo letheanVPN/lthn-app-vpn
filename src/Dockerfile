@@ -91,8 +91,6 @@ COPY . /usr/src/lethean-vpn/
 
 RUN rm -rf /usr/src/lethean-vpn/build/
 
-RUN pip3 install --user -r /usr/src/lethean-vpn/requirements.txt
-
 COPY server/docker-run.sh /lethean-vpn.sh
 
 RUN chown -R lthn /usr/src/; \
@@ -102,11 +100,18 @@ RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/
 
 RUN rm -rf /cache/apt
 
+RUN pip3 install --upgrade pip
+
 USER lthn
+
+RUN pip3 install --user -r /usr/src/lethean-vpn/requirements.txt
+
 WORKDIR /usr/src/lethean-vpn/
 
 RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --client
+
 RUN make install SERVER=1 CLIENT=1
+
 RUN rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \
         /opt/lthn/var/* \
         /usr/src/lethean-vpn/build /usr/src/lethean-vpn/env.mk ; \

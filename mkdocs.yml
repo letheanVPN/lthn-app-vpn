@@ -11,31 +11,32 @@ theme:
   name: material
   custom_dir: docs/overrides
   favicon: images/favicon.ico
-  logo: images/lethean-logo.png
   language: en
   font:
     text: montserrat
+  icon:
+    repo: fontawesome/brands/gitlab
   features:
-    - navigation.instant
     - navigation.tracking
     - navigation.tabs
-    - navigation.indexes
+    - navigation.tabs.sticky
+    - navigation.sections
     - navigation.top
     - toc.integrate
     - search.suggest
     - search.highlight
     - search.share
   palette:
-    - scheme: default
-      toggle:
-        icon: material/toggle-switch-off-outline
-        name: Switch to dark mode
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode
-  icon:
-    repo: fontawesome/brands/gitlab
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
 
 extra:
   generator: false
@@ -58,6 +59,7 @@ extra:
       lang: ru
 
 plugins:
+  - search:
   - i18n:
       default_language: en
       languages:
@@ -67,3 +69,8 @@ plugins:
   - git-revision-date-localized:
        fallback_to_build_date: true
        enable_creation_date: true
+
+markdown_extensions:
+  - toc:
+      slugify: !!python/name:pymdownx.slugs.uslugify
+      permalink: ⚓︎

@@ -27,3 +27,6 @@ build:
 push:
 	docker push lthn/vpn:latest
 
+.PHONY: docs
+docs:
+	pip3 install -r requirements.txt

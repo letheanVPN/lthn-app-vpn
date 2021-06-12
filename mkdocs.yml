@@ -1,0 +1,63 @@
+site_name: Lethean VPN
+site_url: https://vpn.lethean.help/
+site_dir: public
+copyright: Copyright &copy; Lethean.io Community
+repo_url: https://gitlab.com/lthn.io/projects/vpn/node
+edit_uri: edit/master/docs/
+repo_name: lthn/vpn
+extra_css:
+  - stylesheets/extra.css
+theme:
+  name: material
+  custom_dir: docs/overrides
+  favicon: images/favicon.ico
+  logo: images/lethean-logo.png
+  language: en
+  font:
+    text: montserrat
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.top
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/gitlab
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/letheanvpn
+    - icon: fontawesome/brands/github
+      link: https://github.com/lethean-io
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.com/lthn.io
+  alternate:
+    - name: English
+      link: ./en/
+      lang: en
+    - name: Deutsch
+      link: de/
+      lang: de
+    - name: Russian
+      link: ru/
+      lang: ru
+
+plugins:
+  - git-revision-date-localized:
+       fallback_to_build_date: true
+       enable_creation_date: true

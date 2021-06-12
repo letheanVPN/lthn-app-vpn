@@ -2,7 +2,7 @@
 
 This project provides the interface into the VPN Marketplace.
 
-For full documentation visit [https://vpn.lethean.help](https://vpn.lethean.io).
+For full documentation visit [https://vpn.lethean.help](https://vpn.lethean.help).
 
 ## Commands
 

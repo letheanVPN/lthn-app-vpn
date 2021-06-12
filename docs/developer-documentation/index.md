@@ -14,13 +14,22 @@ Client will show only instructions what to pay. We do not want to have any conne
 ### Server mode
 As a server, dispatcher helps you to create, publish and run your service as a provider.
 
-## Directories
 
-```
-/
- client/  Files for Client Mode
- conf/    Templates and example config files
- server/  Files for Server Mode
- lib/     Library files
- scripts/ Various scripts and tools
-```
+## Commands
+
+* `make config` - Create a VPN exit node configuration
+
+## Project layout
+
+    mkdocs.yml       # Documentation Config.
+    docs/
+        index.md     # The documentation homepage.
+    scripts/         # Utility scripts for VPN ops
+    settings/        # user editable configurations
+    src/
+        client/      # VPN Client scipts
+        conf/        # Default configuration templates
+        lib/         # LetheanVPN Interfaces
+        server/      # VPN Server scripts
+        templates/   # Dispatcher & SDP Defaults
+        ...      

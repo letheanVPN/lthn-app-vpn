@@ -9,7 +9,7 @@ When our docker image is used, system packages are no longer used, we utilize th
 ## Runtime Modes
 
 ### Client mode
-As a client, The `lthn` dispatcher uses global SDP platform to fetch data about provider and gather connection details. Currently, there is no automatic payment functionality inside client. It is up to user to send corresponding payments from their wallet to the VPN provider.
+As a client, The `lthn` dispatcher uses global SDP platform to fetch data about a provider and gather connection details. Currently, there is no automatic payment functionality inside client. It is up to user to send corresponding payments from their wallet to the VPN provider.
 
 Our systems show only instructions on how to pay due to limitations of providing a non-fungable VPN payment system.
 

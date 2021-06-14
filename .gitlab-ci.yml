@@ -54,5 +54,3 @@ pages:
     - if: $CI_COMMIT_BRANCH == 'master'
       changes:
         - docs/*
-        - mkdocs.yml
-        - requirements.txt

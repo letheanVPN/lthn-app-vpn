@@ -1,7 +1,7 @@
 site_name: Lethean VPN
 site_url: https://vpn.lethean.help/
 site_dir: public
-copyright: Copyright &copy; Lethean.io Community
+copyright: Copyright &copy; <a rel="noopener" href="https://lethean.io">Lethean VPN</a> - The Peoples Network
 repo_url: https://gitlab.com/lthn.io/projects/vpn/node
 edit_uri: edit/master/docs/
 repo_name: lthn/vpn

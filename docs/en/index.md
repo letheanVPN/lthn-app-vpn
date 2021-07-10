@@ -1,3 +1,3 @@
-# Welcome to Lethean VPN
+# Virtual Private Network Documentation
 
-This project provides the interface into the VPN Marketplace.
+This website section is currently under construction

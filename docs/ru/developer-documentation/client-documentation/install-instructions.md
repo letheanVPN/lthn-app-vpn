@@ -1,18 +1,18 @@
-## Installation
-Use docker or native way. Docker info 
+## Инсталяция
+Можно использовать докер или вручную компилировать из исходников 
 
-### Linux native
+### Для Linux 
 ```
 ./configure.sh --client
 make install
 ```
 
-### Windows native
-We are working on install script for windows. 
-You can use cygwin to compile haproxy binaries. Use our easy-install-cygwin.cmd to easily install cygwin or use your own cygwin.
+### Для Windows
+Мы работаем над скриптами для Windows. 
+Пока что вы можете использовать cygwin чтобы скомпилировать haproxy. Используйте easy-install-cygwin.cmd для простой установки cygwin или используйте ваш собственный cygwin.
 
 #### haproxy
-You can use our easy-compile-haproxy-cygwin.sh script which has to be run inside of cygwin environment
+Используйте наш easy-compile-haproxy-cygwin.sh скрипт который должен быть запущен из среды cygwin
 
 #### Openvpn
-You can use standard openvpn binaries for windows.
+Вы можете использовать стандартные пакеты с официального сайта openvpn для windows.

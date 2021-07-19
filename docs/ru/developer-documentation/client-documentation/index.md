@@ -1,36 +1,38 @@
-# Client Vpn Documentation
+# Документация по диспетчеру Lethean
 
-## Payments
-This client will not pay anything for you. It only helps to create local configs and connect to remote service. It will instruct you in audit.log, how to pay for service.
-It will wait until service is paid and checkes each 60 seconds if credit is still OK.
+## Платежи
+Этот диспетчер не будет ничего оплачивать за вас. Он поможет создать локальную конфигурацию и соединиться с удалённым сервисом. Также он создаст audit.log, в котором будут инструкции по оплате.
+Он будет ждать, пока услуга будет оплачена, и каждые 60 секунд проверять, поступила ли оплата.
 
-## Exiting from client
-By default, client tries to connect and if there is some error, it exits after connect-timeout. Next, it waits for payment and if payment does not arrive, it exits after payment-timeout.
-If you want to have client trying forever, use big numbers for timeouts. Keep in mind, that timeout starts as small number but it is increased by two in each loop to avoid network congestion.
-You can use --fork-on-connect to fork to the background after successfull connect. This can be used for chaining (see below).
+## Выход из диспетчера
+По умолчанию клиент пытается подключиться, и если есть какая-то ошибка, он завершает работу по истечении времени ожидания подключения. Затем он ожидает платежа и, если платеж не поступает, завершает работу по истечении времени ожидания платежа(по таймауту).
+Если вы хотите, чтобы клиент постоянно пытался подключиться, используйте большие числа для таймаутов. Имейте в виду, что время ожидания начинается с небольшого числа, но увеличивается на два в каждом цикле, чтобы избежать перегрузки сети.
+Вы можете использовать --fork-on-connect для перехода в фоновый режим после успешного подключения. Это можно использовать для цепочки впн (см. ниже). 
 
-## Compatibility
-There are two versions of dispatchers - v3 and v4. We changed names of headers due to letheanisation. If you want to connect to old (v3) dispatcher, use --compatibility v3.
-Client will not connect if compatibility level does not match!
+## Совместимость
+Есть две версии диспетчера - v3 и v4. Мы изменили названия заголовков из-за летеанизации . Если вы хотите приконнектиться к старому (v3) диспетчеру, используйте --compatibility v3.
+Клиент не будет подключаться, если уровень совместимости не совпадает!
 
-## Service URI format
-Service URI are used to identify services over providers. It is unique over the world. There are two types of URI - SDP based and FQDN based.
-While SDP based are fetched from central SDP server, FQDN based are fetched from local provider SDP server.
+## Формат URI сервиса
+URI службы используются для идентификации служб по провайдерам. Это наша экслюзивная разработка. Есть два типа URI - на основе SDP и на основе FQDN.
+На основе SDP данные собираются с центрального сервера SDP, на основе FQDN данные собираются с сервера SDP локального провайдера. 
 
-### General simple URI syntax
+### Основной URI синтакс
 
 authid@provider/service
 
- * provider can be providerid or domain name
- * service can be serviceid or service name
- * authid can be ommited so it will be auto-generated. Do not forget that first two characters of authid must be same as serviceid.
+ * provider может быть providerid или domain name
+ * service может быть serviceid или service name
+ * authid можно опустить, он будет автоматически сгенерирован. Не забывайте, что первые два символа authid должны совпадать с идентификатором службы serviceid.
 
-If provider is fqdn and not providerid, client will use DNS to get info about SDP and provider. 
+Если провайдер на основе FQDN и не имеет providerid, клиент будет использовать DNS чтобы получить информацию о SDP и провайдере. 
 
-### More complex URI (provider chaining)
+### Расширенный URI синтакс (цепочка впн)
 
- * Using HTTP proxy: {authid1@provider1/service1}//proxy:port
- * Basic chaining: Connect to provider2 and use it as backend to connect to service1: {authid1@provider1/service1}//{authid2@provider2/service2}
- * More complex chaining (round-robin): {authid1@provider1/service1}//{authid2@provider2/service2,authid3@provider3/service3}
+В нашем сервисе можно использовать VPN/Proxy chaining или цепочку ВПН/Proxy. Т.е. вы можете подключиться сразу к нескольким провайдерам и получить большую анонимность по сравнению с обычным ВПН/Proxy.
+
+ * При использовании HTTP прокси: {authid1@provider1/service1}//proxy:port
+ * Простая цепочка ВПН из двух провайдеров: Соединение с провайдером2 и использовать его как серверную часть для подключения к service1: {authid1@provider1/service1}//{authid2@provider2/service2}
+ * Более сложная цепочка (циклическая): {authid1@provider1/service1}//{authid2@provider2/service2,authid3@provider3/service3}
 
 

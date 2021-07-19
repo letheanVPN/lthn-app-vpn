@@ -16,7 +16,7 @@
 
 
 ### Q: Возможно ли использовать удалёную ноду в CLI кошельке ? ###
-Да, возможно. Для этого надо запустить lethean-wallet-cli.exe --daemon-address nodes.hashvault.pro:48782
+Да, возможно. Для этого надо запустить `lethean-wallet-cli.exe --daemon-address nodes.hashvault.pro:48782`
 
 
 ### Q: Как майнить Lethean? ###

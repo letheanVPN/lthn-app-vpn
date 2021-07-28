@@ -1,15 +1,13 @@
 version: "3.9"
 services:
   exit-node:
-    build: ..
+    container_name: vpn-server
+    build: .
     image: lthn/vpn
     ports:
-      - "48782:48782"
-      - "48772:48772"
       - "5000:5000"
+      - 14660:14660
     volumes:
-      - "data:/home/lthn"
-      - "data:/opt/lthn/etc"
-      - "data:/opt/lthn/logs"
+      - .:/home/lthn/vpn/etc:rw
 volumes:
   data:

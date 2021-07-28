@@ -13,7 +13,7 @@ if [ "`whoami`" = "root" ]; then
 fi
 
 if [ -z "$LTHN_PREFIX" ]; then
-    echo "You must configure intense-vpn!"
+    echo "You must configure lethean-vpn!"
     exit 1
 fi
 

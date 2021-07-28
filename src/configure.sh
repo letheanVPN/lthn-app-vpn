@@ -6,7 +6,7 @@ export TOPDIR=$(realpath $(dirname $0))
 export PARMS="$@"
 
 # Static defaults
-LTHN_PREFIX=/opt/lthn/
+LTHN_PREFIX=/home/lthn/vpn
 
 # General usage help
 usage() {
@@ -75,7 +75,7 @@ summary() {
         exit 1
     fi
 
-    echo "Intense-vpn configured."
+    echo "Lethean VPN configured."
     echo "Python bin:   $PYTHON_BIN"
     echo "pip bin:      $PIP_BIN"
     echo "sudo bin:     $SUDO_BIN"

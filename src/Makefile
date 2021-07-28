@@ -57,7 +57,7 @@ docker-shell:
 	mkdir -p deploy/etc
 	mkdir -p deploy/bcdata
 	docker run -i -t \
-	  --mount type=bind,source=$$(pwd)/deploy/etc,target=/opt/lthn/etc \
+	  --mount type=bind,source=$$(pwd)/deploy/etc,target=/home/lthn/etc \
    	  --mount type=bind,source=$$(pwd)/deploy/bcdata,target=/home/lthn \
 	  lthn/vpn sh
 

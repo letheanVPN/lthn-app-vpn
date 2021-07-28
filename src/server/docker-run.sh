@@ -1,9 +1,9 @@
 #!/bin/bash
 
-export PATH=/opt/lthn/bin:/sbin:/usr/sbin:$PATH
-export CONF=/opt/lthn/etc/
-export HOME=/home/lthn
-export LMDB=/home/lthn/.intensecoin/lmdb
+export PATH=/opt/lthn/vpn/bin:/sbin:/usr/sbin:$PATH
+export CONF=/home/lthn/vpn/etc
+export HOME=/home/lthn/vpn
+export LMDB=/home/lthn/chain/data/lmdb
 
 if [ -f "$CONF/env.sh" ]; then
   . "$CONF/env.sh"
@@ -16,57 +16,16 @@ errorExit(){
 }
 
 prepareConf(){
-    cd /usr/src/lethean-vpn
+    cd $HOME
     ./configure.sh --runas-user lthn --runas-group lthn --client
     make install CLIENT=1 || { errorExit 2 "Cannot prepare $CONF! "; }
 }
 
-prepareRsyncConf(){
-    if ! [ -f $CONF/rsyncd.conf ]; then
-      cat >$CONF/rsyncd.conf <<EOF
- [lmdb]
-    path = $LMDB
-    comment = Lethean Blockchain
-    read only = yes
-EOF
-fi
-}
 
-prepareLmdb(){
-  if ! [ -d "$LMDB" ] || [ "$1" = "force" ]; then
-    echo "Fetching Blockchain data..." >&2
-    mkdir -p $LMDB && cd $LMDB || errorExit 4 "Cannot create $LMDB dir!"
-     rm -f data.mdb.zsync
-     wget "$ZSYNC_URL" && zsync data.mdb.zsync
-     if ! [ -f data.mdb ]; then
-        errorExit 4 "Cannot fetch Blockchain data!"
-     fi
-     if [ -n "$ZSYNC_DATA_SHA" ]; then
-        echo "Testing blockchain file for consistency..." >&2
-        localsum=$(sha256sum data.mdb | cut -d ' ' -f 1)
-        remotesum=$(wget -O- $ZSYNC_DATA_SHA)
-        if [ "$localsum" != "$remotesum" ]; then
-            errorExit 4 "Blockchain data corrupted!"
-        fi
-    fi
-     echo "Blockchain data downloaded!" >&2
-  else
-    echo "Blockchain data already exists. Skipping fetch." >&2
-  fi
-}
 
-runDaemon(){
-    if [ -t 0 ] ; then
-        prepareLmdb
-        echo "Starting lethean daemon..." >&2
-        letheand "$@"
-    else
-        errorExit 3 "You must allocate TTY to run letheand! Use -t option"
-    fi
-}
 
 runWalletRpc(){
-    cd /opt/lthn/var
+    cd $HOME/var
     if [ -z "$WALLET_RPC_URI" ]; then
       echo "Starting Wallet RPC server with $CONF/$WALLET_FILE." >&2
       rm -f lethean-wallet-vpn-rpc*.login
@@ -79,7 +38,7 @@ runWalletRpc(){
 }
 
 runWalletCli(){
-    cd /opt/lthn/var
+    cd $HOME/var
     if ! [ -t 0 ] ; then
         errorExit 3 "You must allocate TTY to run letheand! Use -t option"
     fi
@@ -131,17 +90,6 @@ refresh_pattern .               0       20%     4320
 EOF
 }
 
-prepareZabbix(){
-cat >$CONF/zabbix_agentd.conf <<EOF
-PidFile=/opt/lthn/var/run/zabbix_agentd.pid
-LogFile=/dev/null
-LogFileSize=0
-Server=127.0.0.1
-ServerActive=127.0.0.1
-HostnameItem=system.hostname
-EOF
-}
-
 generateEnv(){
     echo "WALLET_PASSWORD='$WALLET_PASSWORD'"
     echo "WALLET_RPC_PASSWORD=$WALLET_RPC_PASSWORD'"
@@ -183,17 +131,18 @@ EOF
 }
 
 testServerConf(){
-    if ! [ -f /opt/lthn/etc/sdp.json ] || ! [ -f /opt/lthn/etc/dispatcher.ini ]; then
+    if ! [ -f $HOME/etc/sdp.json ] || ! [ -f $HOME/etc/dispatcher.ini ]; then
         printWelcome
-        exit
+        easy-deploy
     fi
 }
 
 
 case $1 in
 config|easy-deploy)
-    cd /usr/src/lethean-vpn
+    cd "$HOME"
 
+    mkdir -p $CONF
     if [ -z "$WALLET_PASSWORD" ]; then
         WALLET_PASSWORD=$(pwgen 32 1)
     fi
@@ -224,15 +173,15 @@ config|easy-deploy)
         WALLET_RPC_URI="http://localhost:14660"
     fi
     
-    ./configure.sh --prefix "/opt/lthn" --runas-user lthn --runas-group lthn --easy --with-wallet-address "$WALLET_ADDRESS" \
+    $HOME/configure.sh --prefix "$HOME" --runas-user lthn --runas-group lthn --easy --with-wallet-address "$WALLET_ADDRESS" \
        --with-wallet-rpc-user dispatcher --with-wallet-rpc-pass "$WALLET_RPC_PASSWORD" $provideropts --with-capass "$CA_PASSWORD" \
          || { errorExit 3 "Cannot configure! Something is wrong."; }
     make install FORCE=y || { errorExit 4 "Cannot install! Something is wrong."; }
-    /opt/lthn/bin/lvmgmt --generate-sdp \
+    $HOME/bin/lvmgmt --generate-sdp \
      --sdp-provider-type "$PROVIDER_TYPE" \
      --sdp-provider-name "$PROVIDER_NAME" \
      --wallet-address "$WALLET_ADDRESS" \
-     --sdp-service-crt /opt/lthn/etc/ca/certs/ha.cert.pem \
+     --sdp-service-crt "$HOME"/etc/ca/certs/ha.cert.pem \
      --sdp-service-name proxy --sdp-service-id 1a --sdp-service-endpoint "$ENDPOINT" --sdp-service-port "$PORT" \
      --sdp-service-type proxy --sdp-service-cost 0.001 --sdp-service-dlspeed 1 --sdp-service-ulspeed 1 \
      --sdp-service-prepaid-mins 10 --sdp-service-verifications 0 || \
@@ -253,19 +202,12 @@ prepare-conf)
     ;;
 
 upload-sdp)
-    /opt/lthn/bin/lvmgmt --upload-sdp
+    $HOME/bin/lvmgmt --upload-sdp
     ;;
 
 lthnvpnd|run)
-    cd /opt/lthn/var
+    cd $HOME/var
     testServerConf
-    if ! [ -f $CONF/zabbix_agentd.conf.conf ]; then
-      prepareZabbix || { errorExit 2 "Cannot create $CONF/zabbix_agentd.conf! "; }
-    fi
-    if [ -x /usr/sbin/zabbix_agentd ]; then
-       echo "Starting zabbix agent" >&2
-       zabbix_agentd -c /etc/zabbix/zabbix_agentd.conf
-    fi
     if ! [ -f $CONF/squid.conf ]; then
       prepareSquid || { errorExit 2 "Cannot create $CONF/squid.conf! "; }
     fi
@@ -284,36 +226,6 @@ lthnvpnd|run)
     done
     echo "Starting dispatcher" >&2
     exec lthnvpnd --wallet-rpc-uri "$WALLET_RPC_URI" --syslog "$@"
-    ;;
-
-wallet-rpc)
-    shift
-    runWalletRpc "$@"
-    ;;
-
-wallet-cli)
-    shift
-    runWalletCli "$@"
-    ;;
-
-zsync-make)
-    if [ -d "$LMDB" ]; then
-        cd $LMDB
-        zsyncmake -v -b 262144 -f data.mdb -u "$ZSYNC_DATA_URL" data.mdb
-        sha256sum data.mdb | cut -d ' ' -f 1 >data.mdb.sha256
-    else
-        errorExit 2 "LMDB database does not exist!"
-    fi
-    ;;
-
-sync-bc)
-    shift
-    prepareLmdb force
-    ;;
-
-letheand)
-    shift
-    runDaemon "$@"
     ;;
 
 connect|lthnvpnc)
@@ -338,7 +250,7 @@ lvmgmt)
     ;;
 
 root)
-    cd /home/lthn
+    cd "$HOME"
     su --preserve-environment lthn
     ;;
 
@@ -351,13 +263,9 @@ sh|bash)
     echo "run [args] to run dispatcher"
     echo "list [args] to list available services"
     echo "connect uri [args] to run client"
-    echo "letheand [args] to run letheand"
     echo "easy-deploy [args] to easy deploy node"
     echo "prepare-conf [args] to prepare new conf dir"
     echo "upload-sdp [args] to upload SDP"
-    echo "sync-bc to fast sync blockhain data from server."
-    echo "wallet-rpc [args] to run wallet-rpc-daemon"
-    echo "wallet-cli [args] to run wallet-cli"
     echo "sh to go into shell" 
     exit 2
     ;;

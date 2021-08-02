@@ -52,11 +52,11 @@ WORKDIR /home/lthn/vpn/build
 
 COPY --from=lthn/chain /home/lthn/bin/chain /usr/bin
 
-COPY . /home/lthn/vpn/
+COPY ./src /home/lthn/vpn/
 
 RUN rm -rf /home/lthn/vpn/build/
 
-COPY --chown=lthn:lthn server/docker-run.sh /lethean-vpn.sh
+COPY --chown=lthn:lthn ./src/server/docker-run.sh /lethean-vpn.sh
 
 RUN chown -R lthn /home/lthn/vpn; \
   chmod +x /lethean-vpn.sh; \

@@ -6,7 +6,7 @@ services:
     container_name: chain
   dispatcher:
     container_name: dispatcher
-    build: src
+    build: .
     image: lthn/vpn
     links:
       - blockchain

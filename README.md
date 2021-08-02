@@ -2,30 +2,22 @@
 
 This project provides the interface into the VPN Marketplace.
 
-For full documentation visit [https://vpn.lethean.help](https://vpn.lethean.help).
+For full documentation visit [https://lt.hn/en/doc/vpn](https://lt.hn/en/docs/vpn).
 
-## Commands
+## Install
+1) Download [docker-compose.yml](https://gitlab.com/lthn.io/projects/vpn/node/-/raw/master/docker-compose.yml) to the installation directory you have made locally.
+```shell
+wget https://gitlab.com/lthn.io/projects/vpn/node/-/raw/master/docker-compose.yml >> ./docker-compose.yml
+```
 
-* `make config` - Create a VPN exit node configuration
-* `make run` - same as `lthn/vpn run`
+2) Create containers & start lethean vpn
+```shell
+docker-compose up -d
+```
 
-### Dev Commands
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+3) Configure your SDP
+```shell
+docker container exec -it dispatcher /lethean-vpn.sh easy-deploy
+```
 
-## Project layout
 
-    mkdocs.yml       # Documentation Config.
-    docs/
-        index.md     # The documentation homepage.
-    scripts/         # Utility scripts for VPN ops
-    settings/        # user editable configurations
-    src/
-        client/      # VPN Client scipts
-        conf/        # Default configuration templates
-        lib/         # LetheanVPN Interfaces
-        server/      # VPN Server scripts
-        templates/   # Dispatcher & SDP Defaults
-        ...      

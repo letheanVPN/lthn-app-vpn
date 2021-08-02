@@ -36,7 +36,7 @@ class ServiceStunnel(Service):
         if not os.path.isfile(config.Config.CAP.stunnelBin):
             log.L.error("Stunnel binary %s not found. Cannot continue!" % (config.Config.CAP.stunnelBin))
             sys.exit(1)
-        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, shell=None, universal_newlines=True)
+        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, shell=False, universal_newlines=True)
         time.sleep(0.3)
         if (os.path.exists(self.pidfile)):
             time.sleep(0.3)

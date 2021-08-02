@@ -45,22 +45,6 @@ ca: build/ca/index.txt
 build/ca/index.txt: env.mk
 	./configure.sh --generate-ca --with-capass "$(PASS)" --with-cn "$CN"
 
-docker-img:
-	docker build -t lthn/vpn .
-
-docker: docker-img
-
-docker-clean:
-	docker rm -v lthn/vpn
-
-docker-shell:
-	mkdir -p deploy/etc
-	mkdir -p deploy/bcdata
-	docker run -i -t \
-	  --mount type=bind,source=$$(pwd)/deploy/etc,target=/home/lthn/etc \
-   	  --mount type=bind,source=$$(pwd)/deploy/bcdata,target=/home/lthn \
-	  lthn/vpn sh
-
 lthnvpnc:
 	mkdir bin
 	@echo pyinstaller --add-data "lib;lib" --add-data "conf;conf" \

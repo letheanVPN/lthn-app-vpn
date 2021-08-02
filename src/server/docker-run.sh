@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=/opt/lthn/vpn/bin:/sbin:/usr/sbin:$PATH
+export PATH=/home/lthn/vpn/bin:/sbin:/usr/sbin:$PATH
 export CONF=/home/lthn/vpn/etc
 export HOME=/home/lthn/vpn
 export LMDB=/home/lthn/chain/data/lmdb

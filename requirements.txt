@@ -1,4 +1,0 @@
-mkdocs>=1.1.2
-mkdocs-material>=5.4.0
-mkdocs-git-revision-date-localized-plugin
-mkdocs-i18n

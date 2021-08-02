@@ -1,3 +1,0 @@
-include:
-  - template: Auto-DevOps.gitlab-ci.yml
-

@@ -1,0 +1,46 @@
+{
+   "protocolVersion": 1,
+   "provider": {
+      "certificates": [
+         {
+            "cn": "ignored",
+            "content": "-----BEGIN CERTIFICATE-----MIIFGDCCAwCgAwase45345OuiVcF/7DGAMA0GCSqGSIb3DQEBCwUAMBkxFzAVBgNVBAMMDkxUSE5FYXN5RGVwbG95MB4XDTE4MTIxOTIxMTkyOFoXDTM4MTIxNDIxMTkyOFowGTEXMBUGA1UEAwwOTFRITkVhc3lEZXBsb3kwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDEjdG54Lj2bbyvPUoWalMgaI2iI5/8Q20+0Al8edSIygzGxem4dfgbXHpTrGTaWd4N8WTbgKJbdTw3vrZmx/le3oUuVICnQVf+jBy68TRK3nxzOkEu3N5Sx7Tp4x9kNVG+eOxiZ+3lMjS2lP8uucFQ6sVeBj8CemCti2zEkGt6g7ZBAWXrTEwwtT7w0+frTjtrxNCf5SiEN3S+RBg5JFF8py+9Wr/z35rI5ULywU1b/2msZFNI2jeohlRIMvyZD3BzJYWPm66uA147VgSaCaSBvTzUG2RqoxNM+nFZ5sWH3n4JVeuvZlrldMlzoCS7rimy4FwCbMhTPwCd3HysaX6AGPrer+thFtl4ZMnu7tC5AW6rtmTNi7EAIM3mnRvQ1rEY+N58Icz//40+KjuQCR6RGNSrFD3ZjEniY7ujkZDrsUtyY88pOkc4I088bWFqJmA6zcyETBRCyxbtkfiGame9FEVOQsE64vcEwdqTI4mxJVKrBCVveoEBYuD/SA2QdxbtIMLHlA5aholHcd+jMEHOZwPxk1zRRNbdWnNgRdhFrZapUE5NfqmelLsWurbpiPCO6mny30jI4UiNe4ZAS11AhsTl2G6O69S+mGpeCDQpPmsYJStWqeB6FWio2VzsN9y0ufV0BVkNJPtcRkTBPIKSgXoxGBTdZcTknP8L6E7SWwIDAQABo2MwYTAdBgNVHQ4EFgQUyFd/AYH0kT9T5UCUkJZPKioQOCgwHwYDVR0jBBgwFoAUyFd/AYH0kT9T5UCUkJZPKioQOCgwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAYYwDQYJKoZIhvcNAQELBQADggIBAAopB1RJHW9l/WvGxNUDQfz0zG3rz3uWENSWCxPJeBIw5uFQGfjq1ZmrFvx0YoRaZsheidTfUaOC2JO5XGiZDyB96C+kRXVNKMVJV2w0s94m2JYGpAWOOQ03mttS5HQeEm2MExV+SvKztPuM6TRZ42ft0G1eKaG4jWI6gyURe8XKZfRIcnMber0uy5KlL+ivdyb6ToUdvGK1blsefN8ZDCiKfzSiijvdISdoe9vi8wgCk1LagKqXEGDfbneryXin38swMuMHl933LHTf+Nq18dabmmgHuetMa4lFjmtzXCgz5kWzAUwWSzjm5dx8lfCAESF80DJlzYLx2c+U1UDCTlGTHSdzht0gRsPPxoQ2dQqZ3ijQjk7Q6SIv0ECUE8Ti1HxTVWgNCXAGH1hxcmHEX5wNs4BSlXmsTX+AtF+jFbURmVJGmAa/r2muR2FJu6XFkSV6kBP85Nk5TQ0ZxoMEdqOUPS78d9QBCmuGd4y/ALW08Ors9dU2/6S+emOxOd0mfGk/9/zS025Tc8h9Psha3rik06yfvIZ9m/E/+xGWnHws428CmVT11CtVshI148RWHb6EG7sVQet8q3vSw2fLQNJO9MvXagI7ZNsooEm5ydYUHl2D1qcz5SzTzWAT9G7YZWIdfAMicyBmHO2lVx3j9nb3LBCEwNWcXYfpCBQcyR1P-----END CERTIFICATE-----",
+            "id": 0
+         }
+      ],
+      "id": "YOURPROVIDERID",
+      "name": "LTHN Proxy Template",
+      "nodeType": "residential",
+      "terms": "Only Proxy Template",
+      "wallet": "YOURWALLET"
+   },
+   "services": [
+      {
+         "allowRefunds": false,
+         "certificates": [
+            {
+               "id": 0
+            }
+         ],
+         "cost": "0.01000000",
+         "disable": false,
+         "downloadSpeed": 10000000,
+         "firstPrePaidMinutes": 10,
+         "firstVerificationsNeeded": 0,
+         "id": "1A",
+         "name": "Proxy",
+         "proxy": [
+            {
+               "endpoint": "testnode.lethean.io",
+               "port": "8080/TCP"
+            }
+         ],
+         "subsequentPrePaidMinutes": 10,
+         "subsequentVerificationsNeeded": 0,
+         "type": "proxy",
+         "uploadSpeed": 10000000,
+         "vpn": []
+     
+      }
+   ]
+}

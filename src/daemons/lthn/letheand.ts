@@ -5,6 +5,7 @@ import EventEmitter from 'https://deno.land/std@0.79.0/node/events.ts';
 import {existsSync} from 'https://deno.land/std/fs/mod.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
 import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
+import { parse } from "https://deno.land/std@0.113.0/flags/mod.ts";
 
 export class stdOutStream extends EventEmitter {
   constructor() {
@@ -46,6 +47,7 @@ export class LetheanDaemonLetheand {
   static options: any
   constructor(daemonArgs: any) {
 
+    daemonArgs = parse(daemonArgs)
     if(daemonArgs['debug']) {
 
       this.debug = 1

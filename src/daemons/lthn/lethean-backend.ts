@@ -1,6 +1,8 @@
 import { createApp } from "https://deno.land/x/servest@v1.3.1/mod.ts";
 
 import type { WebSocket } from "https://deno.land/std/ws/mod.ts";
+import {LetheanDaemonLetheand} from './letheand.ts';
+import {LetheanDaemonLetheanWalletRpc} from './lethean-wallet-rpc.ts';
 
 export class LetheanBackend {
 
@@ -33,7 +35,7 @@ export class LetheanBackend {
 
 		app.handle("/daemon/start/letheand", async (req) => {
 			daemons = {
-				//...daemons, letheand: new LetheanDaemonLetheand()
+				...daemons, letheand: new LetheanDaemonLetheand(Deno.args)
 			};
 			daemons.letheand.run()
 			console.log(daemons)
@@ -48,7 +50,7 @@ export class LetheanBackend {
 
 		app.handle("/daemon/start/lethean-wallet-rpc", async (req) => {
 			daemons = {
-				//...daemons, letheanWalletRpc: new LetheanDaemonLetheanWalletRpc()
+				...daemons, letheanWalletRpc: new LetheanDaemonLetheanWalletRpc(Deno.args)
 			};
 			daemons.letheanWalletRpc.run()
 			console.log(daemons)

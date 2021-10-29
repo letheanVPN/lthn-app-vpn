@@ -37,4 +37,4 @@ windows:
   artifacts:
     name: windows
     paths:
-      - build/lthn
+      - build/lthn.exe

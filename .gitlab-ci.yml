@@ -1,0 +1,40 @@
+build:
+  stage: build
+  script:
+    - echo "appy days"
+
+linux:
+  stage: build
+  image: node:16-bullseye-slim
+  before_script:
+    - curl -fsSL https://deno.land/x/install/install.sh | sh
+  script:
+    - npm server:build:linux
+  artifacts:
+    name: linux
+    paths:
+      - build/lthn
+
+macos:
+  stage: build
+  image: node:16-bullseye-slim
+  before_script:
+    - curl -fsSL https://deno.land/x/install/install.sh | sh
+  script:
+    - npm server:build:macos
+  artifacts:
+    name: macos
+    paths:
+      - build/lthn
+
+windows:
+  stage: build
+  image: node:16-bullseye-slim
+  before_script:
+    - curl -fsSL https://deno.land/x/install/install.sh | sh
+  script:
+    - npm server:build:windows
+  artifacts:
+    name: windows
+    paths:
+      - build/lthn

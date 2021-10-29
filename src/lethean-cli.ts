@@ -3,6 +3,8 @@ import { CompletionsCommand } from "https://deno.land/x/cliffy/command/completio
 import { HelpCommand } from "https://deno.land/x/cliffy/command/help/mod.ts";
 import {LetheanToolsProvider} from './tools/provider.ts';
 import {LetheanDaemonDvpnClient} from './daemons/dvpn/client.ts';
+import {LetheanBackend} from './daemons/lthn/lethean-backend.ts';
+import {LetheanDaemons} from './daemons/lethean-daemons.ts';
 export class LetheanCli {
 
 	static options: any
@@ -15,18 +17,25 @@ export class LetheanCli {
 			.name("lthn")
 			.version("0.1.0")
 			.description("Command line interface for Lethean")
+			.option('--home-dir', 'Home directory', {global: true})
+			.option('--bin-dir', 'Binaries directory', {global: true})
+			//.command('backend', LetheanBackend.config())
+			.command('daemon', LetheanDaemons.config())
 			.command("vpn",
 				new Command().description('VPN Functions')
 						.command('provider', LetheanToolsProvider.config()
 						.command('client', LetheanDaemonDvpnClient.config())
 					))
-			.option("-h, --home-dir", "Home directory.")
-			.option("-d, --data-dir", "Directory to store data.")
-			.option("-c, --config-file", "Daemon config(dep)")
-			.option("-b, --bin-dir", "Binaries location")
 			.command("help", new HelpCommand())
-			.command("completions", new CompletionsCommand())
-			.parse(Deno.args);
+			.command("completions", new CompletionsCommand());
+
+		try {
+			LetheanCli.options.parse(Deno.args);
+		} catch (error) {
+			console.error("[CUSTOM_ERROR]", error);
+			Deno.exit(1);
+		}
+
 
 	}
 }

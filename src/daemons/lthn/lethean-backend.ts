@@ -1,11 +1,11 @@
 import { createApp } from "https://deno.land/x/servest@v1.3.1/mod.ts";
-
+import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
 import type { WebSocket } from "https://deno.land/std/ws/mod.ts";
 import {LetheanDaemonLetheand} from './letheand.ts';
 import {LetheanDaemonLetheanWalletRpc} from './lethean-wallet-rpc.ts';
 
 export class LetheanBackend {
-
+	static options: any
 	constructor() {
 		const app = createApp();
 		let daemons: any = {}
@@ -65,4 +65,19 @@ export class LetheanBackend {
 
 		app.listen({port: 36911});
 	}
+
+	public static config(){}
+	static async init() {
+			LetheanBackend.options = await new Command()
+				.name("Lethean CLI")
+				.version("0.1.0")
+				.description("Command line interface for Lethean")
+				.option("-h, --home-dir", "Home directory.")
+				.option("-d, --data-dir", "Directory to store data.")
+				.option("-c, --config-file", "Daemon config(dep)")
+				.option("-b, --bin-dir", "Binaries location")
+				.parse(Deno.args);
+			new LetheanBackend()
+		}
+
 }

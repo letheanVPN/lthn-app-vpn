@@ -4,10 +4,10 @@
   "description": "Lethean VPN Node",
   "main": "main.js",
   "scripts": {
-    "start": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts --home-dir=/Users/snider/Lethean --data-dir=/Users/snider/Lethean/data --config-file=/Users/snider/WebstormProjects/app/app/conf/letheand.conf --bin-dir=/Users/snider/WebstormProjects/app/app/cli",
-    "backend": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts backend",
+    "start": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts daemon chain start --help --home-dir=/Users/snider/Lethean --data-dir=/Users/snider/Lethean/data --config-file=/Users/snider/WebstormProjects/app/app/conf/letheand.conf --bin-dir=/Users/snider/WebstormProjects/app/app/cli",
+    "backend": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts daemon chain start --help",
     "vpn": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts vpn provider  --help",
-    "server:compile": "$HOME/.deno/bin/deno compile --unstable --allow-env --allow-run --allow-net --allow-read --allow-write --output build/lethean-backend --target  ",
+    "server:compile": "$HOME/.deno/bin/deno compile --unstable --allow-env --allow-run --allow-net --allow-read --allow-write --output build/lthn --target  ",
     "server:build:linux": "npm run server:compile -- x86_64-unknown-linux-gnu src/server.ts",
     "server:build:macos": "npm run server:compile -- x86_64-apple-darwin src/server.ts ",
     "server:build:windows": "npm run server:compile -- x86_64-pc-windows-msvc src/server.ts"

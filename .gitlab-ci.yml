@@ -10,7 +10,7 @@ linux:
     - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
-    - npm server:build:linux
+    - npm run server:build:linux
   artifacts:
     name: linux
     paths:
@@ -23,7 +23,7 @@ macos:
     - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
-    - npm server:build:macos
+    - npm run server:build:macos
   artifacts:
     name: macos
     paths:
@@ -36,7 +36,7 @@ windows:
     - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
-    - npm server:build:windows
+    - npm run server:build:windows
   artifacts:
     name: windows
     paths:

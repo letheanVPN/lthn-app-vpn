@@ -7,6 +7,7 @@ linux:
   stage: build
   image: node:16-bullseye-slim
   before_script:
+    - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
     - npm server:build:linux
@@ -19,6 +20,7 @@ macos:
   stage: build
   image: node:16-bullseye-slim
   before_script:
+    - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
     - npm server:build:macos
@@ -31,6 +33,7 @@ windows:
   stage: build
   image: node:16-bullseye-slim
   before_script:
+    - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
     - npm server:build:windows

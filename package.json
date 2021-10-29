@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts --home-dir=/Users/snider/Lethean --data-dir=/Users/snider/Lethean/data --config-file=/Users/snider/WebstormProjects/app/app/conf/letheand.conf --bin-dir=/Users/snider/WebstormProjects/app/app/cli",
+    "backend": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts backend",
     "vpn": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts vpn provider  --help",
     "server:compile": "$HOME/.deno/bin/deno compile --unstable --allow-env --allow-run --allow-net --allow-read --allow-write --output build/lethean-backend --target  ",
     "server:build:linux": "npm run server:compile -- x86_64-unknown-linux-gnu src/server.ts",

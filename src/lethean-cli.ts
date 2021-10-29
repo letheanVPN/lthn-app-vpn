@@ -2,6 +2,7 @@ import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
 import { CompletionsCommand } from "https://deno.land/x/cliffy/command/completions/mod.ts";
 import { HelpCommand } from "https://deno.land/x/cliffy/command/help/mod.ts";
 import {LetheanToolsProvider} from './tools/provider.ts';
+import {LetheanDaemonDvpnClient} from './daemons/dvpn/client.ts';
 export class LetheanCli {
 
 	static options: any
@@ -16,8 +17,8 @@ export class LetheanCli {
 			.description("Command line interface for Lethean")
 			.command("vpn",
 				new Command().description('VPN Functions')
-					.command('provider', LetheanToolsProvider.config()
-
+						.command('provider', LetheanToolsProvider.config()
+						.command('client', LetheanDaemonDvpnClient.config())
 					))
 			.option("-h, --home-dir", "Home directory.")
 			.option("-d, --data-dir", "Directory to store data.")

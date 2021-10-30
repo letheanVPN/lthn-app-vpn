@@ -77,7 +77,7 @@ export class LetheanBackend {
 				headers: new Headers({
 					"content-type": "text/plain",
 				}),
-				body: result.public,
+				body: 'good',
 			});
 		})
 

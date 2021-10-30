@@ -46,49 +46,20 @@ export class LetheanDaemonLetheand {
 	private stopped: boolean = true;
 	static options: any;
 
-	constructor(daemonArgs: any) {
+	constructor() {
+		let homeDir = os.homeDir();
 
-		daemonArgs = parse(daemonArgs);
-		if (daemonArgs['debug']) {
 
-			this.debug = 1;
-		}
-		if (!existsSync(daemonArgs['config-file'])) {
-			throw new Error(`Config file not found: ${daemonArgs['config-file']}`);
-		}
-		this.configFile = daemonArgs['config-file'];
-		this.dataDir = daemonArgs['data-dir'];
-
-		if (!existsSync(daemonArgs['bin-dir'])) {
-			throw new Error(`Lethean CLI Folder not found: ${daemonArgs['bin-dir']}`);
-		}
-		this.binDir = daemonArgs['bin-dir'] === undefined ? Deno.cwd() : daemonArgs['bin-dir'];
 		this.exeFile = 'letheand' + (os.platform() === 'windows' ? '.exe' : '');
-		this.command = path.join(this.binDir, this.exeFile);
+		this.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
 
-		if (!existsSync(this.command)) {
-			throw new Error(`Lethean CLI Command Not Found: ${this.command}`);
-		}
-
-		if (daemonArgs.debug) {
-			console.log(`Platform: ${os.platform()}`);
-		}
-		if (daemonArgs.debug) {
-			console.log(`Config File: ${this.configFile}`);
-		}
-		if (daemonArgs.debug) {
-			console.log(`Data Directory: ${this.dataDir}`);
-		}
-		if (daemonArgs.debug) {
-			console.log(`Command: ${this.command}`);
-		}
 		this.process = new stdOutStream();
 	}
 
-	run() {
+	run(args: any) {
 		if (!this.stopped) return this.process;
 
-		return ensureDir(this.dataDir).then(async () => {
+		return ensureDir(args['dataDir']).then(async () => {
 
 			this.stopped = false;
 
@@ -107,8 +78,9 @@ export class LetheanDaemonLetheand {
 					console.log(status);
 				}
 			}).run(this.command,
-				`--config-file=${this.configFile}`,
-				`--data-dir=${this.dataDir}`);
+				`--data-dir=${args['dataDir']}`,
+				`--config-file=${args['configFile']}`,
+				);
 
 
 		});
@@ -118,15 +90,15 @@ export class LetheanDaemonLetheand {
 		return new Command()
 			.description('Blockchain Functions')
 			.command('start', 'Start chain daemon')
-			.option('--config-file', 'Specify configuration file')
-			.option('--detach', 'Run as daemon')
-			.option('--pidfile', 'File path to write the daemon\'s PID to (optional, requires --detach)')
-			.option('--non-interactive', 'Run non-interactive')
-			.option('--log-file', 'Specify log file')
-			.option('--log-level', '1-4')
-			.option('--max-concurrency', 'Max number of threads to use for a parallel job')
-			.option('--data-dir', 'Specify data directory')
-			.option('--testnet-data-dir', 'Specify testnet data directory')
+			.option('--config-file <string>', 'Specify configuration file')
+			.option('--detach <boolean>', 'Run as daemon', {default: false})
+			.option('--pidfile <string>', 'File path to write the daemon\'s PID to (optional, requires --detach)', {default: false})
+			.option('--non-interactive <boolean>', 'Run non-interactive', {default: false})
+			.option('--log-file <string>', 'Specify log file')
+			.option('--log-level <number>', '1-4')
+			.option('--max-concurrency <number>', 'Max number of threads to use for a parallel job')
+			.option('--data-dir <string>', 'Specify data directory')
+			.option('--testnet-data-dir <string>', 'Specify testnet data directory')
 			.option('--test-drop-download', 'For net tests: in download, discard ALL blocks instead checking/saving them (very fast)')
 			.option('--test-drop-download-height', 'Like test-drop-download but disards only after around certain height')
 			.option('--testnet', 'Run on testnet. The wallet must be launched with --testnet flag.')
@@ -148,33 +120,33 @@ export class LetheanDaemonLetheand {
 			.option('--bg-mining-min-idle-interval', 'Specify min lookback interval in seconds for determining idle state')
 			.option('--bg-mining-idle-threshold', 'Specify minimum avg idle percentage over lookback interval')
 			.option('--bg-mining-miner-target', 'Specify maximum percentage cpu use by miner(s)')
-			.option('--db-type', 'Specify database type, available: lmdb')
-			.option('--db-sync-mode', 'Specify sync option, using format [safe|fast|fastest]:[sync|async]:[nbloc ks_per_sync].')
+			.option('--db-type <string>', 'Specify database type, available: lmdb', {default: 'lmdb'})
+			.option('--db-sync-mode <string>', 'Specify sync option, using format [safe|fast|fastest]:[sync|async]:[nbloc ks_per_sync].')
 			.option('--db-salvage', 'Try to salvage a blockchain database if it seems corrupted')
-			.option('--p2p-bind-ip', 'Interface for p2p network protocol')
-			.option('--p2p-external-port', 'External port for p2p network protocol (if port forwarding used with NAT)')
+			.option('--p2p-bind-ip <string>', 'Interface for p2p network protocol')
+			.option('--p2p-external-port <string>', 'External port for p2p network protocol (if port forwarding used with NAT)')
 			.option('--allow-local-ip', 'Allow local ip add to peer list, mostly in debug purposes')
-			.option('--add-peer', 'Manually add peer to local peerlist')
-			.option('--add-priority-node', 'Specify list of peers to connect to and attempt to keep the connection open')
-			.option('--add-exclusive-node', 'Specify list of peers to connect to only. If this option is given the options add-priority-node and seed-node  are ignored')
-			.option('--seed-node', 'Connect to a node to retrieve peer  addresses, and disconnect')
+			.option('--add-peer <string>', 'Manually add peer to local peerlist')
+			.option('--add-priority-node <string>', 'Specify list of peers to connect to and attempt to keep the connection open')
+			.option('--add-exclusive-node <string>', 'Specify list of peers to connect to only. If this option is given the options add-priority-node and seed-node  are ignored')
+			.option('--seed-node <string>', 'Connect to a node to retrieve peer  addresses, and disconnect')
 			.option('--hide-my-port', 'Do not announce yourself as peerlist candidate')
 			.option('--no-igd', 'Disable UPnP port mapping')
 			.option('--offline', 'Do not listen for peers, nor connect to any')
-			.option('--out-peers', 'set max number of out peers')
+			.option('--out-peers <string>', 'set max number of out peers')
 			.option('--tos-flag', 'set TOS flag')
-			.option('--limit-rate-up', 'set limit-rate-up [kB/s]')
-			.option('--limit-rate-down', 'set limit-rate-down [kB/s]')
-			.option('--limit-rate', 'set limit-rate [kB/s]')
-			.option('--save-graph', 'Save data for dr functions')
-			.option('--rpc-bind-port', 'Port for RPC server')
-			.option('--testnet-rpc-bind-port', 'Port for testnet RPC server')
-			.option('--restricted-rpc', 'Restrict RPC to view only commands')
-			.option('--rpc-bind-ip arg', 'Specify ip to bind rpc server')
-			.option('--rpc-login', 'Specify username[:password] required for RPC server')
-			.option('--confirm-external-bind', 'Confirm rpc-bind-ip value is NOT a loopback (local) IP')
+			.option('--limit-rate-up <string>', 'set limit-rate-up [kB/s]')
+			.option('--limit-rate-down <string>', 'set limit-rate-down [kB/s]')
+			.option('--limit-rate <string>', 'set limit-rate [kB/s]')
+			.option('--save-graph <boolean>', 'Save data for dr functions', {default: false})
+			.option('--rpc-bind-port <string>', 'Port for RPC server')
+			.option('--testnet-rpc-bind-port <string>', 'Port for testnet RPC server')
+			.option('--restricted-rpc <boolean>', 'Restrict RPC to view only commands', {default: false})
+			.option('--rpc-bind-ip <string>', 'Specify ip to bind rpc server')
+			.option('--rpc-login <string>', 'Specify username[:password] required for RPC server')
+			.option('--confirm-external-bind <boolean>', 'Confirm rpc-bind-ip value is NOT a loopback (local) IP', {default: false})
 
-			.action(() => {new LetheanDaemonLetheand(Deno.args).run()})
+			.action((args) => {new LetheanDaemonLetheand().run(args)})
 			.command('stop', 'Stop chain daemon')
 			.command('import', 'Import blockchain raw data')
 			.command('export', 'Export blockchain raw data')

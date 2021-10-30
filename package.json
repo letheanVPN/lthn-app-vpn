@@ -6,7 +6,7 @@
   "scripts": {
     "start": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts update cli",
     "backend": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts backend start --home-dir=/Users/snider/Lethean --data-dir=/Users/snider/Lethean/data --config-file=/Users/snider/WebstormProjects/app/app/conf/letheand.conf --bin-dir=/Users/snider/WebstormProjects/app/app/cli",
-    "chain": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts daemon chain start --home-dir=/Users/snider/Lethean --data-dir=/Users/snider/Lethean/data --config-file=/Users/snider/WebstormProjects/app/app/conf/letheand.conf --bin-dir=/Users/snider/WebstormProjects/app/app/cli",
+    "chain": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts daemon chain start --help --data-dir=/Users/snider/Lethean/data --config-file=/Users/snider/WebstormProjects/app/app/conf/letheand.conf",
     "vpn": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts vpn provider  --help",
     "server:compile": "$HOME/.deno/bin/deno compile --unstable --allow-env --allow-run --allow-net --allow-read --allow-write --output build/lthn --target  ",
     "server:build:linux": "npm run server:compile -- x86_64-unknown-linux-gnu src/server.ts",

@@ -39,7 +39,7 @@ export class LetheanBackend {
 
 		app.handle("/daemon/start/letheand", async (req) => {
 			daemons = {
-				...daemons, letheand: new LetheanDaemonLetheand(Deno.args)
+				...daemons, letheand: new LetheanDaemonLetheand()
 			};
 			daemons.letheand.run()
 			console.log(daemons)

@@ -7,6 +7,10 @@ import {LetheanDaemonLetheanWalletRpc} from './lethean-wallet-rpc.ts';
 export class LetheanBackend {
 	static options: any
 	constructor() {
+
+	}
+
+	public static run(){
 		const app = createApp();
 		let daemons: any = {}
 
@@ -66,7 +70,17 @@ export class LetheanBackend {
 		app.listen({port: 36911});
 	}
 
-	public static config(){}
+	public static config(){
+		return new Command()
+			.description("Backend Services for Application GUI")
+			.command('start', 'Start Application Helper Daemon')
+			.option("-h, --home-dir", "Home directory.")
+			.option("-d, --data-dir", "Directory to store data.")
+			.option("-c, --config-file", "Daemon config(dep)")
+			.option("-b, --bin-dir", "Binaries location")
+			.action(() => LetheanBackend.run())
+
+	}
 	static async init() {
 			LetheanBackend.options = await new Command()
 				.name("Lethean CLI")

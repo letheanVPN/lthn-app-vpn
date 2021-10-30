@@ -114,21 +114,6 @@ export class LetheanDaemonLetheand {
 		});
 	}
 
-	/**
-	 * :   --help                                Produce help message
-stderr:   --version                             Output version information
-stderr:   --os-version                          OS for which this executable was
-stderr:                                         compiled
-stderr:   --config-file arg (=/Users/snider/.intensecoin/intensecoin.conf)
-stderr:   --test-dbg-lock-sleep arg (=0)        Sleep time in ms, defaults to 0 (off), used to debug before/after locking mutex. Values 100 to 1000 are good for tests.
-stderr:
-stderr:    arg
-stderr:
-
-
-
-	 * @returns {any}
-	 */
 	public static config() {
 		return new Command()
 			.description('Blockchain Functions')

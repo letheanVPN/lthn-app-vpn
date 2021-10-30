@@ -6,6 +6,8 @@ import {LetheanDaemonDvpnClient} from './daemons/dvpn/client.ts';
 import {LetheanBackend} from './daemons/lthn/lethean-backend.ts';
 import {LetheanDaemons} from './daemons/lethean-daemons.ts';
 import {LetheanAccount} from './accounts/user.ts';
+import {LetheanUpdater} from './tools/updater.ts';
+
 export class LetheanCli {
 
 	static options: any
@@ -21,13 +23,14 @@ export class LetheanCli {
 			.option('--home-dir', 'Home directory', {global: true, default: '~/Lethean'})
 			.option('--bin-dir', 'Binaries directory', {global: true, default: '~/Lethean/cli'})
 			.command('backend', LetheanBackend.config())
-			.command('account', LetheanAccount.config())
+//			.command('account', LetheanAccount.config())
 			.command('daemon', LetheanDaemons.config())
-			.command("vpn",
-				new Command().description('VPN Functions')
-						.command('provider', LetheanToolsProvider.config()
-						.command('client', LetheanDaemonDvpnClient.config())
-					))
+			.command('update', LetheanUpdater.config())
+//			.command("vpn",
+//				new Command().description('VPN Functions')
+//						.command('provider', LetheanToolsProvider.config()
+//						.command('client', LetheanDaemonDvpnClient.config())
+//					))
 			.command("help", new HelpCommand())
 			.command("completions", new CompletionsCommand());
 
@@ -38,6 +41,10 @@ export class LetheanCli {
 			Deno.exit(1);
 		}
 
+
+	}
+
+	download(){
 
 	}
 }

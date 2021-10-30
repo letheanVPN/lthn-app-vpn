@@ -15,7 +15,7 @@ linux:
   artifacts:
     name: linux
     paths:
-      - build/lthn
+      - lthn
 
 macos-arm64:
   stage: build
@@ -29,7 +29,7 @@ macos-arm64:
   artifacts:
     name: macos-arm
     paths:
-      - build/lthn
+      - lthn
 
 macos-intel:
   stage: build

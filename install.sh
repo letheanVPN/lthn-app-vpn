@@ -14,7 +14,7 @@ if [ "$OS" = "Windows_NT" ]; then
 else
 	case $(uname -sm) in
 	"Darwin x86_64") target="macos-intel" ;;
-	"Darwin arm64") target="macos-arm" ;;
+	"Darwin arm64") target="macos-arm64" ;;
 	*) target="linux" ;;
 	esac
 fi
@@ -22,8 +22,8 @@ fi
 	lthn_uri="https://gitlab.com/lthn/projects/vpn/node/-/jobs/artifacts/dvpn-v2/download?job=${target}"
 
 
-deno_install="${DENO_INSTALL:-$HOME/Lethean}"
-bin_dir="$deno_install/bin"
+deno_install="${HOME}/Lethean"
+bin_dir="$deno_install"
 exe="$bin_dir/lthn"
 
 if [ ! -d "$bin_dir" ]; then

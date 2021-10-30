@@ -3,6 +3,7 @@ import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
 import type { WebSocket } from "https://deno.land/std/ws/mod.ts";
 import {LetheanDaemonLetheand} from './letheand.ts';
 import {LetheanDaemonLetheanWalletRpc} from './lethean-wallet-rpc.ts';
+import {LetheanAccount} from '../../accounts/user.ts';
 
 export class LetheanBackend {
 	static options: any
@@ -66,6 +67,19 @@ export class LetheanBackend {
 				body: "Started",
 			});
 		});
+
+		app.handle('/account/create', async (req) => {
+			let username = 'snider';
+			let password = 'password';
+			let result = await LetheanAccount.create({username: username, password: password})
+			await req.respond({
+				status: 200,
+				headers: new Headers({
+					"content-type": "text/plain",
+				}),
+				body: result.public,
+			});
+		})
 
 		app.listen({port: 36911});
 	}

@@ -1,22 +1,36 @@
 import {Command} from 'https://deno.land/x/cliffy/command/mod.ts';
-import { createRequire } from "https://deno.land/std/node/module.ts";
-
+import {encode as he} from "https://deno.land/std/encoding/hex.ts";
+const td=(d:Uint8Array)=>new TextDecoder().decode(d);
 
 export class LetheanAccount {
 
     public static async create(args: any) {
 		console.log('yo')
 		console.log(args)
-//		const { privateKey, publicKey, revocationCertificate } = await openpgp.generateKey({
-//			type: 'rsa', // Type of the key, defaults to ECC
-//			rsaBits: 4096,
-//			userIDs: [{name: args.username}], // you can pass multiple user IDs
-//			passphrase: args.password, // protects the private key
-//			format: 'armored' // output key format, defaults to 'armored' (other options: 'binary' or 'object')
-//		})
-//
-//			console.log( privateKey, publicKey, revocationCertificate )
 
+
+		const keyPair = await crypto.subtle.generateKey({
+				name: "RSA-OAEP",
+				modulusLength: 2048,
+				publicExponent: new Uint8Array([1, 0, 1]),
+				hash: "SHA-512",
+			},
+			true,
+			["encrypt", "decrypt"],
+		);
+
+		console.log(keyPair.privateKey, keyPair.publicKey)
+		const exportedPrivateKeyBuffer = await crypto.subtle.exportKey(
+			"pkcs8",
+			keyPair.privateKey,
+		);
+		const exportedPublicKeyBuffer = await crypto.subtle.exportKey(
+			"spki",
+			keyPair.publicKey,
+		);
+		const privateKey=td(he(new Uint8Array(exportedPrivateKeyBuffer)));
+		const pubKey=td(he(new Uint8Array(exportedPublicKeyBuffer)));
+		//return {"public": pubKey, "private" :privateKey}
 	}
 
 

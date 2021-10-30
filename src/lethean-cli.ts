@@ -23,7 +23,7 @@ export class LetheanCli {
 			.option('--home-dir', 'Home directory', {global: true, default: '~/Lethean'})
 			.option('--bin-dir', 'Binaries directory', {global: true, default: '~/Lethean/cli'})
 			.command('backend', LetheanBackend.config())
-//			.command('account', LetheanAccount.config())
+			.command('account', LetheanAccount.config())
 			.command('daemon', LetheanDaemons.config())
 			.command('update', LetheanUpdater.config())
 //			.command("vpn",

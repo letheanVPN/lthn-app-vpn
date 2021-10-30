@@ -16,5 +16,6 @@ the CLI is sectioned into sub commands, you can add `--help` at any level to the
 - `lthn backend start --help`
 - `lthn chain start --help`
 
+- `lthn account create --username=test --password=test`
 
 - `lthn update cli`

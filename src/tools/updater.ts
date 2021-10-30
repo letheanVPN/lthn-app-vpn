@@ -17,25 +17,22 @@ export class LetheanUpdater {
 
 	static async download(args: any) {
 
-		let url, filename, platform = os.platform(), homeDir = os.homeDir();
+		let url, platform = os.platform(), homeDir = os.homeDir();
 
 		console.log(`Downloading files for ${platform}`)
 
 		switch (platform) {
 			case 'darwin':
 				url = LetheanUpdater.downloads.cli.macos
-				filename = url.split('/').pop() ;
 				break;
 			case 'linux':
 				url = LetheanUpdater.downloads.cli.linux
-				filename = url.split('/').pop() ;
 				break;
 			case 'windows':
 				url = LetheanUpdater.downloads.cli.windows
-				filename = url.split('\\').pop() ;
 				break;
 		}
-
+		let filename = url.split('/').pop() ;
 		try {
 
 			const destination: Destination = {
@@ -45,7 +42,10 @@ export class LetheanUpdater {
 			const fileObj = await download(url, destination);
 			console.log(`Downloaded file to ${fileObj.fullPath}`)
 			console.log("removing old binaries")
-			await Deno.remove(path.join(homeDir ? homeDir : '', 'Lethean', 'cli'), { recursive: true })
+			try {
+				await Deno.remove(path.join(homeDir ? homeDir : '', 'Lethean', 'cli'), { recursive: true })
+			}catch (e){}
+
 			console.log(`Unpacking Downloaded zip to: ${path.join(homeDir ? homeDir : '', 'Lethean', 'cli')}`)
 
 			await unZipFromFile(fileObj.fullPath, path.join(homeDir ? homeDir : '', 'Lethean', 'cli'), {  includeFileName: false})

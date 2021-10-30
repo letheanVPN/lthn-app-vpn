@@ -87,6 +87,9 @@ export class LetheanDaemonLetheand {
 	}
 
 	public static config() {
+
+		let home = os.homeDir();
+
 		return new Command()
 			.description('Blockchain Functions')
 			.command('start', 'Start chain daemon')
@@ -97,7 +100,7 @@ export class LetheanDaemonLetheand {
 			.option('--log-file <string>', 'Specify log file')
 			.option('--log-level <number>', '1-4')
 			.option('--max-concurrency <number>', 'Max number of threads to use for a parallel job')
-			.option('--data-dir <string>', 'Specify data directory')
+			.option('--data-dir <string>', 'Specify data directory', {default: path.join(home ? home : '~/', 'Lethean', 'data')})
 			.option('--testnet-data-dir <string>', 'Specify testnet data directory')
 			.option('--test-drop-download', 'For net tests: in download, discard ALL blocks instead checking/saving them (very fast)')
 			.option('--test-drop-download-height', 'Like test-drop-download but disards only after around certain height')

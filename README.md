@@ -1,11 +1,9 @@
 # Lethean Unified Command Line & Rest API
 
-* add the lthn/lthn.exe binary to your $PATH env, the below assumes this is done.
+* Mac/Linux
 
 ```shell
-export LETHEAN_CLI="$HOME/Lethean:$HOME/Lethean/cli"
-export PATH="$LETHEAN_CLI:$PATH"
-
+curl -fsSL https://gitlab.com/lthn/projects/vpn/node/-/raw/dvpn-v2/install.sh | sh
 ```
 
 ## Base commands

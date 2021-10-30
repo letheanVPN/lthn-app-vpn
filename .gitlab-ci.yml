@@ -11,6 +11,7 @@ linux:
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
     - npm run server:build:linux
+    - cp build/lthn lthn
   artifacts:
     name: linux
     paths:
@@ -24,23 +25,25 @@ macos-arm64:
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
     - npm run server:build:macos-arm
+    - cp build/lthn lthn
   artifacts:
-    name: macos
+    name: macos-arm
     paths:
       - build/lthn
 
-macos-intell:
+macos-intel:
   stage: build
   image: node:16-bullseye-slim
   before_script:
     - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
-    - npm run server:build:macos-intell
+    - npm run server:build:macos-intel
+    - cp build/lthn lthn
   artifacts:
-    name: macos
+    name: macos-intel
     paths:
-      - build/lthn
+      - lthn
 
 windows:
   stage: build
@@ -50,7 +53,8 @@ windows:
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
     - npm run server:build:windows
+    - cp build/lthn.exe lthn.exe
   artifacts:
     name: windows
     paths:
-      - build/lthn.exe
+      - lthn.exe

@@ -1,9 +1,9 @@
 import { createApp } from "https://deno.land/x/servest@v1.3.1/mod.ts";
 import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
-import type { WebSocket } from "https://deno.land/std/ws/mod.ts";
 import {LetheanDaemonLetheand} from './letheand.ts';
 import {LetheanDaemonLetheanWalletRpc} from './lethean-wallet-rpc.ts';
 import {LetheanAccount} from '../../accounts/user.ts';
+import * as path from 'https://deno.land/std/path/mod.ts';
 
 export class LetheanBackend {
 	static options: any
@@ -11,23 +11,11 @@ export class LetheanBackend {
 
 	}
 
-	public static run(){
+	public static run(args: any){
 		const app = createApp();
 		let daemons: any = {}
 
-		function handleHandshake(sock: WebSocket) {
-			async function handleMessage(sock: WebSocket) {
-				for await (const msg of sock) {
-					if (typeof msg === "string") {
-						sock.send(msg);
-					}
-				}
-			}
-
-			handleMessage(sock);
-		}
-
-		app.ws("/ws", handleHandshake);
+		console.log(args)
 		app.handle("/", async (req) => {
 			await req.respond({
 				status: 200,
@@ -81,18 +69,23 @@ export class LetheanBackend {
 			});
 		})
 
-		app.listen({port: 36911});
+		app.listenTls({
+			"hostname": "localhost",
+			"port": 36911,
+			"certFile" :`${path.join(args.homeDir, 'conf', 'public.pem')}`,
+			"keyFile": `${path.join(args.homeDir, 'conf', 'private.pem')}`
+			});
 	}
 
 	public static config(){
 		return new Command()
 			.description("Backend Services for Application GUI")
 			.command('start', 'Start Application Helper Daemon')
-			.option("-h, --home-dir", "Home directory.")
-			.option("-d, --data-dir", "Directory to store data.")
-			.option("-c, --config-file", "Daemon config(dep)")
-			.option("-b, --bin-dir", "Binaries location")
-			.action(() => LetheanBackend.run())
+			.option("-h, --home-dir <string>", "Home directory.")
+			.option("-d, --data-dir <string>", "Directory to store data.")
+			.option("-c, --config-file <string>", "Daemon config(dep)")
+			.option("-b, --bin-dir <string>", "Binaries location")
+			.action((args) => LetheanBackend.run(args))
 
 	}
 	static async init() {

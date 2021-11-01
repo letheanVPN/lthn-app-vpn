@@ -4,10 +4,7 @@ const td=(d:Uint8Array)=>new TextDecoder().decode(d);
 
 export class LetheanAccount {
 
-    public static async create(args: any) {
-		console.log('yo')
-		console.log(args)
-
+    public static async create() {
 
 		const keyPair = await crypto.subtle.generateKey({
 				name: "RSA-OAEP",
@@ -19,7 +16,6 @@ export class LetheanAccount {
 			["encrypt", "decrypt"],
 		);
 
-		console.log(keyPair.privateKey, keyPair.publicKey)
 		const exportedPrivateKeyBuffer = await crypto.subtle.exportKey(
 			"pkcs8",
 			keyPair.privateKey,
@@ -30,19 +26,16 @@ export class LetheanAccount {
 		);
 		const privateKey=td(he(new Uint8Array(exportedPrivateKeyBuffer)));
 		const pubKey=td(he(new Uint8Array(exportedPublicKeyBuffer)));
-		//return {"public": pubKey, "private" :privateKey}
+		return {"public": pubKey, "private" :privateKey}
 	}
 
 
 	public static config() {
 		return new Command().description('Lethean Account Management')
-			.command('create', 'Create an Account on the filesystem')
-			.option('-n, --name <string>', 'Username to use')
-			.option('-p, --password <string>', 'Password')
-			.action((args) => LetheanAccount.create(args))
+			.command('create', 'Create an keypair')
+			.action((args) => console.log(JSON.stringify(LetheanAccount.create())))
 			;
 
-//		# Initialise config
 	}
 
 }

@@ -57,15 +57,13 @@ export class LetheanBackend {
 		});
 
 		app.handle('/account/create', async (req) => {
-			let username = 'snider';
-			let password = 'password';
-			let result = await LetheanAccount.create({username: username, password: password})
+			let result = await LetheanAccount.create()
 			await req.respond({
 				status: 200,
 				headers: new Headers({
-					"content-type": "text/plain",
+					"content-type": "application/json",
 				}),
-				body: 'good',
+				body: JSON.stringify(result),
 			});
 		})
 

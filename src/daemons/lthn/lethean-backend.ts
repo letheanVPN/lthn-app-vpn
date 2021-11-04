@@ -1,4 +1,4 @@
-import { createApp } from "https://deno.land/x/servest@v1.3.1/mod.ts";
+import { createApp, contentTypeFilter } from "https://deno.land/x/servest@v1.3.1/mod.ts";
 import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
 import * as path from 'https://deno.land/std/path/mod.ts';
 import {LetheanCli} from '../../lethean-cli.ts';
@@ -31,7 +31,7 @@ export class LetheanBackend {
 	}
 
 	static addRoute(path: string, handle: any){
-		this.app.handle(path, async (req) => {
+		this.app.get(path, async (req) => {
 			await req.respond({
 				status: 200,
 				headers: new Headers({
@@ -40,6 +40,27 @@ export class LetheanBackend {
 				body: LetheanBackend.templateOutput(handle.getHelp()),
 			});
 		});
+
+		this.app.post(path, async (req) => {
+
+			let cmdArgs:any = req.url.replace('/','').split('/')
+			for (let dat of await req.formData()) {
+
+				//@ts-ignore
+				let value = dat[1].length > 1 ? `=${dat[1]}` : ''
+				cmdArgs.push('--' + dat[0].replace(/([A-Z])/g, (x) => '-'+x.toLowerCase())+ value)
+			}
+			console.log(cmdArgs)
+			await LetheanCli.run(cmdArgs)
+
+			await req.respond({
+				status: 200,
+				headers: new Headers({
+					"content-type": "text/html",
+				}),
+				body: 'yarp',
+			});
+			},)
 	}
 
 	public static run(args: any){

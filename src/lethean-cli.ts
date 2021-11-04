@@ -7,12 +7,22 @@ import {LetheanBackend} from './daemons/lthn/lethean-backend.ts';
 import {LetheanDaemons} from './daemons/lethean-daemons.ts';
 import {LetheanAccount} from './accounts/user.ts';
 import {LetheanUpdater} from './tools/updater.ts';
+import {Filesystem} from './tools/filesystem.ts';
 
 export class LetheanCli {
 
 	static options: any
 	 constructor() {
 
+	}
+
+	static async run(args: any){
+		try {
+			LetheanCli.options.parse(args);
+		} catch (error) {
+			console.error("[CUSTOM_ERROR]", error);
+			Deno.exit(1);
+		}
 	}
 
 	static async init() {
@@ -23,6 +33,7 @@ export class LetheanCli {
 			.option('--home-dir', 'Home directory', {global: true, default: '~/Lethean'})
 			.option('--bin-dir', 'Binaries directory', {global: true, default: '~/Lethean/cli'})
 			.command('backend', LetheanBackend.config())
+			.command('filesystem', Filesystem.config())
 			.command('account', LetheanAccount.config())
 			.command('daemon', LetheanDaemons.config())
 			.command('update', LetheanUpdater.config())
@@ -34,17 +45,7 @@ export class LetheanCli {
 			.command("help", new HelpCommand())
 			.command("completions", new CompletionsCommand());
 
-		try {
-			LetheanCli.options.parse(Deno.args);
-		} catch (error) {
-			console.error("[CUSTOM_ERROR]", error);
-			Deno.exit(1);
-		}
-
 
 	}
 
-	download(){
-
-	}
 }

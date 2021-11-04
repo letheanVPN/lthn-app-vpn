@@ -1,73 +1,103 @@
 import { createApp } from "https://deno.land/x/servest@v1.3.1/mod.ts";
 import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
-import {LetheanDaemonLetheand} from './letheand.ts';
-import {LetheanDaemonLetheanWalletRpc} from './lethean-wallet-rpc.ts';
-import {LetheanAccount} from '../../accounts/user.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
+import {LetheanCli} from '../../lethean-cli.ts';
+import {Filter} from '../../tools/toHTML.ts';
 
 export class LetheanBackend {
-	static options: any
-	constructor() {
 
+	static app = createApp();
+
+	static pathPerms:any = {
+		backend: false,
+		filesystem: true,
+		daemon: true,
+		update: true,
+		help: false,
+		completions: false
+	}
+
+	static discoverRoute(base: string, routes: any){
+		for (let dat of routes) {
+			let key = dat[0],value = dat[1];
+			if(LetheanBackend.pathPerms[key] === undefined || LetheanBackend.pathPerms[key] !== false){
+				console.log(`Adding route: ${[base, key].join('/')}`)
+				this.addRoute( [base, key].join('/'), value);
+				if(value.commands){
+					this.discoverRoute([base, key].join('/'), value.commands)
+				}
+			}
+		}
+	}
+
+	static addRoute(path: string, handle: any){
+		this.app.handle(path, async (req) => {
+			await req.respond({
+				status: 200,
+				headers: new Headers({
+					"content-type": "text/html",
+				}),
+				body: LetheanBackend.templateOutput(handle.getHelp()),
+			});
+		});
 	}
 
 	public static run(args: any){
-		const app = createApp();
-		let daemons: any = {}
 
-		console.log(args)
-		app.handle("/", async (req) => {
+		this.discoverRoute('',LetheanCli.options.commands);
+
+		this.app.handle("/", async (req) => {
 			await req.respond({
 				status: 200,
 				headers: new Headers({
-					"content-type": "text/plain",
+					"content-type": "text/html",
 				}),
-				body: "Hello, I'm the Lethean Desktop API, there is not much exciting here, but it's good to see you taking a look!",
+				body: LetheanBackend.templateOutput(LetheanCli.options.getHelp()),
 			});
 		});
 
-		app.handle("/daemon/start/letheand", async (req) => {
-			daemons = {
-				...daemons, letheand: new LetheanDaemonLetheand()
-			};
-			daemons.letheand.run()
-			console.log(daemons)
-			await req.respond({
-				status: 200,
-				headers: new Headers({
-					"content-type": "text/plain",
-				}),
-				body: "Started",
-			});
-		});
+//		app.handle("/daemon/start/letheand", async (req) => {
+//			daemons = {
+//				...daemons, letheand: new LetheanDaemonLetheand()
+//			};
+//			daemons.letheand.run()
+//			console.log(daemons)
+//			await req.respond({
+//				status: 200,
+//				headers: new Headers({
+//					"content-type": "text/plain",
+//				}),
+//				body: "Started",
+//			});
+//		});
+//
+//		app.handle("/daemon/start/lethean-wallet-rpc", async (req) => {
+//			daemons = {
+//				...daemons, letheanWalletRpc: new LetheanDaemonLetheanWalletRpc(Deno.args)
+//			};
+//			daemons.letheanWalletRpc.run()
+//			console.log(daemons)
+//			await req.respond({
+//				status: 200,
+//				headers: new Headers({
+//					"content-type": "text/plain",
+//				}),
+//				body: "Started",
+//			});
+//		});
+//
+//		app.handle('/account/create', async (req) => {
+//			let result = await LetheanAccount.create()
+//			await req.respond({
+//				status: 200,
+//				headers: new Headers({
+//					"content-type": "application/json",
+//				}),
+//				body: JSON.stringify(result),
+//			});
+//		})
 
-		app.handle("/daemon/start/lethean-wallet-rpc", async (req) => {
-			daemons = {
-				...daemons, letheanWalletRpc: new LetheanDaemonLetheanWalletRpc(Deno.args)
-			};
-			daemons.letheanWalletRpc.run()
-			console.log(daemons)
-			await req.respond({
-				status: 200,
-				headers: new Headers({
-					"content-type": "text/plain",
-				}),
-				body: "Started",
-			});
-		});
-
-		app.handle('/account/create', async (req) => {
-			let result = await LetheanAccount.create()
-			await req.respond({
-				status: 200,
-				headers: new Headers({
-					"content-type": "application/json",
-				}),
-				body: JSON.stringify(result),
-			});
-		})
-
-		app.listenTls({
+		this.app.listenTls({
 			"hostname": "localhost",
 			"port": 36911,
 			"certFile" :`${path.join(args.homeDir, 'conf', 'public.pem')}`,
@@ -75,28 +105,16 @@ export class LetheanBackend {
 			});
 	}
 
+	static templateOutput(input: string){
+		return new Filter().toHtml(`<html><head></head><body  style="background: radial-gradient(circle,#08f2b5 0%,#158297 100%); "><pre style=" margin-left: 2vw; width: 96vw; background: rgb(33, 33, 33);">${input}</pre></body></html>`);
+	}
 	public static config(){
 		return new Command()
 			.description("Backend Services for Application GUI")
 			.command('start', 'Start Application Helper Daemon')
 			.option("-h, --home-dir <string>", "Home directory.")
-			.option("-d, --data-dir <string>", "Directory to store data.")
-			.option("-c, --config-file <string>", "Daemon config(dep)")
-			.option("-b, --bin-dir <string>", "Binaries location")
 			.action((args) => LetheanBackend.run(args))
 
 	}
-	static async init() {
-			LetheanBackend.options = await new Command()
-				.name("Lethean CLI")
-				.version("0.1.0")
-				.description("Command line interface for Lethean")
-				.option("-h, --home-dir", "Home directory.")
-				.option("-d, --data-dir", "Directory to store data.")
-				.option("-c, --config-file", "Daemon config(dep)")
-				.option("-b, --bin-dir", "Binaries location")
-				.parse(Deno.args);
-			new LetheanBackend()
-		}
 
 }

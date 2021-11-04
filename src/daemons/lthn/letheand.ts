@@ -2,10 +2,8 @@ import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import {ensureDir} from 'https://deno.land/std@0.106.0/fs/mod.ts';
 import {readLines} from 'https://deno.land/std@0.79.0/io/bufio.ts';
 import EventEmitter from 'https://deno.land/std@0.79.0/node/events.ts';
-import {existsSync} from 'https://deno.land/std/fs/mod.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
 import {Command} from 'https://deno.land/x/cliffy/command/mod.ts';
-import {parse} from 'https://deno.land/std@0.113.0/flags/mod.ts';
 
 export class stdOutStream extends EventEmitter {
 	constructor() {
@@ -36,32 +34,31 @@ export class stdOutStream extends EventEmitter {
 
 
 export class LetheanDaemonLetheand {
-	private command: any;
-	private exeFile: string;
-	private binDir: any;
-	private dataDir: any;
-	private configFile: any;
-	private debug: number = 1;
-	private process: stdOutStream;
-	private stopped: boolean = true;
-	static options: any;
+	private static command: any;
+	private static exeFile: string;
+	private static debug: number = 1;
+	private static process: stdOutStream;
 
-	constructor() {
+	static run(args: any) {
+
 		let homeDir = os.homeDir();
 
 
 		this.exeFile = 'letheand' + (os.platform() === 'windows' ? '.exe' : '');
-		this.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
+		LetheanDaemonLetheand.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
 
-		this.process = new stdOutStream();
-	}
+		LetheanDaemonLetheand.process = new stdOutStream();
+		let cmdArgs:any = []
 
-	run(args: any) {
-		if (!this.stopped) return this.process;
+		for (let arg in args){
+			if (arg !== 'igd'){
+				let value = args[arg].length > 1 ? `=${args[arg]}` : ''
+				cmdArgs.push('--' + arg.replace(/([A-Z])/g, (x) => '-'+x.toLowerCase())+ value)
+			}
+
+		}
 
 		return ensureDir(args['dataDir']).then(async () => {
-
-			this.stopped = false;
 
 			return this.process.on('stdout', stdout => {
 				if (this.debug) {
@@ -77,10 +74,7 @@ export class LetheanDaemonLetheand {
 				if (this.debug) {
 					console.log(status);
 				}
-			}).run(this.command,
-				`--data-dir=${args['dataDir']}`,
-				`--config-file=${args['configFile']}`,
-				);
+			}).run(this.command, ...cmdArgs);
 
 
 		});
@@ -94,13 +88,13 @@ export class LetheanDaemonLetheand {
 			.description('Blockchain Functions')
 			.command('start', 'Start chain daemon')
 			.option('--config-file <string>', 'Specify configuration file')
-			.option('--detach <boolean>', 'Run as daemon', {default: false})
-			.option('--pidfile <string>', 'File path to write the daemon\'s PID to (optional, requires --detach)', {default: false})
-			.option('--non-interactive <boolean>', 'Run non-interactive', {default: false})
+			.option('--detach <boolean>', 'Run as daemon')
+			.option('--pidfile <string>', 'File path to write the daemon\'s PID to (optional, requires --detach)')
+			.option('--non-interactive <boolean>', 'Run non-interactive', {default: true})
 			.option('--log-file <string>', 'Specify log file')
 			.option('--log-level <number>', '1-4')
 			.option('--max-concurrency <number>', 'Max number of threads to use for a parallel job')
-			.option('--data-dir <string>', 'Specify data directory', {default: path.join(home ? home : '~/', 'Lethean', 'data')})
+			.option('--data-dir <string>', 'Specify data directory', {default: path.join(home ? home : '/', 'Lethean', 'data')})
 			.option('--testnet-data-dir <string>', 'Specify testnet data directory')
 			.option('--test-drop-download', 'For net tests: in download, discard ALL blocks instead checking/saving them (very fast)')
 			.option('--test-drop-download-height', 'Like test-drop-download but disards only after around certain height')
@@ -123,7 +117,7 @@ export class LetheanDaemonLetheand {
 			.option('--bg-mining-min-idle-interval', 'Specify min lookback interval in seconds for determining idle state')
 			.option('--bg-mining-idle-threshold', 'Specify minimum avg idle percentage over lookback interval')
 			.option('--bg-mining-miner-target', 'Specify maximum percentage cpu use by miner(s)')
-			.option('--db-type <string>', 'Specify database type, available: lmdb', {default: 'lmdb'})
+			.option('--db-type <string>', 'Specify database type, available: lmdb')
 			.option('--db-sync-mode <string>', 'Specify sync option, using format [safe|fast|fastest]:[sync|async]:[nbloc ks_per_sync].')
 			.option('--db-salvage', 'Try to salvage a blockchain database if it seems corrupted')
 			.option('--p2p-bind-ip <string>', 'Interface for p2p network protocol')
@@ -134,22 +128,22 @@ export class LetheanDaemonLetheand {
 			.option('--add-exclusive-node <string>', 'Specify list of peers to connect to only. If this option is given the options add-priority-node and seed-node  are ignored')
 			.option('--seed-node <string>', 'Connect to a node to retrieve peer  addresses, and disconnect')
 			.option('--hide-my-port', 'Do not announce yourself as peerlist candidate')
-			.option('--no-igd', 'Disable UPnP port mapping')
+			.option('--no-igd <boolean>', 'Disable UPnP port mapping')
 			.option('--offline', 'Do not listen for peers, nor connect to any')
 			.option('--out-peers <string>', 'set max number of out peers')
 			.option('--tos-flag', 'set TOS flag')
 			.option('--limit-rate-up <string>', 'set limit-rate-up [kB/s]')
 			.option('--limit-rate-down <string>', 'set limit-rate-down [kB/s]')
 			.option('--limit-rate <string>', 'set limit-rate [kB/s]')
-			.option('--save-graph <boolean>', 'Save data for dr functions', {default: false})
+			.option('--save-graph <boolean>', 'Save data for dr functions')
 			.option('--rpc-bind-port <string>', 'Port for RPC server')
 			.option('--testnet-rpc-bind-port <string>', 'Port for testnet RPC server')
-			.option('--restricted-rpc <boolean>', 'Restrict RPC to view only commands', {default: false})
+			.option('--restricted-rpc <boolean>', 'Restrict RPC to view only commands')
 			.option('--rpc-bind-ip <string>', 'Specify ip to bind rpc server')
 			.option('--rpc-login <string>', 'Specify username[:password] required for RPC server')
-			.option('--confirm-external-bind <boolean>', 'Confirm rpc-bind-ip value is NOT a loopback (local) IP', {default: false})
+			.option('--confirm-external-bind <boolean>', 'Confirm rpc-bind-ip value is NOT a loopback (local) IP')
 
-			.action((args) => {new LetheanDaemonLetheand().run(args)})
+			.action((args) => { LetheanDaemonLetheand.run(args)})
 			.command('stop', 'Stop chain daemon')
 			.command('import', 'Import blockchain raw data')
 			.command('export', 'Export blockchain raw data')

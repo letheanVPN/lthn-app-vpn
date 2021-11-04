@@ -30,8 +30,6 @@ export class LetheanCli {
 			.name("lthn")
 			.version("0.1.0")
 			.description("Command line interface for Lethean")
-			.option('--home-dir', 'Home directory', {global: true, default: '~/Lethean'})
-			.option('--bin-dir', 'Binaries directory', {global: true, default: '~/Lethean/cli'})
 			.command('backend', LetheanBackend.config())
 			.command('filesystem', Filesystem.config())
 			.command('account', LetheanAccount.config())

@@ -3,7 +3,7 @@ import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import { download, Destination } from "https://deno.land/x/download/mod.ts";
 import { unZipFromFile } from 'https://deno.land/x/zip@v1.1.0/mod.ts'
 import * as path from 'https://deno.land/std/path/mod.ts';
-import { move, moveSync, copy } from "https://deno.land/std@0.95.0/fs/mod.ts";
+import { copy } from "https://deno.land/std@0.95.0/fs/mod.ts";
 
 export class LetheanUpdater {
 

@@ -1,8 +1,6 @@
 import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
 import { CompletionsCommand } from "https://deno.land/x/cliffy/command/completions/mod.ts";
 import { HelpCommand } from "https://deno.land/x/cliffy/command/help/mod.ts";
-import {LetheanToolsProvider} from './tools/provider.ts';
-import {LetheanDaemonDvpnClient} from './daemons/dvpn/client.ts';
 import {LetheanBackend} from './daemons/lthn/lethean-backend.ts';
 import {LetheanDaemons} from './daemons/lethean-daemons.ts';
 import {LetheanAccount} from './accounts/user.ts';
@@ -17,12 +15,7 @@ export class LetheanCli {
 	}
 
 	static async run(args: any){
-		try {
-			LetheanCli.options.parse(args);
-		} catch (error) {
-			console.error("[CUSTOM_ERROR]", error);
-			Deno.exit(1);
-		}
+			return await LetheanCli.options.parse(args);
 	}
 
 	static async init() {

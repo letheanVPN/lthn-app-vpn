@@ -1,4 +1,4 @@
-import { createApp, contentTypeFilter } from "https://deno.land/x/servest@v1.3.1/mod.ts";
+import { createApp } from "https://deno.land/x/servest@v1.3.1/mod.ts";
 import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
 import * as path from 'https://deno.land/std/path/mod.ts';
 import {LetheanCli} from '../../lethean-cli.ts';
@@ -50,17 +50,19 @@ export class LetheanBackend {
 				let value = dat[1].length > 1 ? `=${dat[1]}` : ''
 				cmdArgs.push('--' + dat[0].replace(/([A-Z])/g, (x) => '-'+x.toLowerCase())+ value)
 			}
-			console.log(cmdArgs)
-			await LetheanCli.run(cmdArgs)
+			try {
+				await LetheanCli.run(cmdArgs)
+			} catch (error) {
+				await req.respond({
+					status: 200,
+					headers: new Headers({
+						"content-type": "text/html",
+					}),
+					body: error.message,
+				});
+			}
 
-			await req.respond({
-				status: 200,
-				headers: new Headers({
-					"content-type": "text/html",
-				}),
-				body: 'yarp',
-			});
-			},)
+			})
 	}
 
 	public static run(args: any){
@@ -76,47 +78,6 @@ export class LetheanBackend {
 				body: LetheanBackend.templateOutput(LetheanCli.options.getHelp()),
 			});
 		});
-
-//		app.handle("/daemon/start/letheand", async (req) => {
-//			daemons = {
-//				...daemons, letheand: new LetheanDaemonLetheand()
-//			};
-//			daemons.letheand.run()
-//			console.log(daemons)
-//			await req.respond({
-//				status: 200,
-//				headers: new Headers({
-//					"content-type": "text/plain",
-//				}),
-//				body: "Started",
-//			});
-//		});
-//
-//		app.handle("/daemon/start/lethean-wallet-rpc", async (req) => {
-//			daemons = {
-//				...daemons, letheanWalletRpc: new LetheanDaemonLetheanWalletRpc(Deno.args)
-//			};
-//			daemons.letheanWalletRpc.run()
-//			console.log(daemons)
-//			await req.respond({
-//				status: 200,
-//				headers: new Headers({
-//					"content-type": "text/plain",
-//				}),
-//				body: "Started",
-//			});
-//		});
-//
-//		app.handle('/account/create', async (req) => {
-//			let result = await LetheanAccount.create()
-//			await req.respond({
-//				status: 200,
-//				headers: new Headers({
-//					"content-type": "application/json",
-//				}),
-//				body: JSON.stringify(result),
-//			});
-//		})
 
 		this.app.listenTls({
 			"hostname": "localhost",

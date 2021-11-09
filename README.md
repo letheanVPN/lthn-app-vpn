@@ -1,10 +1,13 @@
 # Lethean Unified Command Line & Rest API
 
+* Deno Cheat Sheet: https://droces.github.io/Deno-Cheat-Sheet/
+
 * Mac/Linux
 
 ```shell
 curl -fsSL https://gitlab.com/lthn/projects/vpn/node/-/raw/dvpn-v2/install.sh | sh
 ```
+
 * Windows Powershell
 
 ```shell

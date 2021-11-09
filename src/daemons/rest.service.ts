@@ -1,4 +1,5 @@
 import {createApp} from 'https://deno.land/x/servest@v1.3.1/mod.ts';
+import {cors} from 'https://deno.land/x/servest@v1.3.1/middleware/cors.ts';
 import {Command} from 'https://deno.land/x/cliffy/command/mod.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
 import {LetheanCli} from '../lethean-cli.ts';
@@ -44,19 +45,21 @@ export class RestService {
 		this.app.post(path, async (req) => {
 
 			let cmdArgs: any = req.url.replace('/', '').split('/');
-			for (let dat of await req.formData()) {
 
+			let payload = await req.json();
+			for (let key in payload) {
+				console.log(payload[key]);
 				//@ts-ignore
-				let value = dat[1].length > 1 ? `=${dat[1]}` : '';
-				cmdArgs.push('--' + dat[0].replace(/([A-Z])/g, (x) => '-' + x.toLowerCase()) + value);
+				let value = payload[key].length > 1 ? `=${payload[key]}` : '';
+				cmdArgs.push('--' + key.replace(/([A-Z])/g, (x: any) => '-' + x.toLowerCase()) + value);
 			}
 			try {
 				await LetheanCli.run(cmdArgs);
 			} catch (error) {
-				await req.respond({
+				return await req.respond({
 					status: 200,
 					headers: new Headers({
-						'content-type': 'text/html'
+						'content-type': 'text/plain'
 					}),
 					body: error.message
 				});
@@ -67,7 +70,9 @@ export class RestService {
 
 	public static run(args: any) {
 
+
 		this.discoverRoute('', LetheanCli.options.commands);
+
 
 		this.app.handle('/', async (req) => {
 			await req.respond({
@@ -78,6 +83,13 @@ export class RestService {
 				body: RestService.templateOutput(LetheanCli.options.getHelp())
 			});
 		});
+
+		this.app.use(cors({
+			origin: '*',
+			methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
+			allowedHeaders: ['x-my-api-token'],
+			maxAge: 300
+		}));
 
 		this.app.listenTls({
 			'hostname': 'localhost',

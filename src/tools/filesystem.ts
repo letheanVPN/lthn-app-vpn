@@ -4,23 +4,28 @@ import {StringResponse} from './string-response.ts';
 
 export class Filesystem {
 
-	static path(args: any): string {
-		if (args.match('/')) {
-			args = args.split('/');
-		} else if (args.match('\\')) {
-			args = args.split('\\');
+	static path(pathname: any): string {
+		// turn .. into .
+		pathname = pathname.replace(/\.\./g, '.');
+
+		if (pathname.match('/')) {
+			pathname = pathname.split('/');
+		} else if (pathname.match('\\')) {
+			pathname = pathname.split('\\');
 		}
 
-		return path.join(...args);
+		//@ts-ignore
+		const home: string = Deno.env.get('HOME') !== undefined ? Deno.env.get('HOME') : '';
+
+		return path.join(home, 'Lethean', ...pathname);
 	}
 
 	static read(args: any) {
-		console.log(args);
-		return Deno.readTextFileSync(args.path);
+		return Deno.readTextFileSync(Filesystem.path(args.path));
 	}
 
 	static write(path: string, data: string) {
-		return Deno.writeTextFileSync(path, data);
+		return Deno.writeTextFileSync(Filesystem.path(path), data);
 	}
 
 	public static config() {

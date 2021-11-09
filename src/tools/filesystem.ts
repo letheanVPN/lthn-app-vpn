@@ -5,7 +5,7 @@ import {StringResponse} from './string-response.ts';
 export class Filesystem {
 
 	static path(pathname: any): string {
-		// turn .. into .
+		// turn .. into . @todo turn this into a loop, keep going on end result until no .. remains
 		pathname = pathname.replace(/\.\./g, '.');
 
 		if (pathname.match('/')) {
@@ -14,8 +14,8 @@ export class Filesystem {
 			pathname = pathname.split('\\');
 		}
 
-		//@ts-ignore
-		const home: string = Deno.env.get('HOME') !== undefined ? Deno.env.get('HOME') : '';
+		//@ts-ignore @todo grab --home-dir if passed to backend start
+		const home: string = Deno.env.get('HOME') !== undefined ? Deno.env.get('HOME') : './';
 
 		return path.join(home, 'Lethean', ...pathname);
 	}

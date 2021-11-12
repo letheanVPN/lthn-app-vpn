@@ -8,7 +8,7 @@
     "backend": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts backend start --home-dir=$HOME/Lethean",
     "chain": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts daemon chain start",
     "vpn": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts vpn provider  --help",
-    "server:compile": "$HOME/.deno/bin/deno compile --unstable --allow-env --allow-run --allow-net --allow-read --allow-write --output build/lthn --target  ",
+    "server:compile": "deno compile --unstable --allow-env --allow-run --allow-net --allow-read --allow-write --output build/lthn --target  ",
     "server:build:linux": "npm run server:compile -- x86_64-unknown-linux-gnu src/server.ts",
     "server:build:macos-intel": "npm run server:compile -- x86_64-apple-darwin src/server.ts ",
     "server:build:macos-arm": "npm run server:compile -- aarch64-apple-darwin src/server.ts ",

@@ -2,6 +2,7 @@ import {createApp} from 'https://deno.land/x/servest@v1.3.1/mod.ts';
 import {cors} from 'https://deno.land/x/servest@v1.3.1/middleware/cors.ts';
 import {Command} from 'https://deno.land/x/cliffy/command/mod.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
+import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import {LetheanCli} from '../lethean-cli.ts';
 import {Filter} from '../tools/toHTML.ts';
 
@@ -104,10 +105,11 @@ export class RestService {
 	}
 
 	public static config() {
+		let home = os.homeDir();
 		return new Command()
 			.description('Backend Services for Application GUI')
 			.command('start', 'Start Application Helper Daemon')
-			.option('-h, --home-dir <string>', 'Home directory.')
+			.option('-h, --home-dir <string>', 'Home directory.', {default: path.join(home ? home : '/', 'Lethean')})
 			.action((args) => RestService.run(args));
 
 	}

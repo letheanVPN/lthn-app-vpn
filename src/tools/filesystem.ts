@@ -7,6 +7,12 @@ import {
 
 export class Filesystem {
 
+	/**
+	 * Return a system path to the Lethean data folder
+	 *
+	 * @param pathname
+	 * @returns {string}
+	 */
 	static path(pathname: any): string {
 		// turn .. into . @todo turn this into a loop, keep going on end result until no .. remains
 		pathname = pathname.replace(/\.\./g, '.');
@@ -23,6 +29,12 @@ export class Filesystem {
 		return path.join(home, 'Lethean', ...pathname);
 	}
 
+	/**
+	 * Read a file from the Lethean folder
+	 *
+	 * @param args {path:string} relative path
+	 * @returns {string}
+	 */
 	static read(args: any) {
 		return Deno.readTextFileSync(Filesystem.path(args.path));
 	}
@@ -37,6 +49,13 @@ export class Filesystem {
 		return JSON.stringify(ret);
 	}
 
+	/**
+	 * Write to the Lethean data folder
+	 *
+	 * @param {string} path relative path
+	 * @param {string} data string data to save
+	 * @returns {string}
+	 */
 	static write(path: string, data: string) {
 		ensureDirSync(path);
 		Deno.writeTextFileSync(Filesystem.path(path), data);

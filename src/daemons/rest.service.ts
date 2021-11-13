@@ -36,7 +36,8 @@ export class RestService {
 			await req.respond({
 				status: 200,
 				headers: new Headers({
-					'content-type': 'text/html'
+					'content-type': 'text/html',
+					'Access-Control-Allow-Origin': '*'
 				}),
 				body: RestService.templateOutput(handle.getHelp())
 			});
@@ -59,7 +60,8 @@ export class RestService {
 				return await req.respond({
 					status: 200,
 					headers: new Headers({
-						'content-type': 'text/plain'
+						'content-type': 'text/plain',
+						'Access-Control-Allow-Origin': '*'
 					}),
 					body: error.message
 				});
@@ -78,17 +80,15 @@ export class RestService {
 			await req.respond({
 				status: 200,
 				headers: new Headers({
-					'content-type': 'text/html'
+					'content-type': 'text/html',
+					'Access-Control-Allow-Origin': 'https://localhost'
 				}),
 				body: RestService.templateOutput(LetheanCli.options.getHelp())
 			});
 		});
 
 		this.app.use(cors({
-			origin: '*',
-			methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
-			allowedHeaders: ['x-my-api-token'],
-			maxAge: 300
+			origin: '*'
 		}));
 
 		this.app.listenTls({

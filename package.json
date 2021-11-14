@@ -12,6 +12,7 @@
     "server:build:linux": "npm run server:compile -- x86_64-unknown-linux-gnu src/server.ts",
     "server:build:macos-intel": "npm run server:compile -- x86_64-apple-darwin src/server.ts ",
     "server:build:macos-arm": "npm run server:compile -- aarch64-apple-darwin src/server.ts ",
+    "release:windows": "npm run server:compile -- x86_64-pc-windows-msvc src/server.ts ",
     "server:build:windows": "%HOME%\\.deno\\bin\\deno compile --unstable --allow-env --allow-run --allow-net --allow-read --allow-write --output build/lthn --target   x86_64-pc-windows-msvc src/server.ts"
   },
   "repository": {

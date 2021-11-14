@@ -4,6 +4,7 @@ import {readLines} from 'https://deno.land/std@0.79.0/io/bufio.ts';
 import EventEmitter from 'https://deno.land/std@0.79.0/node/events.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
 import {Command} from 'https://deno.land/x/cliffy/command/mod.ts';
+import {StringResponse} from '../../tools/string-response.ts';
 
 export class stdOutStream extends EventEmitter {
 	constructor() {
@@ -48,12 +49,12 @@ export class LetheanDaemonLetheand {
 		LetheanDaemonLetheand.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
 
 		LetheanDaemonLetheand.process = new stdOutStream();
-		let cmdArgs:any = []
+		let cmdArgs: any = [];
 
-		for (let arg in args){
-			if (arg !== 'igd'){
-				let value = args[arg].length > 1 ? `=${args[arg]}` : ''
-				cmdArgs.push('--' + arg.replace(/([A-Z])/g, (x) => '-'+x.toLowerCase())+ value)
+		for (let arg in args) {
+			if (arg !== 'igd') {
+				let value = args[arg].length > 1 ? `=${args[arg]}` : '';
+				cmdArgs.push('--' + arg.replace(/([A-Z])/g, (x) => '-' + x.toLowerCase()) + value);
 			}
 
 		}
@@ -143,7 +144,12 @@ export class LetheanDaemonLetheand {
 			.option('--rpc-login <string>', 'Specify username[:password] required for RPC server')
 			.option('--confirm-external-bind', 'Confirm rpc-bind-ip value is NOT a loopback (local) IP')
 
-			.action((args) => { LetheanDaemonLetheand.run(args)})
+			.action((args) => {
+				LetheanDaemonLetheand.run(args);
+
+				throw new StringResponse('Started');
+
+			});
 
 	}
 }

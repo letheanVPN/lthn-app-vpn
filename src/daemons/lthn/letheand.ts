@@ -63,12 +63,12 @@ export class LetheanDaemonLetheand {
 
 			return this.process.on('stdout', stdout => {
 				if (this.debug) {
-					console.log('stdout: ' + stdout);
+					console.log(stdout);
 				}
 
 			}).on('stderr', stderr => {
 				if (this.debug) {
-					console.log('stderr: ' + stderr);
+					console.log(stderr);
 				}
 
 			}).on('end', status => {

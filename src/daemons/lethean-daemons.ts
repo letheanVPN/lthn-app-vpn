@@ -10,7 +10,6 @@ export class LetheanDaemons {
 		return new Command().description('Lethean Binary Control')
 			.command('chain', LetheanDaemonLetheand.config())
 			.command('wallet', LetheanWalletRpc.config())
-			.command('vpn-wallet', LetheanWalletVpnRpc.config())
 			;
 
 	}

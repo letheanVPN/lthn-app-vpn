@@ -45,7 +45,7 @@ export class LetheanWalletVpnRpc {
 		let homeDir = os.homeDir();
 
 
-		this.exeFile = 'lethean-wallet-rpc' + (os.platform() === 'windows' ? '.exe' : '');
+		this.exeFile = 'lethean-wallet-vpn-rpc' + (os.platform() === 'windows' ? '.exe' : '');
 		LetheanWalletVpnRpc.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
 
 		LetheanWalletVpnRpc.process = new stdOutStream();
@@ -76,7 +76,7 @@ export class LetheanWalletVpnRpc {
 		let home = os.homeDir();
 
 		return new Command()
-			.description('Wallet RPC')
+			.description('Wallet VPN RPC')
 			.option('--daemon-address <string>', 'Use daemon instance at <host>:<port>')
 			.option('--daemon-host <string>', 'Use daemon instance at host <arg> instead of localhost')
 			.option('--password <string>', 'Wallet password (escape/quote as needed)')

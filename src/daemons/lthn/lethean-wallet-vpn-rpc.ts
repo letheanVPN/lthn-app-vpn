@@ -34,7 +34,7 @@ export class stdOutStream extends EventEmitter {
 }
 
 
-export class LetheanWalletRpc {
+export class LetheanWalletVpnRpc {
 	private static command: any;
 	private static exeFile: string;
 	private static debug: number = 1;
@@ -46,9 +46,9 @@ export class LetheanWalletRpc {
 
 
 		this.exeFile = 'lethean-wallet-rpc' + (os.platform() === 'windows' ? '.exe' : '');
-		LetheanWalletRpc.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
+		LetheanWalletVpnRpc.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
 
-		LetheanWalletRpc.process = new stdOutStream();
+		LetheanWalletVpnRpc.process = new stdOutStream();
 		let cmdArgs: any = [];
 
 		for (let arg in args) {
@@ -60,8 +60,8 @@ export class LetheanWalletRpc {
 		}
 
 		//return ensureDir(args['dataDir']).then(async () => {
-		console.log(LetheanWalletRpc.command, cmdArgs);
-		return LetheanWalletRpc.process.on('stdout', stdout => {
+		console.log(LetheanWalletVpnRpc.command, cmdArgs);
+		return LetheanWalletVpnRpc.process.on('stdout', stdout => {
 			console.log(stdout);
 		}).on('stderr', stderr => {
 			console.log(stderr);
@@ -85,21 +85,19 @@ export class LetheanWalletRpc {
 			.option('--daemon-login <string>', 'Specify username[:password] for daemon RPC client')
 			.option('--testnet <boolean>', 'For testnet. Daemon must also be launched with --testnet flag')
 			.option('--restricted-rpc  <boolean>', 'Restricts to view-only commands')
-			.option('--rpc-bind-port  <string>', 'Sets bind port for server')
-			.option('--disable-rpc-login  <string>', 'Disable HTTP authentication for RPC connections served by this process')
+			.option('--vpn-rpc-bind-port  <string>', 'Sets bind port for VPN RPC server')
 			.option('--trusted-daemon  <string>', 'Enable commands which rely on a trusted daemon')
 			.option('--rpc-bind-ip  <string>', 'Specify ip to bind rpc server')
 			.option('--rpc-login  <string>', 'Specify username[:password] required for RPC server')
 			.option('--confirm-external-bind  <string>', 'Confirm rpc-bind-ip value is NOT a loopback (local) IP')
 			.option('--wallet-file  <string>', 'Use wallet')
 			.option('--generate-from-json  <string>', 'Generate wallet from JSON format file')
-			.option('--wallet-dir  <string>', 'Directory for newly created wallets', {default: path.join(home ? home : '/', 'Lethean', 'wallets')})
 			.option('--log-file  <string>', 'Specify log file')
 			.option('--log-level  <string>', '0-4 or categories')
 			.option('--max-concurrency  <string>', 'Max number of threads to use for a parallel job')
 			.option('--config-file  <string>', 'Config file')
 			.action((args) => {
-				LetheanWalletRpc.run(args);
+				LetheanWalletVpnRpc.run(args);
 				if (Deno.env.get('REST')) {
 					throw new StringResponse('Started');
 				}

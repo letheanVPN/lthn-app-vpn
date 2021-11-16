@@ -24,11 +24,11 @@ export class LetheanCli {
 			.name('lthn')
 			.version('0.1.0')
 			.description('Command line interface for Lethean')
+			.command('daemon', LetheanDaemons.config())
+			.command('update', LetheanUpdater.config())
 			.command('backend', RestService.config())
 			.command('filesystem', Filesystem.config())
 			.command('account', LetheanAccount.config())
-			.command('daemon', LetheanDaemons.config())
-			.command('update', LetheanUpdater.config())
 			//			.command("vpn",
 			//				new Command().description('VPN Functions')
 			//						.command('provider', LetheanToolsProvider.config()

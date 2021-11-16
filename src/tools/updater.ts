@@ -6,6 +6,8 @@ import * as path from 'https://deno.land/std/path/mod.ts';
 import {copy} from 'https://deno.land/std@0.95.0/fs/mod.ts';
 import {StringResponse} from './string-response.ts';
 
+import {UpgradeCommand, GithubProvider} from 'https://deno.land/x/cliffy/command/upgrade/mod.ts';
+
 export class LetheanUpdater {
 
 	public static downloads = {
@@ -66,6 +68,13 @@ export class LetheanUpdater {
 
 	public static config() {
 		return new Command().description('Lethean Updater Service')
+			.command('lthn',
+				new UpgradeCommand({
+					provider: [
+						new GithubProvider({repository: 'letheanVPN/dvpn', branches: true})
+					]
+				}))
+			.description('Update lthn')
 			.command('cli', 'Downloads the latest CLI binaries')
 			.action(async (args) => {
 

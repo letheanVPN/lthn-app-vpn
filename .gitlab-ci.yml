@@ -52,7 +52,7 @@ windows:
     - apt update && apt install -y curl unzip
     - curl -fsSL https://deno.land/x/install/install.sh | sh
   script:
-    - npm run server:build:windows
+    - npm run release:windows
     - cp build/lthn.exe lthn.exe
   artifacts:
     name: windows

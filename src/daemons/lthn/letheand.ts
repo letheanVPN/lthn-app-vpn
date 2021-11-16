@@ -5,6 +5,7 @@ import EventEmitter from 'https://deno.land/std@0.79.0/node/events.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
 import {Command} from 'https://deno.land/x/cliffy/command/mod.ts';
 import {StringResponse} from '../../tools/string-response.ts';
+import {LetheanBlockchainExport} from './lethean-blockchain-export.ts';
 
 export class stdOutStream extends EventEmitter {
 	constructor() {
@@ -146,10 +147,12 @@ export class LetheanDaemonLetheand {
 
 			.action((args) => {
 				LetheanDaemonLetheand.run(args);
+				if (Deno.env.get('REST')) {
+					throw new StringResponse('Started');
+				}
 
-				throw new StringResponse('Started');
-
-			});
+			})
+			.command('export', LetheanBlockchainExport.config());
 
 	}
 }

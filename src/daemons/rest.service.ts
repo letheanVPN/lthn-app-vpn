@@ -56,7 +56,9 @@ export class RestService {
 				cmdArgs.push('--' + key.replace(/([A-Z])/g, (x: any) => '-' + x.toLowerCase()) + value);
 			}
 			try {
+
 				await LetheanCli.run(cmdArgs);
+
 			} catch (error) {
 				return await req.respond({
 					status: 200,
@@ -73,6 +75,7 @@ export class RestService {
 
 	public static run(args: any) {
 
+		Deno.env.set('REST', '1');
 
 		this.discoverRoute('', LetheanCli.options.commands);
 

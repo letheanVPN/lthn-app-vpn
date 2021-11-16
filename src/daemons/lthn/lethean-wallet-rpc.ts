@@ -76,7 +76,7 @@ export class LetheanWalletRpc {
 		let home = os.homeDir();
 
 		return new Command()
-			.description('Blockchain Functions')
+			.description('Wallet RPC')
 			.command('start', 'Start Wallet RPC Daemon')
 			.option('--daemon-address <string>', 'Use daemon instance at <host>:<port>')
 			.option('--daemon-host <string>', 'Use daemon instance at host <arg> instead of localhost')
@@ -101,8 +101,9 @@ export class LetheanWalletRpc {
 			.option('--config-file  <string>', 'Config file')
 			.action((args) => {
 				LetheanWalletRpc.run(args);
-
-				throw new StringResponse('Started');
+				if (Deno.env.get('REST')) {
+					throw new StringResponse('Started');
+				}
 
 			});
 

@@ -68,23 +68,35 @@ export class Filesystem {
 			.command('list', 'List entities in path')
 			.option('--path <string>', 'File path to view')
 			.action((args) => {
-				throw new StringResponse(Filesystem.list(args));
+				const req = Filesystem.list(args);
+				if (Deno.env.get('REST')) {
+					throw new StringResponse(req);
+				}
 			})
 			.command('path', 'Returns correct')
 			.option('--convert <string>', 'File path to convert')
 			.action((args) => {
-				throw new StringResponse(Filesystem.path(args.convert));
+				const req = Filesystem.path(args.convert);
+				if (Deno.env.get('REST')) {
+					throw new StringResponse(req);
+				}
 			})
 			.command('read', 'Returns file')
 			.option('--path <string>', 'File path to read')
 			.action((args) => {
-				throw new StringResponse(Filesystem.read(args));
+				const req = Filesystem.read(args);
+				if (Deno.env.get('REST')) {
+					throw new StringResponse(req);
+				}
 			})
 			.command('write', 'Write a file')
 			.option('--path <string>', 'File path to read')
 			.option('--data <string>', 'File data to save')
 			.action((args) => {
-				throw new StringResponse(Filesystem.write(args.path, args.data));
+				const req = Filesystem.write(args.path, args.data);
+				if (Deno.env.get('REST')) {
+					throw new StringResponse(req);
+				}
 			});
 	}
 

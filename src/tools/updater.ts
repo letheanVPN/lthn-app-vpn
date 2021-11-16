@@ -68,8 +68,11 @@ export class LetheanUpdater {
 		return new Command().description('Lethean Updater Service')
 			.command('cli', 'Downloads the latest CLI binaries')
 			.action(async (args) => {
+
 				await LetheanUpdater.download(args).then((dat) => {
-					throw new StringResponse(dat);
+					if (Deno.env.get('REST')) {
+						throw new StringResponse(dat);
+					}
 				});
 			});
 	}

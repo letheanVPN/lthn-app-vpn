@@ -4,7 +4,7 @@
   "description": "Lethean VPN Node",
   "main": "main.js",
   "scripts": {
-    "start": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts filesystem read --path=$HOME/Lethean/conf/app.ini",
+    "start": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts daemon wallet start",
     "backend": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts backend start --home-dir=$HOME/Lethean",
     "chain": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts daemon chain start",
     "vpn": "$HOME/.deno/bin/deno run --allow-net --allow-env --allow-run --allow-read --allow-write --unstable src/server.ts vpn provider  --help",

@@ -2,116 +2,111 @@ import os from 'https://deno.land/x/dos@v0.11.0/mod.ts';
 import {ensureDir} from 'https://deno.land/std@0.106.0/fs/mod.ts';
 import {readLines} from 'https://deno.land/std@0.79.0/io/bufio.ts';
 import EventEmitter from 'https://deno.land/std@0.79.0/node/events.ts';
-import {existsSync} from 'https://deno.land/std/fs/mod.ts';
 import * as path from 'https://deno.land/std/path/mod.ts';
-
-import { parse } from "https://deno.land/std@0.113.0/flags/mod.ts";
+import {Command} from 'https://deno.land/x/cliffy/command/mod.ts';
+import {StringResponse} from '../../tools/string-response.ts';
 
 export class stdOutStream extends EventEmitter {
-  constructor() {
-    super();
-  }
+	constructor() {
+		super();
+	}
 
-  public async run(...command: Array<string>): Promise<void> {
-    const p = Deno.run({
-      cmd: command,
-      stderr: 'piped',
-      stdout: 'piped'
-    });
-    for await (const line of readLines(p.stdout)) {
-      if (line.trim()) {
-        super.emit('stdout', line);
-      }
-    }
-    for await (const line of readLines(p.stderr)) {
-      if (line.trim()) {
-        super.emit('stderr', line);
-      }
-    }
-    super.emit('end', await p.status());
-    p.close();
-    return;
-  }
+	public async run(...command: Array<string>): Promise<void> {
+		const p = Deno.run({
+			cmd: command,
+			stderr: 'piped',
+			stdout: 'piped'
+		});
+		for await (const line of readLines(p.stdout)) {
+			if (line.trim()) {
+				super.emit('stdout', line);
+			}
+		}
+		for await (const line of readLines(p.stderr)) {
+			if (line.trim()) {
+				super.emit('stderr', line);
+			}
+		}
+		super.emit('end', await p.status());
+		p.close();
+		return;
+	}
 }
 
 
-export class LetheanDaemonLetheanWalletRpc {
-  private command: any;
-  private exeFile: string;
-  private binDir: any;
-  private walletDir: any;
-  private configFile: any;
-  private debug: number = 0;
-  private process: stdOutStream;
-  private stopped: boolean = true;
+export class LetheanWalletRpc {
+	private static command: any;
+	private static exeFile: string;
+	private static debug: number = 1;
+	private static process: stdOutStream;
 
-  constructor(daemonArgs: any) {
+	static run(args: any) {
 
-    daemonArgs = parse(daemonArgs)
-    if(daemonArgs['debug']) {
-
-      this.debug = 1
-    }
-    if (!existsSync(daemonArgs['config-file'])) {
-      throw new Error(`Config file not found: ${daemonArgs['config-file']}`);
-    }
-    this.configFile = daemonArgs['config-file'];
-    this.walletDir = path.join(daemonArgs['home-dir'],'wallets');
-
-    if (!existsSync(daemonArgs['bin-dir'])) {
-      throw new Error(`Lethean CLI Folder not found: ${daemonArgs['bin-dir']}`);
-    }
-    this.binDir = daemonArgs['bin-dir'] === undefined ? Deno.cwd() : daemonArgs['bin-dir']
-    this.exeFile = 'lethean-wallet-rpc' + (os.platform() === 'windows' ? '.exe' : '')
-    this.command = path.join(this.binDir, this.exeFile);
-
-    if (!existsSync(this.command)) {
-      throw new Error(`Lethean CLI Command Not Found: ${this.command}`);
-    }
-
-    if (daemonArgs.debug) {
-      console.log(`Platform: ${os.platform()}`);
-    }
-    if (daemonArgs.debug) {
-      console.log(`Config File: ${this.configFile}`);
-    }
-    if (daemonArgs.debug) {
-      console.log(`Data Directory: ${this.walletDir}`);
-    }
-    if (daemonArgs.debug) {
-      console.log(`Command: ${this.command}`);
-    }
-    this.process = new stdOutStream();
-  }
-
-  run(){
-    if(!this.stopped) return this.process
-
-    return ensureDir(this.walletDir).then(async () => {
-
-      this.stopped = false
-
-      return this.process.on('stdout', stdout => {
-        if (this.debug) {
-          console.log('stdout: ' + stdout);
-        }
-
-      }).on('stderr', stderr => {
-        if (this.debug) {
-          console.log('stderr: ' + stderr);
-        }
-
-      }).on('end', status => {
-        if (this.debug) {
-          console.log(status);
-        }
-      }).run(this.command,
-          `--wallet-dir=${this.walletDir}`);
+		let homeDir = os.homeDir();
 
 
-    });
-  }
+		this.exeFile = 'lethean-wallet-rpc' + (os.platform() === 'windows' ? '.exe' : '');
+		LetheanWalletRpc.command = path.join(homeDir ? homeDir : './', 'Lethean', 'cli', this.exeFile);
+
+		LetheanWalletRpc.process = new stdOutStream();
+		let cmdArgs: any = [];
+
+		for (let arg in args) {
+			if (arg !== 'igd') {
+				let value = args[arg].length > 1 ? `=${args[arg]}` : '';
+				cmdArgs.push('--' + arg.replace(/([A-Z])/g, (x) => '-' + x.toLowerCase()) + value);
+			}
+
+		}
+
+		//return ensureDir(args['dataDir']).then(async () => {
+		console.log(LetheanWalletRpc.command, cmdArgs);
+		return LetheanWalletRpc.process.on('stdout', stdout => {
+			console.log(stdout);
+		}).on('stderr', stderr => {
+			console.log(stderr);
+		}).run(this.command, ...cmdArgs);
+
+
+		//});
+	}
+
+	public static config() {
+
+		let home = os.homeDir();
+
+		return new Command()
+			.description('Blockchain Functions')
+			.command('start', 'Start Wallet RPC Daemon')
+			.option('--daemon-address <string>', 'Use daemon instance at <host>:<port>')
+			.option('--daemon-host <string>', 'Use daemon instance at host <arg> instead of localhost')
+			.option('--password <string>', 'Wallet password (escape/quote as needed)')
+			.option('--password-file <string>', 'Wallet password file')
+			.option('--daemon-port <string>', 'Use daemon instance at port <arg> instead of 48782')
+			.option('--daemon-login <string>', 'Specify username[:password] for daemon RPC client')
+			.option('--testnet <boolean>', 'For testnet. Daemon must also be launched with --testnet flag')
+			.option('--restricted-rpc  <boolean>', 'Restricts to view-only commands')
+			.option('--rpc-bind-port  <string>', 'Sets bind port for server')
+			.option('--disable-rpc-login  <string>', 'Disable HTTP authentication for RPC connections served by this process')
+			.option('--trusted-daemon  <string>', 'Enable commands which rely on a trusted daemon')
+			.option('--rpc-bind-ip  <string>', 'Specify ip to bind rpc server')
+			.option('--rpc-login  <string>', 'Specify username[:password] required for RPC server')
+			.option('--confirm-external-bind  <string>', 'Confirm rpc-bind-ip value is NOT a loopback (local) IP')
+			.option('--wallet-file  <string>', 'Use wallet')
+			.option('--generate-from-json  <string>', 'Generate wallet from JSON format file')
+			.option('--wallet-dir  <string>', 'Directory for newly created wallets', {default: path.join(home ? home : '/', 'Lethean', 'wallets')})
+			.option('--log-file  <string>', 'Specify log file')
+			.option('--log-level  <string>', '0-4 or categories')
+			.option('--max-concurrency  <string>', 'Max number of threads to use for a parallel job')
+			.option('--config-file  <string>', 'Config file')
+			.action((args) => {
+				LetheanWalletRpc.run(args);
+
+				throw new StringResponse('Started');
+
+			});
+
+	}
 }
-
 
 

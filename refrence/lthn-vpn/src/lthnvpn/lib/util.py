@@ -9,8 +9,6 @@ import hashlib
 import base64
 import re
 import dns.resolver
-from lthnvpn.lib.service_ha import ServiceHa
-from lthnvpn.lib.service_ovpn import ServiceOvpn
 from lthnvpn.lib import config, log, services
 
 def timefmt(tme):
@@ -75,9 +73,11 @@ def helpmsg(p):
     if (config.Config.VERBOSE):
         print(p.format_values())
         print('Service options (can be set by [service-id] sections in ini file:')
-        ha = ServiceHa("00")
+        #ha = ServiceHa("00")
+        print("Help yourself for now")
         ha.helpOpts("==Haproxy==")
-        ovpn = ServiceOvpn("00")
+        #ovpn = ServiceOvpn("00")
+        print("Help yourself for now")
         ovpn.helpOpts("==OpenVPN==")
         print('Use log level DEBUG during startup to see values assigned to services from SDP.')
         print()

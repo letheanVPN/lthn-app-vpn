@@ -14,8 +14,6 @@ import binascii
 import configargparse
 import pwd
 import grp
-from lthnvpn.lib.service_ha import ServiceHa
-from lthnvpn.lib.service_ovpn import ServiceOvpn
 from lthnvpn.lib import config, log, services, util, authids, sessions, sdp
 
 def remove_pidfile():

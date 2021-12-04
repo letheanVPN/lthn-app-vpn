@@ -207,7 +207,9 @@ def main(argv):
         log.L.error("You must specify command (list|connect|show)")
         sys.exit(1)
 
+def entry():
+    main(sys.argv[1:])
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    entry()
 

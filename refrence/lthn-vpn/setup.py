@@ -22,5 +22,13 @@ setup(name='lethean-vpn',
         'requests==2.26.0',
         'syslogmp==0.4',
         'urllib3==1.26.7'
-    ]
+    ],
+    entry_points = {
+        'console_scripts': [
+            'lthnvpnc=lthnvpn.client.lthnvpnc:entry',
+            'lthnvpnd=lthnvpn.daemon.lthnvpnd:entry',
+            'lvmgmt=lthnvpn.daemon.lvmgmt:entry',
+        ]
+    }
 )
+

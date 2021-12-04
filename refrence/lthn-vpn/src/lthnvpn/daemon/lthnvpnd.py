@@ -164,6 +164,9 @@ def main(argv):
             
         overaltime = time.time() - starttime
         
-if __name__ == "__main__":
+def entry():
     main(sys.argv[1:])
+
+if __name__ == "__main__":
+    entry()
     

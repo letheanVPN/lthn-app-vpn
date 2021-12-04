@@ -98,6 +98,9 @@ def main(argv):
         log.L.error("You need to specify action. Exiting.")
         sys.exit(2)
 
-if __name__ == "__main__":
+def entry():
     main(sys.argv[1:])
+
+if __name__ == "__main__":
+    entry()
     

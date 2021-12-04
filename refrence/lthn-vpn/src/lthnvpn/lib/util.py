@@ -1,19 +1,17 @@
 import time
 import json
-import config
 import logging
-import log
 import logging.config
-import services
 import sys
-from service_ha import ServiceHa
-from service_ovpn import ServiceOvpn
 import socket
 import ipaddress
 import hashlib
 import base64
 import re
 import dns.resolver
+from lthnvpn.lib.service_ha import ServiceHa
+from lthnvpn.lib.service_ovpn import ServiceOvpn
+from lthnvpn.lib import config, log, services
 
 def timefmt(tme):
     return(time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(tme)))

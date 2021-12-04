@@ -1,14 +1,12 @@
-
 import base64
-import config
 import json
-import log
 import os
 import sys
 import time
 import hashlib
 from urllib.request import Request
 from urllib.request import urlopen
+from lthnvpn.lib import config, log
 
 class SDPList(object):
     

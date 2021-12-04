@@ -1,20 +1,18 @@
-
 import atexit
-import config
-import log
-from sdp import *
 import sys
 import time
-from service_mgmt import ServiceMgmt
-from service_ha import ServiceHa
-from service_hac import ServiceHaClient
-from service_has import ServiceHaServer
-from service_syslog import ServiceSyslog
-from service_ovpn import ServiceOvpn
-from service_ovpnc import ServiceOvpnClient
-from service_ovpns import ServiceOvpnServer
-from service_http import ServiceHttp
 import pprint
+from lthnvpn.lib.sdp import *
+from lthnvpn.lib.service_mgmt import ServiceMgmt
+from lthnvpn.lib.service_ha import ServiceHa
+from lthnvpn.lib.service_hac import ServiceHaClient
+from lthnvpn.lib.service_has import ServiceHaServer
+from lthnvpn.lib.service_syslog import ServiceSyslog
+from lthnvpn.lib.service_ovpn import ServiceOvpn
+from lthnvpn.lib.service_ovpnc import ServiceOvpnClient
+from lthnvpn.lib.service_ovpns import ServiceOvpnServer
+from lthnvpn.lib.service_http import ServiceHttp
+from lthnvpn.lib import config, log
 
 SERVICES = None
 

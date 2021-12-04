@@ -1,7 +1,5 @@
-
 import logging
-import util
-import config
+from lthnvpn.lib import util, config
 
 class Log(object):
     

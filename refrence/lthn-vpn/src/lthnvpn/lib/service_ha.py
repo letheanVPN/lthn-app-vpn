@@ -1,9 +1,6 @@
-from service import Service
-import config
 import os
 import sys
 import time
-import log
 import select
 import signal
 import re
@@ -11,7 +8,8 @@ import shutil
 import random
 import subprocess
 import atexit
-import services
+from lthnvpn.lib.service import Service
+from lthnvpn.lib import config, log, services
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 

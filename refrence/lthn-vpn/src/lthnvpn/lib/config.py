@@ -1,16 +1,15 @@
-
 import configparser
 import json
 import logging
-import log
 import os
-from sdp import SDP
 import sys
-from os.path import expanduser
 import pathlib
 import platform
 import glob
 import shutil
+from os.path import expanduser
+from lthnvpn.lib.sdp import SDP
+from lthnvpn.lib import log
 
 class Config(object):
     """Configuration container"""

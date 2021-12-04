@@ -1,17 +1,14 @@
-from service import Service
-import config
 import http.server
 import socketserver
-import log
 import socket
-import authids
 import re
 import time
 import os
 import sys
 import signal
 import atexit
-import services
+from lthnvpn.lib.service import Service
+from lthnvpn.lib import config, log, services, authids
 
 class HttpStatusRequest(http.server.BaseHTTPRequestHandler):
     

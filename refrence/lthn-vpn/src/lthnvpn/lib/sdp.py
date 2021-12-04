@@ -1,9 +1,7 @@
-
 import base64
 import ed25519
 import json
 import jsonpickle
-import log
 import os
 import pprint
 import re
@@ -11,7 +9,7 @@ import sys
 from urllib.error import HTTPError
 from urllib.request import Request
 from urllib.request import urlopen
-import config
+from lthnvpn.lib import config, log
 
 class SDP(object):
     configFile = None

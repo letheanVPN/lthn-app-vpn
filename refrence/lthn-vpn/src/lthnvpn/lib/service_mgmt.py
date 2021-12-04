@@ -1,13 +1,9 @@
-from service import Service
 import os
 import socket
-import log
 import re
-import authids
-import services
-import sessions
-import config
 import random
+from lthnvpn.lib.service import Service
+from lthnvpn.lib import config, log, services, sessions, authids
 
 class ServiceMgmt(Service):
     

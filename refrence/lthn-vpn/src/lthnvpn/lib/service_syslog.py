@@ -1,12 +1,10 @@
-from service import Service
-import config
 import os
 import select
 import socket
-import log
 import syslogmp
-import sessions
 import re
+from lthnvpn.lib.service import Service
+from lthnvpn.lib import config, log, sessions
 
 class ServiceSyslog(Service):
     

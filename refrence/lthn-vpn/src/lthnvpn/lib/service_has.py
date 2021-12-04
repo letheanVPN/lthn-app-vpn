@@ -1,9 +1,6 @@
-from service import Service
-import config
 import os
 import sys
 import time
-import log
 import select
 import signal
 import re
@@ -11,7 +8,10 @@ import shutil
 import random
 from subprocess import Popen
 from subprocess import PIPE
-from service_ha import ServiceHa
+from lthnvpn.lib.service import Service
+from lthnvpn.lib.service_ha import ServiceHa
+from lthnvpn.lib import config, log
+
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 class ServiceHaServer(ServiceHa):

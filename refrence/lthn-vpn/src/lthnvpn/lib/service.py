@@ -1,11 +1,10 @@
-import config
-import log
 import socket
 import os
 import time
 import sys
 import subprocess
 import pathlib
+from lthnvpn.lib import config, log
 
 class Service(object):
     """

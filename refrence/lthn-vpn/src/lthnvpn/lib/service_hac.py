@@ -1,22 +1,19 @@
-import config
-import log
 import os
 import random
 import re
 import select
-from service import Service
-from service_ha import ServiceHa
-from service_stn import ServiceStunnel
-import services
 import shutil
 import signal
 import subprocess
 import sys
 import time
-import util
 import requests
 import atexit
 import pathlib
+from lthnvpn.lib.service import Service
+from lthnvpn.lib.service_ha import ServiceHa
+from lthnvpn.lib.service_stn import ServiceStunnel
+from lthnvpn.lib import config, log, services, util
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 

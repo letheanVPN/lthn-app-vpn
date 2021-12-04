@@ -1,11 +1,9 @@
-
-import authids
 import hashlib
 import pprint
-import log
 import random
-import services
 import time
+from lthnvpn.lib import authids, log, services
+
 
 SESSIONS = None
 

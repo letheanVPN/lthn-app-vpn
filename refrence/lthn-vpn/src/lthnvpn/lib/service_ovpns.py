@@ -1,16 +1,14 @@
-from service import Service
-import config
 import os
 import sys
 import re
-import log
 import time
 import select
-import authids
-import sessions
 from subprocess import Popen
 from subprocess import PIPE
-from service_ovpn import ServiceOvpn
+from lthnvpn.lib.service_ovpn import ServiceOvpn
+from lthnvpn.lib.service import Service
+from lthnvpn.lib import config, log, authids, sessions
+
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 class ServiceOvpnServer(ServiceOvpn):

@@ -129,15 +129,12 @@ def parseCommonArgs(parser, cfg, name):
     if (cfg.lc):
         logging.config.fileConfig(cfg.lc)
         log.L = log.Log(level=cfg.d, name=name)
-        log.A = log.Audit(level=logging.WARNING)
     elif (cfg.syslog):
         h = logging.handlers.SysLogHandler(address="/dev/log")
         log.L = log.Log(level=cfg.d, name=name, handler=h)
-        log.A = log.Audit(handler=h)
     else:
         ah = logging.FileHandler(cfg.a)
         log.L = log.Log(level=cfg.d, name=name)
-        log.A = log.Audit(handler=ah)
     config.Config.VERBOSE = cfg.v
     config.Config.CONFIGFILE = cfg.config
     config.Config.SDPFILE = cfg.sdp

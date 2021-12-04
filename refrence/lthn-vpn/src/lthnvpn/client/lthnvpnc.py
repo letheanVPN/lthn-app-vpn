@@ -2,25 +2,15 @@
 
 import os
 import sys
-
-# Add lib directory to search path
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib')))
-
 import getopt
-import log
 import ed25519
 import jsonpickle
 import logging
 import logging.config
-import config
 import argparse
 import configargparse
-import util
 import pprint
 import time
-import services
-import sdp
-import sdps
 import random
 import string
 import requests
@@ -29,6 +19,8 @@ import socket
 import re
 import atexit
 import dns
+
+from lthnvpn.lib import log, config, util, services, sdp, sdps
 
 
 def parseUri(cfg, uri):

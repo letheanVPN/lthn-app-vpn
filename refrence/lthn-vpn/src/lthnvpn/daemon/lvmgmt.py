@@ -2,21 +2,13 @@
 
 import os
 import sys
-
-# Add lib directory to search path
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib')))
-
 import ed25519
 import getopt
-import log
 import logging
 import logging.config
-import config
-import util
 import configargparse
 import binascii
-import services
-import sdp
+from lthnvpn.lib import config, log, util, services, sdp
 
 # Starting here
 def main(argv):

@@ -2,12 +2,8 @@
 
 import os
 import sys
-# Add lib directory to search path
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib')))
-
 import ed25519
 import getopt
-import log
 import logging
 import logging.config
 import atexit
@@ -15,19 +11,12 @@ from pprint import pprint
 import time
 import pickle
 import binascii
-from util import *
-import sdp
-import services
-import authids
-import sessions
-import config
-import log
 import configargparse
-from service_ha import ServiceHa
-from service_ovpn import ServiceOvpn
 import pwd
 import grp
-import util
+from lthnvpn.lib.service_ha import ServiceHa
+from lthnvpn.lib.service_ovpn import ServiceOvpn
+from lthnvpn.lib import config, log, services, util, authids, sessions, sdp
 
 def remove_pidfile():
     pf = open(config.CONFIG.PIDFILE,"r")

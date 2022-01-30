@@ -1,5 +1,6 @@
 syslogmp
 psutil
+ed25519
 jsonpickle
 configargparse
 requests

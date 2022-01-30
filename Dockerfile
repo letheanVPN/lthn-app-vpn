@@ -64,7 +64,7 @@ RUN useradd -ms /bin/bash lthn; \
   chown -R lthn /usr/src/lethean-vpn
 
 WORKDIR /usr/src/lethean-vpn/build
-RUN wget -nc -c $DAEMON_BIN_URL && unzip -d /usr/bin/ $(basename $DAEMON_BIN_URL) && chmod +x /usr/bin/lethean*
+RUN wget -nc -c $DAEMON_BIN_URL && unzip -d /usr/bin/ $(basename $DAEMON_BIN_URL) && mv /usr/bin/$(basename $DAEMON_BIN_URL .zip)/lethean* /usr/bin && chmod +x /usr/bin/lethean*
 
 USER root
 COPY ./ /usr/src/lethean-vpn/

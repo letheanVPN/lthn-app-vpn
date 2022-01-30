@@ -320,8 +320,8 @@ ca_dir=${LTHN_PREFIX}/etc/ca/
 data_dir=${LTHN_PREFIX}/var/
 tmp_dir=${LTHN_PREFIX}/tmp/
 
-if ! $HAPROXY_BIN -v | grep -qE "version 1.7|version 1.6|version 1.8|version 1.9"; then
-    echo "Incompatible version of haproxy! You need 1.6.x, 1.7.x, 1.8.x or 1.9.x version for now."
+if ! $HAPROXY_BIN -v | grep -qE "version 1.7|version 1.6|version 1.8|version 1.9|version 2.0|version 2.1"; then
+    echo "Incompatible version of haproxy! You need 1.6.x, 1.7.x, 1.8.x, 1.9.x, 2.0.x or 2.1.x version for now."
     $HAPROXY_BIN -v
     exit 1
 fi

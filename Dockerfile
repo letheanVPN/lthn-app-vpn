@@ -53,7 +53,7 @@ ENV ENDPOINT="127.0.0.1"
 # Service port
 ENV PORT="$PORT"
 
-ENTRYPOINT ["/entrypiont-lethean-vpn.sh"]
+ENTRYPOINT ["/entrypoint-lethean-vpn.sh"]
 CMD ["run"]
 
 RUN useradd -ms /bin/bash lthn; \
@@ -70,7 +70,7 @@ USER root
 COPY ./ /usr/src/lethean-vpn/
 RUN rm -rf /usr/src/lethean-vpn/build/
 RUN pip3 install -r /usr/src/lethean-vpn/requirements.txt
-COPY ./server/docker-run.sh /entrypiont-lethean-vpn.sh
+COPY ./server/docker-run.sh /entrypoint-lethean-vpn.sh
 RUN chown -R lthn /usr/src/; \
   chmod +x /entrypiont-lethean-vpn.sh; \
   chmod +x /usr/src/lethean-vpn/install.sh

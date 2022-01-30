@@ -26,7 +26,7 @@ There is directory which needs to be mounted to host: /opt/lthn/etc . If you wan
 ```
  ENV1=value [ENV2=value2] docker run -p expose:internal \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
-   --mount type=bind,source=/dev/log,target=/dev/log \
+   --mount type=bind,source=$(pwd)/log,target=/dev/log \
    lthn/vpn [cmd [args]]
 
 ```
@@ -101,9 +101,10 @@ Create configs and certificates (or copy your existing /opt/lthn/etc dir here.)
 Easiest way to create from scratch is probably to easy-deploy. Do not forget to allocate terminal for easy-deploy (-t -i):
 ```
  mkdir etc
+ mkdir log
  docker run -t -i \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
-   --mount type=bind,source=/dev/log,target=/dev/log \
+   --mount type=bind,source=$(pwd)/log,target=/dev/log \
    lthn/vpn easy-deploy
 
 ```
@@ -113,7 +114,7 @@ You can edit sdp.json, dispatcher.ini and other things to respect your needs.
 To upload your local SDP, use 
 ```
  docker run --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
-   --mount type=bind,source=/dev/log,target=/dev/log \
+   --mount type=bind,source=$(pwd)/log,target=/dev/log \
    lthn/vpn upload-sdp
 
 ```
@@ -121,7 +122,7 @@ To upload your local SDP, use
 Than to run dispatcher:
 ```
  docker run -p 8080:8080 --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
-   --mount type=bind,source=/dev/log,target=/dev/log \
+   --mount type=bind,source=$(pwd)/log,target=/dev/log \
    lthn/vpn
 
 ```
@@ -139,7 +140,7 @@ Connect to URI:
 See [here](CLIENT.md) for information about URI format
 
 ```
- docker run  -p 8186:8186 --mount type=bind,source=/dev/log,target=/dev/log lthn/vpn connect providerid:serviceid
+ docker run  -p 8186:8186 --mount type=bind,source=$(pwd)/log,target=/dev/log lthn/vpn connect providerid:serviceid
 ```
 Test proxy:
 ```

@@ -27,7 +27,7 @@ There is directory which needs to be mounted to host: /opt/lthn/etc . If you wan
  ENV1=value [ENV2=value2] docker run -p expose:internal \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
-   limosek/lethean-vpn:devel [cmd [args]]
+   lthn/vpn [cmd [args]]
 
 ```
 where cmd can be:
@@ -104,7 +104,7 @@ Easiest way to create from scratch is probably to easy-deploy. Do not forget to 
  docker run -t -i \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
-   limosek/lethean-vpn:devel easy-deploy
+   lthn/vpn easy-deploy
 
 ```
 
@@ -114,7 +114,7 @@ To upload your local SDP, use
 ```
  docker run --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
-   limosek/lethean-vpn:devel upload-sdp
+   lthn/vpn upload-sdp
 
 ```
 
@@ -122,7 +122,7 @@ Than to run dispatcher:
 ```
  docker run -p 8080:8080 --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=/dev/log,target=/dev/log \
-   limosek/lethean-vpn:devel
+   lthn/vpn
 
 ```
 
@@ -132,18 +132,18 @@ Even more, it will not send any payments for service. It will only instruct you 
 
 List all services from SDP platform:
 ```
- docker run limosek/lethean-vpn:devel list
+ docker run lthn/vpn list
 ```
 
 Connect to URI:
 See [here](CLIENT.md) for information about URI format
 
 ```
- docker run  -p 8186:8186 --mount type=bind,source=/dev/log,target=/dev/log limosek/lethean-vpn:devel connect providerid:serviceid
+ docker run  -p 8186:8186 --mount type=bind,source=/dev/log,target=/dev/log lthn/vpn connect providerid:serviceid
 ```
 Test proxy:
 ```
-curl -x http://localhost:8186 -L https://lethean.io/
+curl -x http://localhost:8186 -L https://www.lt.hn
 ```
 
 ### Recomended steps to use lethean daemon
@@ -154,7 +154,7 @@ by setting DAEMON_HOST to empty string. But you need to store blockchain outside
 DAEMON_HOST='' docker run \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=$(pwd)/bcdata,target=/home/lthn \
-  limosek/lethean-vpn:devel 
+  lthn/vpn 
 ```
 
 You can even use our docker image to run standalone daemon.
@@ -163,7 +163,7 @@ If blockchain dir is empty, docker image will pull actual data using zsync which
 docker run -t \
    --mount type=bind,source=$(pwd)/etc,target=/opt/lthn/etc \
    --mount type=bind,source=$(pwd)/bcdata,target=/home/lthn \
-  limosek/lethean-vpn:devel letheand
+  lthn/vpn letheand
 ```
 
 ## FAQ

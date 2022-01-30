@@ -1,4 +1,4 @@
-FROM python:3.7.1-stretch
+FROM python:3-bullseye
 MAINTAINER Lukas Macura <lukas@lethean.io>
 
 LABEL "io.lethean.vpn-server"="Lethean.IO"
@@ -67,19 +67,29 @@ WORKDIR /usr/src/lethean-vpn/build
 RUN wget -nc -c $DAEMON_BIN_URL && unzip -d /usr/bin/ $(basename $DAEMON_BIN_URL) && mv /usr/bin/$(basename $DAEMON_BIN_URL .zip)/lethean* /usr/bin && chmod +x /usr/bin/lethean*
 
 USER root
+
 COPY ./ /usr/src/lethean-vpn/
+
 RUN rm -rf /usr/src/lethean-vpn/build/
+
+RUN /usr/local/bin/python -m pip install --upgrade pip
+
 RUN pip3 install -r /usr/src/lethean-vpn/requirements.txt
+
 COPY ./server/docker-run.sh /entrypoint-lethean-vpn.sh
+
 RUN chown -R lthn /usr/src/; \
   chmod +x /entrypoint-lethean-vpn.sh; \
-  chmod +x /usr/src/lethean-vpn/install.sh
+  chmod +x /usr/src/lethean-vpn/install.sh;
+
 RUN echo -e "domain lthn.local\nsearch lthn.local\nnameserver 127.0.0.1\n >/etc/resolv.conf"
 
 USER lthn
 WORKDIR /usr/src/lethean-vpn/
-RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --client
-RUN make install SERVER=1 CLIENT=1
+RUN chmod +x configure.sh; ./configure.sh --runas-user lthn --runas-group lthn --client;
+
+RUN make install SERVER=1 CLIENT=1;
+
 RUN rm -rf /opt/lthn/etc/ca /opt/lthn/etc/*.ini /opt/lthn/etc/*.json /opt/lthn/etc/*.pem /opt/lthn/etc/*.tlsauth /opt/lthn/etc/*.keys /opt/lthn/etc/provider* \
         /opt/lthn/var/* \
         /usr/src/lethean-vpn/build /usr/src/lethean-vpn/env.mk ; \

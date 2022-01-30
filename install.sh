@@ -30,16 +30,16 @@ nopip() {
 
 # Create directories
 install_dir /
-install_dir bin
-install_dir etc
-install_dir var -m 770
-install_dir var/ha -m 770
-install_dir var/ovpn -m 770
-install_dir var/log -m 770
-install_dir var/run -m 770
-install_dir lib
-install_dir dev
-install_dir dev/net
+install_dir /bin
+install_dir /etc
+install_dir /var -m 770
+install_dir /var/ha -m 770
+install_dir /var/ovpn -m 770
+install_dir /var/log -m 770
+install_dir /var/run -m 770
+install_dir /lib
+install_dir /dev
+install_dir /dev/net
 
 if ! [ -r "$INSTALL_PREFIX/$LTHN_PREFIX/dev/net/tun" ]; then
   install_dir /dev/net/
@@ -139,7 +139,7 @@ if [ -n "$SERVER" ]; then
 fi
 
 sudo chown -R $LTHN_USER:$LTHN_GROUP $INSTALL_PREFIX/$LTHN_PREFIX/etc/
-sudo chmod -R 700 $INSTALL_PREFIX/$LTHN_PREFIX/etc/
+sudo chmod -R 755 $INSTALL_PREFIX/$LTHN_PREFIX/etc/
 
 if [ "$ERRORS" = true ]; then
     echo "Finished installing but with errors. See above."

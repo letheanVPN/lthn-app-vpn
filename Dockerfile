@@ -5,7 +5,7 @@ LABEL "io.lethean.vpn-server"="Lethean.IO"
 LABEL version="1.0"
 LABEL description="Letehan.io VPN server"
 
-ARG DAEMON_BIN_URL="https://github.com/letheanVPN/blockchain/releases/download/v4.0.0/lethean-4.0.0-linux.zip"
+ARG DAEMON_BIN_URL="https://github.com/letheanVPN/blockchain/releases/download/v4.0.4/lethean-4.0.4-linux.zip"
 ARG DAEMON_HOST="seed.lethean.io"
 ARG PORT="8080"
 

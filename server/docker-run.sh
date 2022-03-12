@@ -189,7 +189,7 @@ easy-deploy)
     fi
 
     if [ -z "$WALLET_RPC_URI" ]; then
-        WALLET_RPC_URI="http://localhost:14660"
+        WALLET_RPC_URI="http://localhost:14660/json_rpc"
     fi
     
     ./configure.sh --prefix "/opt/lthn" --runas-user lthn --runas-group lthn --easy --with-wallet-address "$WALLET_ADDRESS" \

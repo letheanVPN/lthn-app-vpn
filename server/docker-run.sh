@@ -72,7 +72,7 @@ runWalletRpc(){
       rm -f lethean-wallet-vpn-rpc*.login
       lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLET_FILE" --daemon-host "$DAEMON_HOST" --rpc-login "dispatcher:$WALLET_RPC_PASSWORD" --password "$WALLET_PASSWORD" --log-file /var/log/wallet.log &
       sleep 4
-      WALLET_RPC_URI="http://localhost:14660"
+      WALLET_RPC_URI="http://localhost:14660/json_rpc"
     else
       echo "Wallet is outside of container ($WALLET_RPC_URI)." >&2
     fi    

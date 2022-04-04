@@ -5,7 +5,7 @@ LABEL "io.lethean.vpn-server"="Lethean.IO"
 LABEL version="1.0"
 LABEL description="Letehan.io VPN server"
 
-ARG DAEMON_BIN_URL="https://github.com/letheanVPN/blockchain/releases/download/v4.0.4/lethean-4.0.4-linux.zip"
+ARG DAEMON_BIN_URL="https://github.com/letheanVPN/blockchain/releases/download/v4.0.6/linux.tar"
 ARG DAEMON_HOST="seed.lethean.io"
 ARG PORT="8080"
 
@@ -64,7 +64,7 @@ RUN useradd -ms /bin/bash lthn; \
   chown -R lthn /usr/src/lethean-vpn
 
 WORKDIR /usr/src/lethean-vpn/build
-RUN wget -nc -c $DAEMON_BIN_URL && unzip -d /usr/bin/ $(basename $DAEMON_BIN_URL) && mv /usr/bin/$(basename $DAEMON_BIN_URL .zip)/lethean* /usr/bin && chmod +x /usr/bin/lethean*
+RUN wget -nc -c $DAEMON_BIN_URL && mkdir -p /usr/bin/lethean-latest-linux && tar -xf $(basename $DAEMON_BIN_URL) -C /usr/bin/lethean-latest-linux && mv /usr/bin/lethean-latest-linux/lethean* /usr/bin && chmod +x /usr/bin/lethean*
 
 USER root
 

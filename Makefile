@@ -46,12 +46,12 @@ build/ca/index.txt: env.mk
 	./configure.sh --generate-ca --with-capass "$(PASS)" --with-cn "$CN"
 
 docker-img:
-	docker build -t lethean/lethean-vpn:devel .
+	docker build --load -t lthn/vpn:dev .
 
 docker: docker-img
 
 docker-clean:
-	docker rm -v lethean-vpn:devel 
+	docker rm -v lthn/vpn:dev
 
 docker-shell:
 	mkdir -p build/etc
@@ -59,7 +59,7 @@ docker-shell:
 	docker run -i -t \
 	  --mount type=bind,source=$$(pwd)/build/etc,target=/opt/lthn/etc \
    	  --mount type=bind,source=$$(pwd)/build/bcdata,target=/home/lthn \
-	  lethean/lethean-vpn:devel sh
+	  lthn/vpn:dev sh
 
 lthnvpnc:
 	mkdir bin

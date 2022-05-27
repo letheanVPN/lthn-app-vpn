@@ -1,11 +1,14 @@
-FROM python:3-bullseye
-MAINTAINER Lukas Macura <lukas@lethean.io>
+FROM python:3-buster
+MAINTAINER Snider <snider@lt.hn>
 
-LABEL "io.lethean.vpn-server"="Lethean.IO"
 LABEL version="1.0"
-LABEL description="Letehan.io VPN server"
+LABEL description="Lethean VPN Exit Node"
 
-ARG DAEMON_BIN_URL="https://github.com/letheanVPN/blockchain/releases/download/v4.0.6/linux.tar"
+RUN apt-get update; \
+    apt-get upgrade -y; \
+    apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen unzip;
+
+ARG DAEMON_BIN_URL="https://github.com/letheanVPN/blockchain-iz/releases/latest/download/linux.tar"
 ARG DAEMON_HOST="seed.lethean.io"
 ARG PORT="8080"
 
@@ -57,8 +60,6 @@ ENTRYPOINT ["/entrypoint-lethean-vpn.sh"]
 CMD ["run"]
 
 RUN useradd -ms /bin/bash lthn; \
-  apt-get update; \
-  apt-get install -y sudo joe less haproxy openvpn squid net-tools wget stunnel zsync pwgen unzip; \
   echo "lthn ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers; \
   mkdir /usr/src/lethean-vpn; \
   chown -R lthn /usr/src/lethean-vpn

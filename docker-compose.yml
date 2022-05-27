@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  exit-node:
+    platform: linux/amd64
+    build:
+      context: .
+      args:
+        - PORT:8080
+        - BRANCH=v1
+        - PROVIDERID=1234
+    volumes:
+      - "./data/vpn/etc:/opt/lthn/etc"
+    command:
+      - easy-deploy
+    container_name: lethean-vpn
+    env_file:
+      - server/config.env
+    ports:
+      - "8080:3000"
+      - "8081:3001"
+#  dynamodb-local:
+#    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+#    image: "amazon/dynamodb-local:latest"
+#    container_name: dynamodb-local
+#    ports:
+#      - "8000:8000"
+#    volumes:
+#      - "./data/dynamodb:/home/dynamodblocal/data"
+#    working_dir: /home/dynamodblocal
+#  sdp-server:
+#    image: lthn/sdp
+#    build:
+#      context: .
+#    container_name: lethean-sdp
+#    env_file:
+#      - server/config.env
+#    ports:
+#      - "8080:3000"
+#      - "8081:3001"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PATH=/opt/lthn/bin:/sbin:/usr/sbin:$PATH
-export CONF=/opt/lthn/etc/
+export CONF=/opt/lthn/etc
 export HOME=/home/lthn
 export LMDB=/home/lthn/.intensecoin/lmdb
 
@@ -70,7 +70,7 @@ runWalletRpc(){
     if [ -z "$WALLET_RPC_URI" ]; then
       echo "Starting Wallet RPC server with $CONF/$WALLET_FILE." >&2
       rm -f lethean-wallet-vpn-rpc*.login
-      lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLET_FILE" --daemon-host "$DAEMON_HOST" --rpc-login "dispatcher:$WALLET_RPC_PASSWORD" --password "$WALLET_PASSWORD" --log-file /var/log/wallet.log &
+      lethean-wallet-vpn-rpc --vpn-rpc-bind-port 14660 --wallet-file "$CONF/$WALLET_FILE" --daemon-host "$DAEMON_HOST" --rpc-login "dispatcher:$WALLET_RPC_PASSWORD" --password $WALLET_PASSWORD --log-file /var/log/wallet.log &
       sleep 4
       WALLET_RPC_URI="http://localhost:14660/json_rpc"
     else

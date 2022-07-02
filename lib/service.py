@@ -58,7 +58,7 @@ class Service(object):
         for c in self.cfg:
             if c not in self.OPTS.keys():
                 log.L.warning("Unknown parameter %s for service %s" % (c,id))
-        if id is not "00":
+        if id != "00":
             for o in self.OPTS_REQUIRED:
                 if o not in self.cfg:
                     log.L.error("Service %s is not configured. You need to edit config file to add:\n[service-%s]\n%s=something" % (id, id, o))
